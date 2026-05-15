@@ -365,6 +365,24 @@ function leadStatus(lead: SavedLead): LeadStatus {
   return lead.status || 'new';
 }
 
+function safeJsonArray<T>(value: string | null): T[] {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function mergeById<T extends { id: string; createdAt?: string }>(localItems: T[], accountItems: T[], limit: number) {
+  const byId = new Map<string, T>();
+  [...accountItems, ...localItems].forEach((item) => byId.set(item.id, item));
+  return Array.from(byId.values())
+    .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+    .slice(0, limit);
+}
+
 function servicePhrase(jobType: string) {
   return jobType.startsWith('HVAC') ? jobType : jobType.toLowerCase();
 }
@@ -414,18 +432,20 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
   }, []);
 
   useEffect(() => {
-    const quoteRaw = window.localStorage.getItem('quotesprint-quotes');
-    const leadRaw = window.localStorage.getItem('quotesprint-leads');
+    const localQuotes = safeJsonArray<SavedQuote>(window.localStorage.getItem('quotesprint-quotes'));
+    const localLeads = safeJsonArray<SavedLead>(window.localStorage.getItem('quotesprint-leads'));
     const profileRaw = window.localStorage.getItem('quotesprint-company-profile');
-    if (quoteRaw) setSavedQuotes(JSON.parse(quoteRaw));
-    if (leadRaw) setSavedLeads(JSON.parse(leadRaw));
+    if (localQuotes.length) setSavedQuotes(localQuotes);
+    if (localLeads.length) setSavedLeads(localLeads);
     if (profileRaw) {
-      const profile = JSON.parse(profileRaw);
-      setBusiness(profile.business || 'Acme Home Services');
-      setServiceArea(profile.serviceArea || 'the local area');
-      setBrandVoice(profile.brandVoice || 'clear, helpful, and no-pressure');
-      setDifferentiator(profile.differentiator || 'fast response, clean work, and clear next steps');
-      setGuarantee(profile.guarantee || 'we explain any change before work begins');
+      try {
+        const profile = JSON.parse(profileRaw);
+        setBusiness(profile.business || 'Acme Home Services');
+        setServiceArea(profile.serviceArea || 'the local area');
+        setBrandVoice(profile.brandVoice || 'clear, helpful, and no-pressure');
+        setDifferentiator(profile.differentiator || 'fast response, clean work, and clear next steps');
+        setGuarantee(profile.guarantee || 'we explain any change before work begins');
+      } catch {}
     }
 
     fetch('/api/account')
@@ -439,8 +459,30 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
           setDifferentiator(data.profile.differentiator || 'fast response, clean work, and clear next steps');
           setGuarantee(data.profile.guarantee || 'we explain any change before work begins');
         }
-        if (Array.isArray(data.quotes)) setSavedQuotes(data.quotes);
-        if (Array.isArray(data.leads) && data.leads.length) setSavedLeads(data.leads);
+        const accountQuotes = Array.isArray(data.quotes) ? data.quotes as SavedQuote[] : [];
+        const accountLeads = Array.isArray(data.leads) ? data.leads as SavedLead[] : [];
+        const mergedQuotes = mergeById(localQuotes, accountQuotes, 50);
+        const mergedLeads = mergeById(localLeads, accountLeads, 100);
+        if (mergedQuotes.length) setSavedQuotes(mergedQuotes);
+        if (mergedLeads.length) setSavedLeads(mergedLeads);
+
+        const accountQuoteIds = new Set(accountQuotes.map((quote) => quote.id));
+        localQuotes.filter((quote) => !accountQuoteIds.has(quote.id)).forEach((quote) => {
+          fetch('/api/quotes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ quote }),
+          }).catch(() => null);
+        });
+
+        const accountLeadIds = new Set(accountLeads.map((lead) => lead.id));
+        localLeads.filter((lead) => !accountLeadIds.has(lead.id)).forEach((lead) => {
+          fetch('/api/leads', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lead }),
+          }).catch(() => null);
+        });
       })
       .catch(() => null)
       .finally(() => setAccountLoaded(true));
