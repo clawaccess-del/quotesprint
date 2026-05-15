@@ -137,7 +137,7 @@ function lowerFirst(text: string) {
   return text.charAt(0).toLowerCase() + text.slice(1);
 }
 
-export function QuoteBuilder() {
+export function QuoteBuilder({ accountEmail }: { accountEmail?: string }) {
   const [business, setBusiness] = useState('Acme Home Services');
   const [serviceArea, setServiceArea] = useState('the local area');
   const [brandVoice, setBrandVoice] = useState('clear, helpful, and no-pressure');
@@ -165,6 +165,21 @@ export function QuoteBuilder() {
       setDifferentiator(profile.differentiator || 'fast response, clean work, and clear next steps');
       setGuarantee(profile.guarantee || 'we explain any change before work begins');
     }
+
+    fetch('/api/account')
+      .then((response) => response.ok ? response.json() : null)
+      .then((data) => {
+        if (!data?.ok) return;
+        if (data.profile) {
+          setBusiness(data.profile.business || 'Acme Home Services');
+          setServiceArea(data.profile.serviceArea || 'the local area');
+          setBrandVoice(data.profile.brandVoice || 'clear, helpful, and no-pressure');
+          setDifferentiator(data.profile.differentiator || 'fast response, clean work, and clear next steps');
+          setGuarantee(data.profile.guarantee || 'we explain any change before work begins');
+        }
+        if (Array.isArray(data.quotes)) setSavedQuotes(data.quotes);
+      })
+      .catch(() => null);
   }, []);
 
   useEffect(() => {
@@ -172,7 +187,16 @@ export function QuoteBuilder() {
   }, [savedQuotes]);
 
   useEffect(() => {
-    window.localStorage.setItem('quotesprint-company-profile', JSON.stringify({ business, serviceArea, brandVoice, differentiator, guarantee }));
+    const profile = { business, serviceArea, brandVoice, differentiator, guarantee };
+    window.localStorage.setItem('quotesprint-company-profile', JSON.stringify(profile));
+    const timeout = window.setTimeout(() => {
+      fetch('/api/account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profile }),
+      }).catch(() => null);
+    }, 600);
+    return () => window.clearTimeout(timeout);
   }, [business, serviceArea, brandVoice, differentiator, guarantee]);
 
   const result = useMemo(() => {
@@ -227,11 +251,21 @@ export function QuoteBuilder() {
       status: 'open',
       createdAt: new Date().toISOString(),
     };
-    setSavedQuotes((quotes) => [quote, ...quotes].slice(0, 12));
+    setSavedQuotes((quotes) => [quote, ...quotes].slice(0, 50));
+    fetch('/api/quotes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ quote }),
+    }).catch(() => null);
   }
 
   function updateStatus(id: string, status: QuoteStatus) {
     setSavedQuotes((quotes) => quotes.map((quote) => quote.id === id ? { ...quote, status } : quote));
+    fetch('/api/quotes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status }),
+    }).catch(() => null);
   }
 
   return (
@@ -270,6 +304,7 @@ export function QuoteBuilder() {
           <p>{result.playbook.risk}</p>
           <span>{result.playbook.prepNote}</span>
         </div>
+        {accountEmail ? <p className="fine-print">Saving to account: {accountEmail}</p> : null}
         <div className="mini-stats">
           <div><strong>{savedQuotes.length}</strong><span>saved quotes</span></div>
           <div><strong>{money(stats.totalQuoted)}</strong><span>quoted pipeline</span></div>

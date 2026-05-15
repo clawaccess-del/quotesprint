@@ -39,7 +39,7 @@ export default async function AppPage() {
         <strong>Access active</strong>
         <span>{aiEnabled ? 'AI credits unlocked with a 100-credit monthly cap.' : access.plan === 'live' ? 'Monthly non-AI system unlocked. Upgrade anytime for AI credits.' : 'One-time product unlocked for this browser.'}</span>
       </div>
-      <QuoteBuilder />
+      <QuoteBuilder accountEmail={access.customerEmail} />
       <AIEnhancer enabled={aiEnabled} />
     </section>
   );
