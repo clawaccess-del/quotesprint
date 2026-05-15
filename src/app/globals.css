@@ -358,3 +358,28 @@ textarea {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+.industry-insight-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .8rem;
+}
+.compact-card {
+  padding: 1rem;
+}
+.compact-card h3 {
+  margin: 0 0 .45rem;
+  font-size: 1rem;
+  letter-spacing: -.02em;
+}
+.compact-card ul {
+  margin: 0;
+  font-size: .9rem;
+}
+.compact-card p {
+  margin: 0;
+  font-size: .9rem;
+  line-height: 1.55;
+}
+@media (max-width: 900px) {
+  .industry-insight-grid { grid-template-columns: 1fr; }
+}

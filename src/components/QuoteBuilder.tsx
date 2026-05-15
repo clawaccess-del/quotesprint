@@ -24,6 +24,14 @@ type IndustryPlaybook = {
   closeBenefit: string;
 };
 
+type IndustryDetail = {
+  customerConcerns: string[];
+  quoteInputs: string[];
+  trustProof: string;
+  followUpTiming: string;
+  decisionAngle: string;
+};
+
 const jobTypes = [
   'HVAC repair',
   'plumbing repair',
@@ -207,6 +215,121 @@ const playbooks: Record<string, IndustryPlaybook> = {
   },
 };
 
+const industryDetails: Record<string, IndustryDetail> = {
+  'HVAC repair': {
+    customerConcerns: ['no heat or AC', 'repair versus replacement', 'energy bills', 'same-day availability'],
+    quoteInputs: ['system type and age', 'thermostat behavior', 'airflow', 'noises or error codes', 'filter age', 'unit access and photos'],
+    trustProof: 'licensed diagnostics, repair-versus-replacement options, warranty explanation, and authorization before added work',
+    followUpTiming: 'For no heat or AC, follow up same day. For standard repairs, check in tomorrow and again on day three. For replacement decisions, follow up around options, financing, materials, and schedule windows.',
+    decisionAngle: 'Separate the must-fix comfort repair from optional efficiency or replacement upgrades.',
+  },
+  'plumbing repair': {
+    customerConcerns: ['active leaks', 'hidden water damage', 'mess', 'emergency pricing'],
+    quoteInputs: ['active or stopped leak', 'fixture or location', 'shutoff access', 'drain symptoms', 'photos or video', 'visible drywall or cabinet damage'],
+    trustProof: 'clean work, shutoff guidance, photo evidence, licensed repair, and warranty clarity',
+    followUpTiming: 'Active leaks need immediate call or SMS and a short booking window. Fixture repairs get next-day and day-three reminders. Remodel or repipe scopes need a day-two clarification follow-up.',
+    decisionAngle: 'Split the immediate stop-the-damage visit from permanent repair or optional fixture replacement.',
+  },
+  'electrical repair': {
+    customerConcerns: ['safety or fire risk', 'outages', 'code compliance', 'hidden panel issues'],
+    quoteInputs: ['breaker trips', 'flickering', 'affected rooms', 'outlet or fixture type', 'burning smell or sparks', 'panel age and photos'],
+    trustProof: 'licensed electrician work, code-aware troubleshooting, permit guidance, and clear authorization before upgrades',
+    followUpTiming: 'Safety, outage, burning smell, or warm outlet leads need same-day follow-up. Standard repairs get day-one reminders. Panel or upgrade quotes need day-two options and a day-seven scheduling check.',
+    decisionAngle: 'Separate safety-critical repair from nice-to-have upgrades or future panel work.',
+  },
+  'painting project': {
+    customerConcerns: ['finish quality', 'prep level', 'mess', 'timeline', 'color confidence'],
+    quoteInputs: ['interior or exterior', 'rooms or square footage', 'wall condition', 'trim or doors', 'color change', 'paint quality and photos'],
+    trustProof: 'prep checklist, surface protection, product clarity, daily cleanup, reviews, and finish warranty',
+    followUpTiming: 'Follow up day one on questions and colors, day three on schedule windows, and day seven before releasing dates. Exterior projects should mention weather windows.',
+    decisionAngle: 'Compare prep, coats, paint quality, protection, and warranty instead of competing only on price.',
+  },
+  'landscaping visit': {
+    customerConcerns: ['curb appeal', 'maintenance cost', 'plant survival', 'drainage', 'crew reliability'],
+    quoteInputs: ['yard size', 'cleanup or install goal', 'access and gates', 'drainage or slope', 'sun and shade', 'plant, mulch, irrigation, and haul-off needs'],
+    trustProof: 'property-specific planning, plant and soil fit, clean edges, before-and-after photos, and reliable recurring scheduling',
+    followUpTiming: 'Maintenance leads need a 24 to 48-hour cadence offer. Installs and cleanups need day-two scope/priorities, day-five weather or schedule reminder, and day-ten seasonal-window touch.',
+    decisionAngle: 'Break the work into cleanup, priority areas, install, and maintenance so the customer can start smaller.',
+  },
+  'cleaning service': {
+    customerConcerns: ['trust inside the home', 'deep-clean scope', 'pets', 'missed areas', 'recurring value'],
+    quoteInputs: ['square footage', 'bedrooms and bathrooms', 'cleaning type', 'last cleaned', 'pets and clutter level', 'access, parking, supplies, and priority rooms'],
+    trustProof: 'room-by-room checklist, arrival window, satisfaction policy, recurring consistency, and reviews',
+    followUpTiming: 'Event, move-out, listing, or holiday cleans need same-day or next-day slot holds. Recurring leads need day-two plan comparison and day-seven first-visit reminder.',
+    decisionAngle: 'Prioritize kitchens, baths, floors, and highest-impact rooms or convert a first deep clean into recurring service.',
+  },
+  'roof inspection': {
+    customerConcerns: ['leaks', 'storm damage', 'insurance', 'repair versus replacement', 'workmanship warranty'],
+    quoteInputs: ['roof age', 'leak location', 'storm date', 'material type', 'interior stain photos', 'attic access and insurance status'],
+    trustProof: 'photo-documented inspection, repair-first guidance, material brands, warranty, cleanup, nail sweep, and insurance documentation support',
+    followUpTiming: 'Active leaks or storm damage need same-day inspection follow-up. Replacement quotes need day-two material or warranty comparison, day-five weather-risk reminder, and day-ten insurance or financing check.',
+    decisionAngle: 'Separate temporary mitigation, permanent repair, and replacement so the next step feels clear.',
+  },
+  'garage door repair': {
+    customerConcerns: ['trapped car', 'home security', 'spring safety', 'opener reliability', 'upsell fear'],
+    quoteInputs: ['door stuck open or closed', 'car trapped', 'spring condition', 'opener behavior', 'track or roller issue', 'door size and photos'],
+    trustProof: 'repair-first diagnostics, common stocked parts, spring and opener expertise, safety testing, and warranty',
+    followUpTiming: 'Trapped car or open door gets immediate follow-up and same-day booking. Standard noise or opener issues get day-one and day-three touches. Door replacement gets day-three and day-seven follow-up.',
+    decisionAngle: 'Separate the function repair from quieter opener, smart opener, or full door upgrade options.',
+  },
+  'tree service': {
+    customerConcerns: ['property damage', 'limb hazards', 'cleanup', 'permits', 'power lines', 'whether the tree can be saved'],
+    quoteInputs: ['photos from multiple angles', 'tree size or species', 'proximity to structures or lines', 'storm damage', 'equipment access', 'haul-off, stump, permit, or HOA needs'],
+    trustProof: 'insured crews, safety plan, property protection, cleanup clarity, arborist or health guidance where applicable, and utility-boundary awareness',
+    followUpTiming: 'Hazardous limbs and storm damage need immediate contact. Routine pruning or removal gets day-two scope check, day-five access reminder, and day-ten slot touch.',
+    decisionAngle: 'Split hazard removal, pruning, haul-off, and stump work so price and safety priorities are easier to evaluate.',
+  },
+  'pool service': {
+    customerConcerns: ['green or cloudy water', 'equipment cost', 'swim readiness', 'recurring maintenance value', 'chemical safety'],
+    quoteInputs: ['pool size and type', 'water photos', 'pump or filter behavior', 'filter type', 'last service', 'algae, leak, heater, salt, or chlorinator issues'],
+    trustProof: 'water diagnostics, equipment checks, clear recovery plan, recurring checklist, and chemical balance guidance',
+    followUpTiming: 'Green pool or equipment-down leads need day-zero and day-one follow-up. Recurring maintenance gets day-two cadence messaging. Swim-deadline leads need tighter same-day and 48-hour reminders.',
+    decisionAngle: 'Separate water recovery, equipment diagnosis, repair or replacement, and ongoing maintenance.',
+  },
+  'pressure washing': {
+    customerConcerns: ['surface damage', 'plant safety', 'paint or siding safety', 'streaks', 'weather'],
+    quoteInputs: ['surfaces', 'square footage', 'photos', 'algae, rust, oil, or stains', 'height or stories', 'water access and delicate plants or outlets'],
+    trustProof: 'surface-safe methods, soft-wash versus pressure explanation, plant protection, insured work, and before-and-after photos',
+    followUpTiming: 'Listing, party, inspection, or event leads need a 24-hour slot hold. Standard quotes get day-two photo or scope check, day-five weather-window reminder, and day-ten curb-appeal touch.',
+    decisionAngle: 'Prioritize driveway, front entry, siding, fence, deck, or highest-visibility areas if the full exterior is too much.',
+  },
+  'junk removal': {
+    customerConcerns: ['price uncertainty', 'heavy item handling', 'donation or disposal', 'access and stairs', 'fast pickup'],
+    quoteInputs: ['photos', 'item list and volume', 'heavy items', 'stairs or elevator', 'parking or truck access', 'hazardous items, donation preference, and pickup deadline'],
+    trustProof: 'transparent volume pricing, careful removal, donation or recycling where possible, insured crew, and same/next-day windows',
+    followUpTiming: 'Move, cleanout, renovation, or listing deadlines need immediate and same-day second touch. Standard pickup gets day-one. Larger cleanout gets day-two planning and day-five deadline reminder.',
+    decisionAngle: 'Prioritize must-go items first and explain how volume or access can change the final price.',
+  },
+  'flooring project': {
+    customerConcerns: ['material choice', 'total cost', 'disruption', 'subfloor surprises', 'timeline', 'durability'],
+    quoteInputs: ['rooms and square footage', 'current flooring', 'desired material', 'subfloor concerns', 'stairs and transitions', 'furniture, pets, moisture, and finish date'],
+    trustProof: 'accurate measurements, prep and subfloor clarity, material suitability, installation warranty, clean transitions, and portfolio',
+    followUpTiming: 'Follow up day one on materials, day three on measurement or samples, day seven on install window and material availability, and day fourteen for longer project nurture.',
+    decisionAngle: 'Offer good/better/best materials and explain prep or subfloor risk before promising timeline.',
+  },
+  'remodeling estimate': {
+    customerConcerns: ['scope creep', 'budget', 'timeline', 'disruption', 'permits', 'design decisions'],
+    quoteInputs: ['room type', 'must-haves', 'rough measurements', 'photos', 'budget range', 'selections, structural changes, permits, HOA, and occupancy constraints'],
+    trustProof: 'written scope, phased options, change-order process, permit guidance, schedule communication, references, portfolio, and protection/cleanup plan',
+    followUpTiming: 'Use day-one scope clarification, day-three budget or phasing note, day-seven decision-maker check, day-fourteen selections/timeline reminder, and monthly nurture for large projects.',
+    decisionAngle: 'Separate must-haves from optional upgrades and phase the project around budget, selections, permits, and timeline.',
+  },
+  'handyman job': {
+    customerConcerns: ['small job availability', 'hourly uncertainty', 'parts', 'workmanship', 'whether a specialist is needed'],
+    quoteInputs: ['task list', 'photos', 'measurements', 'part or product links', 'wall or material type', 'access, priority order, deadline, and safety issues'],
+    trustProof: 'clear task list, realistic time block, practical repair options, before-and-after photos, cleanup, and licensed trade referral when needed',
+    followUpTiming: 'Follow up day one on tasks and priorities, day three on the appointment block, and day seven to bundle repairs before the next opening. Safety or function issues get same-day push.',
+    decisionAngle: 'Set a time block and priority list so open-ended hourly work feels controlled.',
+  },
+  'pest control visit': {
+    customerConcerns: ['health and safety', 'pets or kids', 'recurring infestations', 'chemicals', 'discreet service', 'speed'],
+    quoteInputs: ['pest type or photos', 'activity location and frequency', 'entry points', 'indoor or outdoor issue', 'pets, children, allergies, previous treatments, and prevention interest'],
+    trustProof: 'inspection-first plan, targeted treatment, prevention guidance, safety instructions, follow-up expectations, and licensed applicators where applicable',
+    followUpTiming: 'Active infestations get day-zero and day-one follow-up. Initial treatment gets day-two expectation-setting and day-seven efficacy check. Recurring prevention follows lifecycle or seasonal reminders.',
+    decisionAngle: 'Explain source, entry-point, and lifecycle treatment instead of only spraying what is visible.',
+  },
+};
+
 const urgencyMultipliers: Record<string, number> = { normal: 1, soon: 1.12, emergency: 1.28 };
 const tones: Record<string, string> = {
   direct: 'clear, confident, and to the point',
@@ -305,6 +428,9 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     const serviceRequest = servicePhrase(jobType);
     const riskSentence = lowerFirst(playbooks[jobType].risk);
     const playbook = playbooks[jobType];
+    const detail = industryDetails[jobType];
+    const inputFocus = detail.quoteInputs.slice(0, 5).join(', ');
+    const customerConcerns = detail.customerConcerns.slice(0, 4).join(', ');
     const tonePhrase = `${tones[tone]}, with a brand voice that feels ${brandVoice}`;
     const bookingReason = urgency === 'emergency'
       ? `${playbook.urgencyReason}, so reserving the appointment now protects the fastest available response`
@@ -316,16 +442,20 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       total,
       depositDue,
       playbook,
-      sms: `Hi ${firstName}, this is ${business}. I reviewed the ${serviceRequest} details and put together a working estimate of ${money(total)}. For ${serviceArea}, our focus is ${differentiator}. We can reserve ${timePhrase} with ${money(depositDue)} down. Want me to hold it?`,
-      email: `Subject: ${jobType} estimate from ${business}\n\nHi ${firstName},\n\nThanks for reaching out to ${business}. Your working estimate is ${money(total)} for this ${serviceRequest}. That includes the expected labor, materials, and scheduling priority based on what you shared.\n\nWhat matters for this type of work: ${playbook.risk}\n\nWhy customers choose us: ${differentiator}. Our approach is ${playbook.proofPoint}.\n\nTo reserve the next available opening, the deposit is ${money(depositDue)} (${deposit}%). ${playbook.prepNote}\n\nIf anything changes after we see the job in person, ${guarantee}.\n\nBest,\n${business}`,
-      call: `Open with: “Hi ${firstName}, this is ${business}. I saw your ${serviceRequest} request and wanted to help you get a clear answer quickly.”\n\nMatch the brand voice: ${tonePhrase}.\n\nQualify for this job: ask about ${playbook.qualify}.\n\nBuild confidence: “For this kind of work, we focus on ${playbook.proofPoint}. The main reason to handle it now is that ${riskSentence}”\n\nClose: “The working estimate is ${money(total)}. I can reserve the next opening with ${money(depositDue)} down because ${bookingReason}. Should I hold that spot for you?”`,
+      sms: `Hi ${firstName}, this is ${business}. I reviewed the ${serviceRequest} details and put together a working estimate of ${money(total)}. The main things we’ll confirm are ${inputFocus}. For ${serviceArea}, our focus is ${differentiator}. We can reserve ${timePhrase} with ${money(depositDue)} down. Want me to hold it?`,
+      email: `Subject: ${jobType} estimate from ${business}\n\nHi ${firstName},\n\nThanks for reaching out to ${business}. Your working estimate is ${money(total)} for this ${serviceRequest}. That includes the expected labor, materials, and scheduling priority based on what you shared.\n\nFor this kind of request, customers usually care most about ${customerConcerns}. To keep the quote accurate, we’ll confirm ${inputFocus}.\n\nWhat matters for this type of work: ${playbook.risk}\n\nWhy customers choose us: ${differentiator}. Our approach is ${detail.trustProof}.\n\nTo reserve the next available opening, the deposit is ${money(depositDue)} (${deposit}%). ${playbook.prepNote}\n\nIf anything changes after we see the job in person, ${guarantee}.\n\nBest,\n${business}`,
+      call: `Open with: “Hi ${firstName}, this is ${business}. I saw your ${serviceRequest} request and wanted to help you get a clear answer quickly.”\n\nMatch the brand voice: ${tonePhrase}.\n\nListen for customer concerns around ${customerConcerns}.\n\nQualify for this job: ask about ${playbook.qualify}.\n\nBuild confidence: “For this kind of work, we focus on ${detail.trustProof}. The main reason to handle it now is that ${riskSentence}”\n\nClose: “The working estimate is ${money(total)}. I can reserve the next opening with ${money(depositDue)} down because ${bookingReason}. Should I hold that spot for you?”`,
       sequence: [
         `Day 0: Hi ${firstName}, this is ${business}. Your ${serviceRequest} estimate is ${money(total)}. Because ${playbook.urgencyReason}, I can reserve the next opening with ${money(depositDue)} down. Want me to hold it?`,
         `Day 1: Quick follow-up, ${firstName}. For this ${serviceRequest}, the main thing to avoid is that ${riskSentence} If you want the current opening, I can reserve it with the ${deposit}% deposit.`,
-        `Day 3: Hi ${firstName}, checking before we release this ${serviceRequest} estimate window. ${playbook.prepNote} Do you want us to keep the ${money(total)} quote active?`,
-        `Day 7: Last touch from ${business}. If this is still on your list, reply “ready” and we will help you ${playbook.closeBenefit}.`
+        `Day 3: Hi ${firstName}, checking before we release this ${serviceRequest} estimate window. We’ll use ${inputFocus} to keep the quote accurate. ${playbook.prepNote} Do you want us to keep the ${money(total)} quote active?`,
+        `Day 7: Last touch from ${business}. ${detail.followUpTiming} If this is still on your list, reply “ready” and we will help you ${playbook.closeBenefit}.`
       ],
-      objectionReply: `If ${firstName} hesitates on price: “I understand. ${playbook.objection} The estimate is ${money(total)}, and the ${money(depositDue)} deposit simply reserves the appointment so we can keep the schedule clear for you.”`,
+      objectionReply: `If ${firstName} hesitates on price: “I understand. ${playbook.objection} ${detail.decisionAngle} The estimate is ${money(total)}, and the ${money(depositDue)} deposit simply reserves the appointment so we can keep the schedule clear for you.”`,
+      quoteInputs: detail.quoteInputs,
+      customerConcerns: detail.customerConcerns,
+      trustProof: detail.trustProof,
+      followUpTiming: detail.followUpTiming,
     };
   }, [business, serviceArea, brandVoice, differentiator, guarantee, customer, jobType, laborHours, laborRate, materials, urgency, deposit, tone]);
 
@@ -368,7 +498,8 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     if (generatingSection) return;
     setGeneratingSection(title);
     setAiStatus(`Customizing ${title.toLowerCase()}...`);
-    const company = `Business: ${business}\nService area: ${serviceArea}\nBrand voice: ${brandVoice}\nWhy customers choose us: ${differentiator}\nTrust promise: ${guarantee}`;
+    const detail = industryDetails[jobType];
+    const company = `Business: ${business}\nService area: ${serviceArea}\nBrand voice: ${brandVoice}\nWhy customers choose us: ${differentiator}\nTrust promise: ${guarantee}\nIndustry customer concerns: ${detail.customerConcerns.join(', ')}\nIndustry quote inputs: ${detail.quoteInputs.join(', ')}\nIndustry trust proof: ${detail.trustProof}\nIndustry follow-up timing: ${detail.followUpTiming}`;
     const response = await fetch('/api/ai', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -377,7 +508,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
         company,
         industry: jobType,
         source: text,
-        instruction: `Add a deeper customization layer for ${customer}. Keep it customer-facing, specific to the job type, and ready to send.`,
+        instruction: `Add a deeper customization layer for ${customer}. Keep it customer-facing, specific to the job type, and ready to send. Reflect the industry's real buyer concerns, quote inputs, timing, prep, and objection dynamics.`,
       }),
     });
     const data = await response.json();
@@ -427,6 +558,20 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
           <strong>{result.playbook.label} playbook applied</strong>
           <p>{result.playbook.risk}</p>
           <span>{result.playbook.prepNote}</span>
+        </div>
+        <div className="industry-insight-grid">
+          <article className="copy-card compact-card">
+            <h3>Customer concerns</h3>
+            <ul>{result.customerConcerns.map((item) => <li key={item}>{item}</li>)}</ul>
+          </article>
+          <article className="copy-card compact-card">
+            <h3>Quote inputs to collect</h3>
+            <ul>{result.quoteInputs.slice(0, 6).map((item) => <li key={item}>{item}</li>)}</ul>
+          </article>
+          <article className="copy-card compact-card">
+            <h3>Follow-up logic</h3>
+            <p>{result.followUpTiming}</p>
+          </article>
         </div>
         {accountEmail ? <p className="fine-print">Saving to account: {accountEmail}</p> : null}
         <div className="mini-stats">
