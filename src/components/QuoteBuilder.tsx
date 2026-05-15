@@ -389,6 +389,15 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
   const [socialPlatform, setSocialPlatform] = useState('Facebook');
   const [socialGoal, setSocialGoal] = useState('Book more estimates');
   const [socialTopic, setSocialTopic] = useState('seasonal service reminder');
+  const [customSocialPosts, setCustomSocialPosts] = useState<Record<number, string>>({});
+  const [aiUsage, setAiUsage] = useState<{ used: number; remaining: number; total: number; enabled: boolean } | null>(null);
+
+  useEffect(() => {
+    fetch('/api/ai/usage')
+      .then((response) => response.ok ? response.json() : null)
+      .then((data) => { if (data?.ok) setAiUsage({ used: data.used, remaining: data.remaining, total: data.total, enabled: data.enabled }); })
+      .catch(() => null);
+  }, []);
 
   useEffect(() => {
     const quoteRaw = window.localStorage.getItem('quotesprint-quotes');
@@ -492,6 +501,10 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     return { totalQuoted, won: won.length, open: open.length, winRate };
   }, [savedQuotes]);
 
+  useEffect(() => {
+    setCustomSocialPosts({});
+  }, [business, serviceArea, brandVoice, differentiator, guarantee, jobType, socialPlatform, socialGoal, socialTopic]);
+
   const socialPosts = useMemo(() => {
     const detail = industryDetails[jobType];
     const playbook = playbooks[jobType];
@@ -505,12 +518,20 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
             ? 'neighborly, practical, and community-minded'
             : 'clear, conversational, and easy to respond to';
     const cta = socialPlatform === 'Instagram' ? 'DM us for an estimate.' : socialPlatform === 'Google Business Profile' ? 'Call or message us to schedule an estimate.' : 'Reply or message us to get on the schedule.';
+    const goalAngles: Record<string, string> = {
+      'Book more estimates': `invite people to request a clear estimate and mention that ${detail.quoteInputs.slice(0, 3).join(', ')} help keep it accurate`,
+      'Promote seasonal maintenance': `connect ${socialTopic} to timing, prevention, and schedule availability in ${serviceArea}`,
+      'Educate customers': `teach customers what to look for, especially ${detail.customerConcerns.slice(0, 3).join(', ')}`,
+      'Show trust and proof': `lead with proof: ${detail.trustProof}`,
+      'Win urgent calls': `stress real urgency without scare tactics: ${playbook.urgencyReason}`,
+    };
+    const topicLine = socialTopic.trim() || `${jobType} reminder`;
     return [
-      `${socialTopic}\n\nIf you’re dealing with ${detail.customerConcerns.slice(0, 2).join(' or ')}, ${business} can help with ${jobType.toLowerCase()} in ${serviceArea}. We focus on ${differentiator}, and we keep the next step simple: clear scope, clear timing, and no surprise changes.\n\n${cta}`,
-      `Before you book ${jobType.toLowerCase()}, make sure your estimate accounts for ${detail.quoteInputs.slice(0, 4).join(', ')}. Those details can change the scope, timing, and final recommendation.\n\nAt ${business}, our approach is ${playbook.proofPoint}. ${cta}`,
-      `${playbook.urgencyReason.charAt(0).toUpperCase() + playbook.urgencyReason.slice(1)}. If ${socialTopic.toLowerCase()} is already on your list, it’s worth getting a clear estimate before the schedule fills.\n\n${business} serves ${serviceArea} with ${brandVoice} communication and ${differentiator}. ${cta}`,
+      `${topicLine}: ${goalAngles[socialGoal]}.\n\n${business} helps ${serviceArea} homeowners with ${jobType.toLowerCase()} by focusing on ${differentiator}. For this service, the big things to watch are ${detail.customerConcerns.slice(0, 3).join(', ')}.\n\n${cta}`,
+      `Not every ${jobType.toLowerCase()} quote is the same. For ${topicLine.toLowerCase()}, the details that matter most are ${detail.quoteInputs.slice(0, 5).join(', ')}.\n\n${business} keeps the process ${brandVoice}, with ${guarantee}. ${cta}`,
+      `${socialGoal}: ${topicLine}\n\n${playbook.risk} That’s why ${business} gives ${serviceArea} customers a clear next step, practical prep guidance, and service recommendations based on the actual situation.\n\n${playbook.prepNote}\n\n${cta}`,
     ].map((post) => `${post}\n\nStyle: ${platformStyle}`);
-  }, [business, serviceArea, brandVoice, differentiator, jobType, socialPlatform, socialTopic]);
+  }, [business, serviceArea, brandVoice, differentiator, guarantee, jobType, socialPlatform, socialGoal, socialTopic]);
 
   function saveLead() {
     const lead: SavedLead = {
@@ -603,12 +624,43 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       return;
     }
     if (data.output) setCustomizedCopy((copy) => ({ ...copy, [title]: data.output }));
+    if (typeof data.remaining === 'number') setAiUsage({ used: data.used, remaining: data.remaining, total: 100, enabled: true });
     setAiStatus(`Customized ${title.toLowerCase()}. ${data.remaining} AI credits left this month.`);
+    setGeneratingSection(null);
+  }
+
+  async function enhanceSocialPost(index: number, text: string) {
+    if (generatingSection) return;
+    setGeneratingSection(`Social post ${index + 1}`);
+    setAiStatus(`Customizing social post option ${index + 1}...`);
+    const detail = industryDetails[jobType];
+    const company = `Business: ${business}\nService area: ${serviceArea}\nBrand voice: ${brandVoice}\nWhy customers choose us: ${differentiator}\nTrust promise: ${guarantee}\nPlatform: ${socialPlatform}\nPost goal: ${socialGoal}\nPost topic: ${socialTopic}\nIndustry customer concerns: ${detail.customerConcerns.join(', ')}\nIndustry quote inputs: ${detail.quoteInputs.join(', ')}\nIndustry trust proof: ${detail.trustProof}`;
+    const response = await fetch('/api/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'social',
+        company,
+        industry: jobType,
+        source: text,
+        instruction: `Rewrite this into a more custom ${socialPlatform} post. It must strongly reflect the selected goal (${socialGoal}) and topic (${socialTopic}). Make it specific to the company, industry, customer concerns, and platform. Return only the finished post.`,
+      }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      setAiStatus(data.message || 'AI customization is unavailable.');
+      setGeneratingSection(null);
+      return;
+    }
+    if (data.output) setCustomSocialPosts((posts) => ({ ...posts, [index]: data.output }));
+    if (typeof data.remaining === 'number') setAiUsage({ used: data.used, remaining: data.remaining, total: 100, enabled: true });
+    setAiStatus(`Customized social post option ${index + 1}. ${data.remaining} AI credits left this month.`);
     setGeneratingSection(null);
   }
 
   return (
     <>
+      {aiEnabled ? <aside className="ai-credit-widget"><span>AI credits</span><strong>{aiUsage ? aiUsage.remaining : '—'} / {aiUsage ? aiUsage.total : 100}</strong><small>{aiUsage ? `${aiUsage.used} used this month` : 'Loading usage'}</small></aside> : null}
       <div className="portal-tabs" role="tablist" aria-label="Customer portal sections">
         <button type="button" className={activeTab === 'tool' ? 'active' : ''} onClick={() => setActiveTab('tool')}>Quote tool</button>
         <button type="button" className={activeTab === 'social' ? 'active' : ''} onClick={() => setActiveTab('social')}>Social posts</button>
@@ -696,7 +748,11 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
         <article className="copy-card">
           <h3>{socialPlatform} post options</h3>
           <div className="social-post-list">
-            {socialPosts.map((post, index) => <article className="social-post-card" key={post}><strong>Option {index + 1}</strong><pre>{post}</pre></article>)}
+            {socialPosts.map((post, index) => {
+              const visiblePost = customSocialPosts[index] || post;
+              const generating = generatingSection === `Social post ${index + 1}`;
+              return <article className="social-post-card" key={`${index}-${post}`}><div className="card-title-row"><strong>Option {index + 1} {customSocialPosts[index] ? <span className="customized-badge">AI customized</span> : null}</strong>{aiEnabled ? <button className="button mini" type="button" disabled={Boolean(generatingSection)} onClick={() => enhanceSocialPost(index, visiblePost)}>{generating ? <><span className="spinner" /> Generating</> : customSocialPosts[index] ? 'Customize again' : 'Customize with AI'}</button> : null}</div><pre>{visiblePost}</pre></article>;
+            })}
           </div>
         </article>
       </section> : null}

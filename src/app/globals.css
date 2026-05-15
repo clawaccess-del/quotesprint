@@ -487,3 +487,36 @@ textarea {
   color: var(--green-dark);
   margin-bottom: .5rem;
 }
+.ai-credit-widget {
+  position: fixed;
+  right: 1rem;
+  top: 5.6rem;
+  z-index: 30;
+  display: grid;
+  gap: .15rem;
+  min-width: 142px;
+  border: 1px solid rgba(215,255,113,.65);
+  background: var(--green-dark);
+  color: white;
+  border-radius: 1rem;
+  padding: .85rem .95rem;
+  box-shadow: var(--shadow);
+}
+.ai-credit-widget span,
+.ai-credit-widget small {
+  color: rgba(255,255,255,.72);
+  font-size: .78rem;
+  font-weight: 800;
+}
+.ai-credit-widget strong {
+  color: var(--lime);
+  font-size: 1.35rem;
+  letter-spacing: -.04em;
+}
+@media (max-width: 900px) {
+  .ai-credit-widget {
+    position: static;
+    width: min(100%, 260px);
+    margin: 1rem 0;
+  }
+}

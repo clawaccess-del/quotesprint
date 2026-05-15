@@ -14,6 +14,7 @@ const creditCost: Record<string, number> = {
   objection: 1,
   email: 2,
   sequence: 3,
+  social: 2,
 };
 
 export async function POST(request: NextRequest) {
@@ -56,7 +57,7 @@ export async function POST(request: NextRequest) {
         { role: 'user', content: prompt },
       ],
       temperature: 0.6,
-      max_tokens: action === 'sequence' ? 650 : 420,
+      max_tokens: action === 'sequence' || action === 'social' ? 650 : 420,
     }),
   });
 
