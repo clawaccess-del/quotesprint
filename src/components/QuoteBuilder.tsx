@@ -152,7 +152,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
   const [deposit, setDeposit] = useState(30);
   const [tone, setTone] = useState('direct');
   const [savedQuotes, setSavedQuotes] = useState<SavedQuote[]>([]);
-  const [aiOutput, setAiOutput] = useState<{ title: string; text: string; remaining?: number } | null>(null);
+  const [customizedCopy, setCustomizedCopy] = useState<Record<string, string>>({});
   const [aiStatus, setAiStatus] = useState('');
 
   useEffect(() => {
@@ -272,7 +272,6 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
 
   async function enhanceCopy(title: string, text: string, action = 'rewrite') {
     setAiStatus(`Customizing ${title.toLowerCase()}...`);
-    setAiOutput(null);
     const company = `Business: ${business}\nService area: ${serviceArea}\nBrand voice: ${brandVoice}\nWhy customers choose us: ${differentiator}\nTrust promise: ${guarantee}`;
     const response = await fetch('/api/ai', {
       method: 'POST',
@@ -290,8 +289,8 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       setAiStatus(data.message || 'AI customization is unavailable.');
       return;
     }
-    setAiOutput({ title: `AI-customized ${title}`, text: data.output || '', remaining: data.remaining });
-    setAiStatus(`Customized. ${data.remaining} AI credits left this month.`);
+    if (data.output) setCustomizedCopy((copy) => ({ ...copy, [title]: data.output }));
+    setAiStatus(`Customized ${title.toLowerCase()}. ${data.remaining} AI credits left this month.`);
   }
 
   return (
@@ -337,15 +336,14 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
           <div><strong>{stats.winRate}%</strong><span>tracked win rate</span></div>
         </div>
         {aiEnabled ? <div className="ai-inline-panel"><span className="eyebrow">AI customization layer</span><p>Use AI only when a generated quote, email, call script, or sequence needs an extra custom pass for the customer, job, and brand voice.</p>{aiStatus ? <p className="fine-print">{aiStatus}</p> : null}</div> : null}
-        <Output title="SMS follow-up" text={result.sms} aiEnabled={aiEnabled} onEnhance={() => enhanceCopy('SMS follow-up', result.sms, 'rewrite')} />
-        <Output title="Email follow-up" text={result.email} aiEnabled={aiEnabled} onEnhance={() => enhanceCopy('Email follow-up', result.email, 'email')} />
-        <Output title="Call script" text={result.call} aiEnabled={aiEnabled} onEnhance={() => enhanceCopy('Call script', result.call, 'rewrite')} />
-        <Output title="Objection response" text={result.objectionReply} aiEnabled={aiEnabled} onEnhance={() => enhanceCopy('Objection response', result.objectionReply, 'objection')} />
-        <Output title="Advanced copy direction" text={result.aiAssist} aiEnabled={aiEnabled} onEnhance={() => enhanceCopy('Advanced copy direction', result.aiAssist, 'rewrite')} />
-        {aiOutput ? <article className="copy-card ai-result-card"><h3>{aiOutput.title}</h3><pre>{aiOutput.text}</pre>{typeof aiOutput.remaining === 'number' ? <p className="fine-print">{aiOutput.remaining} AI credits remaining this month.</p> : null}</article> : null}
+        <Output title="SMS follow-up" text={customizedCopy['SMS follow-up'] || result.sms} customized={Boolean(customizedCopy['SMS follow-up'])} aiEnabled={aiEnabled} onEnhance={() => enhanceCopy('SMS follow-up', customizedCopy['SMS follow-up'] || result.sms, 'rewrite')} />
+        <Output title="Email follow-up" text={customizedCopy['Email follow-up'] || result.email} customized={Boolean(customizedCopy['Email follow-up'])} aiEnabled={aiEnabled} onEnhance={() => enhanceCopy('Email follow-up', customizedCopy['Email follow-up'] || result.email, 'email')} />
+        <Output title="Call script" text={customizedCopy['Call script'] || result.call} customized={Boolean(customizedCopy['Call script'])} aiEnabled={aiEnabled} onEnhance={() => enhanceCopy('Call script', customizedCopy['Call script'] || result.call, 'rewrite')} />
+        <Output title="Objection response" text={customizedCopy['Objection response'] || result.objectionReply} customized={Boolean(customizedCopy['Objection response'])} aiEnabled={aiEnabled} onEnhance={() => enhanceCopy('Objection response', customizedCopy['Objection response'] || result.objectionReply, 'objection')} />
+        <Output title="Advanced copy direction" text={customizedCopy['Advanced copy direction'] || result.aiAssist} customized={Boolean(customizedCopy['Advanced copy direction'])} aiEnabled={aiEnabled} onEnhance={() => enhanceCopy('Advanced copy direction', customizedCopy['Advanced copy direction'] || result.aiAssist, 'rewrite')} />
         <article className="copy-card">
-          <div className="card-title-row"><h3>Follow-up sequence</h3>{aiEnabled ? <button className="button mini" type="button" onClick={() => enhanceCopy('Follow-up sequence', result.sequence.join('\n'), 'sequence')}>Customize with AI</button> : null}</div>
-          <ol className="sequence-list">{result.sequence.map((step) => <li key={step}>{step}</li>)}</ol>
+          <div className="card-title-row"><h3>Follow-up sequence {customizedCopy['Follow-up sequence'] ? <span className="customized-badge">AI customized</span> : null}</h3>{aiEnabled ? <button className="button mini" type="button" onClick={() => enhanceCopy('Follow-up sequence', customizedCopy['Follow-up sequence'] || result.sequence.join('\n'), 'sequence')}>Customize with AI</button> : null}</div>
+          {customizedCopy['Follow-up sequence'] ? <pre>{customizedCopy['Follow-up sequence']}</pre> : <ol className="sequence-list">{result.sequence.map((step) => <li key={step}>{step}</li>)}</ol>}
         </article>
         <article className="copy-card">
           <h3>Saved quote history</h3>
@@ -369,10 +367,10 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
   );
 }
 
-function Output({ title, text, aiEnabled, onEnhance }: { title: string; text: string; aiEnabled?: boolean; onEnhance?: () => void }) {
+function Output({ title, text, customized, aiEnabled, onEnhance }: { title: string; text: string; customized?: boolean; aiEnabled?: boolean; onEnhance?: () => void }) {
   return (
     <article className="copy-card">
-      <div className="card-title-row"><h3>{title}</h3>{aiEnabled ? <button className="button mini" type="button" onClick={onEnhance}>Customize with AI</button> : null}</div>
+      <div className="card-title-row"><h3>{title} {customized ? <span className="customized-badge">AI customized</span> : null}</h3>{aiEnabled ? <button className="button mini" type="button" onClick={onEnhance}>{customized ? 'Customize again' : 'Customize with AI'}</button> : null}</div>
       <pre>{text}</pre>
     </article>
   );
