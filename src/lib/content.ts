@@ -55,7 +55,7 @@ export const subscriptionPlans = [
 
 export const plans = [...oneTimePlans, ...subscriptionPlans];
 
-export const industries = ['HVAC', 'plumbing', 'painting', 'landscaping', 'cleaning', 'roofing', 'handyman', 'pest control'];
+export const industries = ['HVAC', 'plumbing', 'electrical', 'painting', 'landscaping', 'cleaning', 'roofing', 'garage door', 'tree service', 'pool service', 'pressure washing', 'junk removal', 'flooring', 'remodeling', 'handyman', 'pest control'];
 
 export const customerBenefits = [
   'Respond while the customer is still ready to book.',
