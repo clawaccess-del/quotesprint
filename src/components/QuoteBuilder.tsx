@@ -383,6 +383,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
   const [aiStatus, setAiStatus] = useState('');
   const [generatingSection, setGeneratingSection] = useState<string | null>(null);
   const [accountLoaded, setAccountLoaded] = useState(false);
+  const [activeTab, setActiveTab] = useState<'tool' | 'leads' | 'history'>('tool');
 
   useEffect(() => {
     const quoteRaw = window.localStorage.getItem('quotesprint-quotes');
@@ -560,7 +561,14 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
   }
 
   return (
-    <section className="builder-grid">
+    <>
+      <div className="portal-tabs" role="tablist" aria-label="Customer portal sections">
+        <button type="button" className={activeTab === 'tool' ? 'active' : ''} onClick={() => setActiveTab('tool')}>Quote tool</button>
+        <button type="button" className={activeTab === 'leads' ? 'active' : ''} onClick={() => setActiveTab('leads')}>Saved leads</button>
+        <button type="button" className={activeTab === 'history' ? 'active' : ''} onClick={() => setActiveTab('history')}>Saved history</button>
+      </div>
+
+      {activeTab === 'tool' ? <section className="builder-grid">
       <form className="builder-panel">
         <div className="form-section-title">Company profile</div>
         <label>Business name<input value={business} onChange={(e) => setBusiness(e.target.value)} /></label>
@@ -571,13 +579,6 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
 
         <div className="form-section-title">Quote details</div>
         <label>Lead / customer name<input value={customer} onChange={(e) => setCustomer(e.target.value)} /></label>
-        <div className="two-col">
-          <label>Lead phone<input value={leadPhone} onChange={(e) => setLeadPhone(e.target.value)} placeholder="(555) 123-4567" /></label>
-          <label>Lead email<input type="email" value={leadEmail} onChange={(e) => setLeadEmail(e.target.value)} placeholder="customer@email.com" /></label>
-        </div>
-        <label>Lead address<input value={leadAddress} onChange={(e) => setLeadAddress(e.target.value)} placeholder="Street, city, ZIP" /></label>
-        <label>Lead notes<textarea value={leadNotes} onChange={(e) => setLeadNotes(e.target.value)} rows={2} placeholder="Gate code, preferred time, issue summary, source, etc." /></label>
-        <button type="button" className="button secondary full" onClick={saveLead}>Save lead contact</button>
         <label>Job type<select value={jobType} onChange={(e) => setJobType(e.target.value)}>{jobTypes.map((type) => <option key={type}>{type}</option>)}</select></label>
         <div className="two-col">
           <label>Labor hours<input type="number" min="1" value={laborHours} onChange={(e) => setLaborHours(Number(e.target.value))} /></label>
@@ -632,6 +633,21 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
           <div className="card-title-row"><h3>Follow-up sequence {customizedCopy['Follow-up sequence'] ? <span className="customized-badge">AI customized</span> : null}</h3>{aiEnabled ? <button className="button mini" type="button" disabled={Boolean(generatingSection)} onClick={() => enhanceCopy('Follow-up sequence', customizedCopy['Follow-up sequence'] || result.sequence.join('\n'), 'sequence')}>{generatingSection === 'Follow-up sequence' ? <><span className="spinner" /> Generating</> : customizedCopy['Follow-up sequence'] ? 'Customize again' : 'Customize with AI'}</button> : null}</div>
           {customizedCopy['Follow-up sequence'] ? <pre>{customizedCopy['Follow-up sequence']}</pre> : <ol className="sequence-list">{result.sequence.map((step) => <li key={step}>{step}</li>)}</ol>}
         </article>
+      </div>
+    </section> : null}
+
+      {activeTab === 'leads' ? <section className="portal-panel-grid">
+        <article className="builder-panel lead-entry-panel">
+          <div className="form-section-title">Lead contact</div>
+          <label>Lead / customer name<input value={customer} onChange={(e) => setCustomer(e.target.value)} /></label>
+          <div className="two-col">
+            <label>Lead phone<input value={leadPhone} onChange={(e) => setLeadPhone(e.target.value)} placeholder="(555) 123-4567" /></label>
+            <label>Lead email<input type="email" value={leadEmail} onChange={(e) => setLeadEmail(e.target.value)} placeholder="customer@email.com" /></label>
+          </div>
+          <label>Lead address<input value={leadAddress} onChange={(e) => setLeadAddress(e.target.value)} placeholder="Street, city, ZIP" /></label>
+          <label>Lead notes<textarea value={leadNotes} onChange={(e) => setLeadNotes(e.target.value)} rows={3} placeholder="Gate code, preferred time, issue summary, source, etc." /></label>
+          <button type="button" className="button full" onClick={saveLead}>Save lead contact</button>
+        </article>
         <article className="copy-card">
           <h3>Saved leads</h3>
           {savedLeads.length ? (
@@ -644,6 +660,9 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
             </div>
           ) : <p>Save lead contact details so the customer record is available next time you log in.</p>}
         </article>
+      </section> : null}
+
+      {activeTab === 'history' ? <section className="portal-panel-grid single">
         <article className="copy-card">
           <h3>Saved quote history</h3>
           {savedQuotes.length ? (
@@ -661,8 +680,8 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
             </div>
           ) : <p>Save a quote to start tracking open estimates, won work, and lost opportunities.</p>}
         </article>
-      </div>
-    </section>
+      </section> : null}
+    </>
   );
 }
 
