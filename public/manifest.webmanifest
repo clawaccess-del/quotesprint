@@ -1,0 +1,19 @@
+{
+  "name": "QuoteSprint",
+  "short_name": "QuoteSprint",
+  "description": "Speed-to-lead quote, follow-up, and lead pipeline app for home-service businesses.",
+  "start_url": "/app?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#fffaf1",
+  "theme_color": "#124832",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/brand/quotesprint-circle-logo.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

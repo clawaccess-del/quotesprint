@@ -8,6 +8,13 @@ export const metadata: Metadata = {
   title: `${brand.name} | Speed-to-lead quote kit for home-service businesses`,
   description: brand.description,
   metadataBase: new URL('https://quotesprint.vercel.app'),
+  manifest: '/manifest.webmanifest',
+  applicationName: 'QuoteSprint',
+  appleWebApp: {
+    capable: true,
+    title: 'QuoteSprint',
+    statusBarStyle: 'black-translucent',
+  },
   icons: {
     icon: '/brand/quotesprint-circle-logo.png',
     apple: '/brand/quotesprint-circle-logo.png',

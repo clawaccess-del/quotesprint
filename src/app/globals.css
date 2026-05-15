@@ -240,9 +240,41 @@ textarea {
   margin: 1.2rem 0;
 }
 .access-banner span { color: rgba(255,255,255,.78); }
+.mobile-install-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 1px solid var(--line);
+  background: linear-gradient(135deg, rgba(255,255,255,.88), rgba(255,244,223,.92));
+  border-radius: 1.2rem;
+  padding: 1rem 1.1rem;
+  margin: -0.35rem 0 1.2rem;
+  box-shadow: 0 10px 30px rgba(18,72,50,.06);
+}
+.mobile-install-card div {
+  display: grid;
+  gap: .2rem;
+}
+.mobile-install-card strong {
+  color: var(--green-dark);
+}
+.mobile-install-card span {
+  color: var(--muted);
+  line-height: 1.45;
+}
+.mobile-install-card.installed {
+  background: rgba(215,255,113,.22);
+}
+.install-help {
+  flex-basis: 100%;
+  margin: 0;
+}
 @media (max-width: 900px) {
   .product-preview-grid { grid-template-columns: 1fr; }
-  .access-banner { align-items: flex-start; flex-direction: column; }
+  .access-banner,
+  .mobile-install-card { align-items: flex-start; flex-direction: column; }
+  .mobile-install-card .button { width: 100%; }
 }
 .ai-panel {
   margin-top: 1rem;

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { QuoteBuilder } from '@/components/QuoteBuilder';
+import { MobileInstallButton } from '@/components/MobileInstallButton';
 import { ACCESS_COOKIE, verifyAccessToken } from '@/lib/access';
 
 export default async function AppPage() {
@@ -38,6 +39,7 @@ export default async function AppPage() {
         <strong>Access active</strong>
         <span>{aiEnabled ? 'AI credits unlocked with a 100-credit monthly cap.' : access.plan === 'live' ? 'Monthly non-AI system unlocked. Upgrade anytime for AI credits.' : 'One-time product unlocked for this browser.'}</span>
       </div>
+      <MobileInstallButton />
       <QuoteBuilder accountEmail={access.customerEmail} aiEnabled={aiEnabled} />
     </section>
   );
