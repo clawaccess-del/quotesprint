@@ -379,6 +379,8 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
   const [leadEmail, setLeadEmail] = useState('');
   const [leadAddress, setLeadAddress] = useState('');
   const [leadNotes, setLeadNotes] = useState('');
+  const [editingLead, setEditingLead] = useState<SavedLead | null>(null);
+  const [editingQuote, setEditingQuote] = useState<SavedQuote | null>(null);
   const [customizedCopy, setCustomizedCopy] = useState<Record<string, string>>({});
   const [aiStatus, setAiStatus] = useState('');
   const [generatingSection, setGeneratingSection] = useState<string | null>(null);
@@ -532,6 +534,28 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     }).catch(() => null);
   }
 
+  function saveLeadEdit() {
+    if (!editingLead) return;
+    setSavedLeads((leads) => leads.map((lead) => lead.id === editingLead.id ? editingLead : lead));
+    fetch('/api/leads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lead: editingLead }),
+    }).catch(() => null);
+    setEditingLead(null);
+  }
+
+  function saveQuoteEdit() {
+    if (!editingQuote) return;
+    setSavedQuotes((quotes) => quotes.map((quote) => quote.id === editingQuote.id ? editingQuote : quote));
+    fetch('/api/quotes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ quote: editingQuote }),
+    }).catch(() => null);
+    setEditingQuote(null);
+  }
+
   async function enhanceCopy(title: string, text: string, action = 'rewrite') {
     if (generatingSection) return;
     setGeneratingSection(title);
@@ -654,7 +678,20 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
             <div className="quote-list">
               {savedLeads.map((lead) => (
                 <div className="lead-row" key={lead.id}>
-                  <div><strong>{lead.name}</strong><span>{[lead.phone, lead.email, lead.address].filter(Boolean).join(' · ') || 'No contact details yet'}</span>{lead.notes ? <small>{lead.notes}</small> : null}</div>
+                  {editingLead?.id === lead.id ? (
+                    <div className="edit-stack">
+                      <label>Name<input value={editingLead.name} onChange={(e) => setEditingLead({ ...editingLead, name: e.target.value })} /></label>
+                      <div className="two-col">
+                        <label>Phone<input value={editingLead.phone} onChange={(e) => setEditingLead({ ...editingLead, phone: e.target.value })} /></label>
+                        <label>Email<input type="email" value={editingLead.email} onChange={(e) => setEditingLead({ ...editingLead, email: e.target.value })} /></label>
+                      </div>
+                      <label>Address<input value={editingLead.address} onChange={(e) => setEditingLead({ ...editingLead, address: e.target.value })} /></label>
+                      <label>Notes<textarea rows={2} value={editingLead.notes} onChange={(e) => setEditingLead({ ...editingLead, notes: e.target.value })} /></label>
+                      <div className="row-actions"><button type="button" className="button mini" onClick={saveLeadEdit}>Save changes</button><button type="button" className="button mini secondary-button" onClick={() => setEditingLead(null)}>Cancel</button></div>
+                    </div>
+                  ) : (
+                    <><div><strong>{lead.name}</strong><span>{[lead.phone, lead.email, lead.address].filter(Boolean).join(' · ') || 'No contact details yet'}</span>{lead.notes ? <small>{lead.notes}</small> : null}</div><button type="button" className="button mini secondary-button" onClick={() => setEditingLead(lead)}>Edit</button></>
+                  )}
                 </div>
               ))}
             </div>
@@ -669,12 +706,22 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
             <div className="quote-list">
               {savedQuotes.map((quote) => (
                 <div className="quote-row" key={quote.id}>
-                  <div><strong>{quote.customer}</strong><span>{quote.jobType} · {money(quote.total)}</span></div>
-                  <select value={quote.status} onChange={(e) => updateStatus(quote.id, e.target.value as QuoteStatus)} aria-label={`Status for ${quote.customer}`}>
-                    <option value="open">Open</option>
-                    <option value="won">Won</option>
-                    <option value="lost">Lost</option>
-                  </select>
+                  {editingQuote?.id === quote.id ? (
+                    <div className="edit-stack quote-edit-stack">
+                      <div className="two-col">
+                        <label>Customer<input value={editingQuote.customer} onChange={(e) => setEditingQuote({ ...editingQuote, customer: e.target.value })} /></label>
+                        <label>Job type<select value={editingQuote.jobType} onChange={(e) => setEditingQuote({ ...editingQuote, jobType: e.target.value })}>{jobTypes.map((type) => <option key={type}>{type}</option>)}</select></label>
+                      </div>
+                      <div className="two-col">
+                        <label>Total<input type="number" min="0" value={Math.round(editingQuote.total)} onChange={(e) => setEditingQuote({ ...editingQuote, total: Number(e.target.value) })} /></label>
+                        <label>Deposit due<input type="number" min="0" value={Math.round(editingQuote.depositDue)} onChange={(e) => setEditingQuote({ ...editingQuote, depositDue: Number(e.target.value) })} /></label>
+                      </div>
+                      <label>Status<select value={editingQuote.status} onChange={(e) => setEditingQuote({ ...editingQuote, status: e.target.value as QuoteStatus })}><option value="open">Open</option><option value="won">Won</option><option value="lost">Lost</option></select></label>
+                      <div className="row-actions"><button type="button" className="button mini" onClick={saveQuoteEdit}>Save changes</button><button type="button" className="button mini secondary-button" onClick={() => setEditingQuote(null)}>Cancel</button></div>
+                    </div>
+                  ) : (
+                    <><div><strong>{quote.customer}</strong><span>{quote.jobType} · {money(quote.total)}</span></div><div className="quote-row-actions"><select value={quote.status} onChange={(e) => updateStatus(quote.id, e.target.value as QuoteStatus)} aria-label={`Status for ${quote.customer}`}><option value="open">Open</option><option value="won">Won</option><option value="lost">Lost</option></select><button type="button" className="button mini secondary-button" onClick={() => setEditingQuote(quote)}>Edit</button></div></>
+                  )}
                 </div>
               ))}
             </div>

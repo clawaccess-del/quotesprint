@@ -441,3 +441,34 @@ textarea {
   .portal-tabs button { flex: 1; }
   .portal-panel-grid { grid-template-columns: 1fr; }
 }
+.edit-stack {
+  display: grid;
+  gap: .75rem;
+  width: 100%;
+}
+.quote-edit-stack {
+  grid-column: 1 / -1;
+}
+.row-actions,
+.quote-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  align-items: center;
+  justify-content: flex-end;
+}
+.secondary-button {
+  background: white;
+  color: var(--green-dark);
+  border: 1px solid var(--line);
+}
+.lead-row {
+  grid-template-columns: 1fr auto;
+  align-items: start;
+}
+@media (max-width: 700px) {
+  .lead-row,
+  .quote-row { grid-template-columns: 1fr; }
+  .row-actions,
+  .quote-row-actions { justify-content: flex-start; }
+}
