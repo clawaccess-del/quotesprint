@@ -13,6 +13,16 @@ type SavedQuote = {
   createdAt: string;
 };
 
+type SavedLead = {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  address: string;
+  notes: string;
+  createdAt: string;
+};
+
 type IndustryPlaybook = {
   label: string;
   proofPoint: string;
@@ -364,6 +374,11 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
   const [deposit, setDeposit] = useState(30);
   const [tone, setTone] = useState('direct');
   const [savedQuotes, setSavedQuotes] = useState<SavedQuote[]>([]);
+  const [savedLeads, setSavedLeads] = useState<SavedLead[]>([]);
+  const [leadPhone, setLeadPhone] = useState('');
+  const [leadEmail, setLeadEmail] = useState('');
+  const [leadAddress, setLeadAddress] = useState('');
+  const [leadNotes, setLeadNotes] = useState('');
   const [customizedCopy, setCustomizedCopy] = useState<Record<string, string>>({});
   const [aiStatus, setAiStatus] = useState('');
   const [generatingSection, setGeneratingSection] = useState<string | null>(null);
@@ -394,6 +409,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
           setGuarantee(data.profile.guarantee || 'we explain any change before work begins');
         }
         if (Array.isArray(data.quotes)) setSavedQuotes(data.quotes);
+        if (Array.isArray(data.leads)) setSavedLeads(data.leads);
       })
       .catch(() => null)
       .finally(() => setAccountLoaded(true));
@@ -470,6 +486,24 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     return { totalQuoted, won: won.length, open: open.length, winRate };
   }, [savedQuotes]);
 
+  function saveLead() {
+    const lead: SavedLead = {
+      id: crypto.randomUUID(),
+      name: customer,
+      phone: leadPhone,
+      email: leadEmail,
+      address: leadAddress,
+      notes: leadNotes,
+      createdAt: new Date().toISOString(),
+    };
+    setSavedLeads((leads) => [lead, ...leads].slice(0, 100));
+    fetch('/api/leads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lead }),
+    }).catch(() => null);
+  }
+
   function saveQuote() {
     const quote: SavedQuote = {
       id: crypto.randomUUID(),
@@ -536,7 +570,14 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
         <label>Trust promise<textarea value={guarantee} onChange={(e) => setGuarantee(e.target.value)} rows={2} /></label>
 
         <div className="form-section-title">Quote details</div>
-        <label>Customer name<input value={customer} onChange={(e) => setCustomer(e.target.value)} /></label>
+        <label>Lead / customer name<input value={customer} onChange={(e) => setCustomer(e.target.value)} /></label>
+        <div className="two-col">
+          <label>Lead phone<input value={leadPhone} onChange={(e) => setLeadPhone(e.target.value)} placeholder="(555) 123-4567" /></label>
+          <label>Lead email<input type="email" value={leadEmail} onChange={(e) => setLeadEmail(e.target.value)} placeholder="customer@email.com" /></label>
+        </div>
+        <label>Lead address<input value={leadAddress} onChange={(e) => setLeadAddress(e.target.value)} placeholder="Street, city, ZIP" /></label>
+        <label>Lead notes<textarea value={leadNotes} onChange={(e) => setLeadNotes(e.target.value)} rows={2} placeholder="Gate code, preferred time, issue summary, source, etc." /></label>
+        <button type="button" className="button secondary full" onClick={saveLead}>Save lead contact</button>
         <label>Job type<select value={jobType} onChange={(e) => setJobType(e.target.value)}>{jobTypes.map((type) => <option key={type}>{type}</option>)}</select></label>
         <div className="two-col">
           <label>Labor hours<input type="number" min="1" value={laborHours} onChange={(e) => setLaborHours(Number(e.target.value))} /></label>
@@ -590,6 +631,18 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
         <article className="copy-card">
           <div className="card-title-row"><h3>Follow-up sequence {customizedCopy['Follow-up sequence'] ? <span className="customized-badge">AI customized</span> : null}</h3>{aiEnabled ? <button className="button mini" type="button" disabled={Boolean(generatingSection)} onClick={() => enhanceCopy('Follow-up sequence', customizedCopy['Follow-up sequence'] || result.sequence.join('\n'), 'sequence')}>{generatingSection === 'Follow-up sequence' ? <><span className="spinner" /> Generating</> : customizedCopy['Follow-up sequence'] ? 'Customize again' : 'Customize with AI'}</button> : null}</div>
           {customizedCopy['Follow-up sequence'] ? <pre>{customizedCopy['Follow-up sequence']}</pre> : <ol className="sequence-list">{result.sequence.map((step) => <li key={step}>{step}</li>)}</ol>}
+        </article>
+        <article className="copy-card">
+          <h3>Saved leads</h3>
+          {savedLeads.length ? (
+            <div className="quote-list">
+              {savedLeads.map((lead) => (
+                <div className="lead-row" key={lead.id}>
+                  <div><strong>{lead.name}</strong><span>{[lead.phone, lead.email, lead.address].filter(Boolean).join(' · ') || 'No contact details yet'}</span>{lead.notes ? <small>{lead.notes}</small> : null}</div>
+                </div>
+              ))}
+            </div>
+          ) : <p>Save lead contact details so the customer record is available next time you log in.</p>}
         </article>
         <article className="copy-card">
           <h3>Saved quote history</h3>

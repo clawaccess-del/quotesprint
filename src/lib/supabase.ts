@@ -9,6 +9,16 @@ export type CompanyProfile = {
   guarantee: string;
 };
 
+export type StoredLead = {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  address: string;
+  notes: string;
+  createdAt: string;
+};
+
 export type StoredQuote = {
   id: string;
   customer: string;
@@ -21,6 +31,7 @@ export type StoredQuote = {
 
 type ProfileRow = { id: string; email: string; company_name?: string | null };
 type QuoteRow = { id: string; customer_name: string; job_description?: string | null; total_amount?: number; status?: StoredQuote['status']; created_at?: string };
+type LeadRow = { id: string; lead?: StoredLead; created_at?: string };
 
 function headers(extra?: Record<string, string>) {
   if (!SUPABASE_SERVICE_ROLE_KEY) throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY');
@@ -141,5 +152,21 @@ export async function updateQuoteStatus(email: string, id: string, status: Store
     method: 'PATCH',
     body: JSON.stringify({ status, job_description: jobDescription }),
     headers: { Prefer: 'return=minimal' },
+  });
+}
+
+export async function getLeads(email: string) {
+  const profile = await getOrCreateProfile(email);
+  const response = await supabaseFetch(`leads?user_id=eq.${encodeURIComponent(profile.id)}&select=id,lead,created_at&order=created_at.desc&limit=100`);
+  const rows = await response.json();
+  return rows.map((row: LeadRow) => row.lead ? { ...row.lead, id: row.id } : null).filter(Boolean);
+}
+
+export async function saveLead(email: string, lead: StoredLead) {
+  const profile = await getOrCreateProfile(email);
+  await supabaseFetch('leads?on_conflict=id', {
+    method: 'POST',
+    body: JSON.stringify([{ id: lead.id, user_id: profile.id, lead, created_at: lead.createdAt }]),
+    headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
   });
 }

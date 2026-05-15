@@ -383,3 +383,18 @@ textarea {
 @media (max-width: 900px) {
   .industry-insight-grid { grid-template-columns: 1fr; }
 }
+.lead-row {
+  display: grid;
+  gap: .25rem;
+  border: 1px solid var(--line);
+  background: rgba(255,250,241,.7);
+  border-radius: 1rem;
+  padding: .8rem;
+}
+.lead-row span,
+.lead-row small {
+  display: block;
+  color: var(--muted);
+  line-height: 1.45;
+}
+.lead-row small { margin-top: .25rem; }
