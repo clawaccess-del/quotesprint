@@ -27,10 +27,4 @@ QuoteSprint: a speed-to-lead quote and follow-up kit for home-service businesses
 
 ## Stripe notes
 
-The code is ready for Stripe Checkout. Add these Vercel env vars when payment is ready:
-
-- STRIPE_SECRET_KEY
-- NEXT_PUBLIC_SITE_URL
-- STRIPE_PRICE_ID_STARTER
-- STRIPE_PRICE_ID_PRO
-- STRIPE_PRICE_ID_AGENCY
+Stripe Checkout is connected in Vercel production/preview/development using live Stripe products and one-time prices. Stored price IDs live in OpenClaw user secrets under projects.quotesprint.stripe.priceIds.
