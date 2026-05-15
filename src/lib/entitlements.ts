@@ -23,11 +23,32 @@ function betterPlan(current?: Entitlement | null, next?: Entitlement | null) {
   return (planRank[next.plan] || 0) > (planRank[current.plan] || 0) ? next : current;
 }
 
+function findManualEntitlementByEmail(email: string): Entitlement | null {
+  const manualAccess = process.env.MANUAL_ACCESS_EMAILS || '';
+  const match = manualAccess
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .map((entry) => {
+      const [rawEmail, rawPlan] = entry.split(':');
+      return { email: rawEmail?.trim().toLowerCase(), plan: rawPlan?.trim() || 'live_ai' };
+    })
+    .find((entry) => entry.email === email && allowedPlans.has(entry.plan));
+
+  if (!match) return null;
+  return {
+    plan: match.plan,
+    mode: 'subscription',
+    sessionId: `manual:${email}`,
+    customerEmail: email,
+  };
+}
+
 export async function findStripeEntitlementByEmail(stripe: Stripe, email: string): Promise<Entitlement | null> {
   const normalizedEmail = email.trim().toLowerCase();
   if (!normalizedEmail) return null;
 
-  let best: Entitlement | null = null;
+  let best: Entitlement | null = findManualEntitlementByEmail(normalizedEmail);
   const customers = await stripe.customers.search({ query: `email:'${normalizedEmail.replace(/'/g, "\\'")}'`, limit: 10 });
 
   for (const customer of customers.data) {
