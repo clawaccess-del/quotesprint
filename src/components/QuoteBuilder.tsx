@@ -154,6 +154,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
   const [savedQuotes, setSavedQuotes] = useState<SavedQuote[]>([]);
   const [customizedCopy, setCustomizedCopy] = useState<Record<string, string>>({});
   const [aiStatus, setAiStatus] = useState('');
+  const [generatingSection, setGeneratingSection] = useState<string | null>(null);
 
   useEffect(() => {
     const quoteRaw = window.localStorage.getItem('quotesprint-quotes');
@@ -271,6 +272,8 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
   }
 
   async function enhanceCopy(title: string, text: string, action = 'rewrite') {
+    if (generatingSection) return;
+    setGeneratingSection(title);
     setAiStatus(`Customizing ${title.toLowerCase()}...`);
     const company = `Business: ${business}\nService area: ${serviceArea}\nBrand voice: ${brandVoice}\nWhy customers choose us: ${differentiator}\nTrust promise: ${guarantee}`;
     const response = await fetch('/api/ai', {
@@ -287,10 +290,12 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     const data = await response.json();
     if (!response.ok) {
       setAiStatus(data.message || 'AI customization is unavailable.');
+      setGeneratingSection(null);
       return;
     }
     if (data.output) setCustomizedCopy((copy) => ({ ...copy, [title]: data.output }));
     setAiStatus(`Customized ${title.toLowerCase()}. ${data.remaining} AI credits left this month.`);
+    setGeneratingSection(null);
   }
 
   return (
@@ -336,13 +341,13 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
           <div><strong>{stats.winRate}%</strong><span>tracked win rate</span></div>
         </div>
         {aiEnabled ? <div className="ai-inline-panel"><span className="eyebrow">AI customization layer</span><p>Use AI only when a generated quote, email, call script, or sequence needs an extra custom pass for the customer, job, and brand voice.</p>{aiStatus ? <p className="fine-print">{aiStatus}</p> : null}</div> : null}
-        <Output title="SMS follow-up" text={customizedCopy['SMS follow-up'] || result.sms} customized={Boolean(customizedCopy['SMS follow-up'])} aiEnabled={aiEnabled} onEnhance={() => enhanceCopy('SMS follow-up', customizedCopy['SMS follow-up'] || result.sms, 'rewrite')} />
-        <Output title="Email follow-up" text={customizedCopy['Email follow-up'] || result.email} customized={Boolean(customizedCopy['Email follow-up'])} aiEnabled={aiEnabled} onEnhance={() => enhanceCopy('Email follow-up', customizedCopy['Email follow-up'] || result.email, 'email')} />
-        <Output title="Call script" text={customizedCopy['Call script'] || result.call} customized={Boolean(customizedCopy['Call script'])} aiEnabled={aiEnabled} onEnhance={() => enhanceCopy('Call script', customizedCopy['Call script'] || result.call, 'rewrite')} />
-        <Output title="Objection response" text={customizedCopy['Objection response'] || result.objectionReply} customized={Boolean(customizedCopy['Objection response'])} aiEnabled={aiEnabled} onEnhance={() => enhanceCopy('Objection response', customizedCopy['Objection response'] || result.objectionReply, 'objection')} />
-        <Output title="Advanced copy direction" text={customizedCopy['Advanced copy direction'] || result.aiAssist} customized={Boolean(customizedCopy['Advanced copy direction'])} aiEnabled={aiEnabled} onEnhance={() => enhanceCopy('Advanced copy direction', customizedCopy['Advanced copy direction'] || result.aiAssist, 'rewrite')} />
+        <Output title="SMS follow-up" text={customizedCopy['SMS follow-up'] || result.sms} customized={Boolean(customizedCopy['SMS follow-up'])} aiEnabled={aiEnabled} generating={generatingSection === 'SMS follow-up'} disabled={Boolean(generatingSection)} onEnhance={() => enhanceCopy('SMS follow-up', customizedCopy['SMS follow-up'] || result.sms, 'rewrite')} />
+        <Output title="Email follow-up" text={customizedCopy['Email follow-up'] || result.email} customized={Boolean(customizedCopy['Email follow-up'])} aiEnabled={aiEnabled} generating={generatingSection === 'Email follow-up'} disabled={Boolean(generatingSection)} onEnhance={() => enhanceCopy('Email follow-up', customizedCopy['Email follow-up'] || result.email, 'email')} />
+        <Output title="Call script" text={customizedCopy['Call script'] || result.call} customized={Boolean(customizedCopy['Call script'])} aiEnabled={aiEnabled} generating={generatingSection === 'Call script'} disabled={Boolean(generatingSection)} onEnhance={() => enhanceCopy('Call script', customizedCopy['Call script'] || result.call, 'rewrite')} />
+        <Output title="Objection response" text={customizedCopy['Objection response'] || result.objectionReply} customized={Boolean(customizedCopy['Objection response'])} aiEnabled={aiEnabled} generating={generatingSection === 'Objection response'} disabled={Boolean(generatingSection)} onEnhance={() => enhanceCopy('Objection response', customizedCopy['Objection response'] || result.objectionReply, 'objection')} />
+        <Output title="Advanced copy direction" text={customizedCopy['Advanced copy direction'] || result.aiAssist} customized={Boolean(customizedCopy['Advanced copy direction'])} aiEnabled={aiEnabled} generating={generatingSection === 'Advanced copy direction'} disabled={Boolean(generatingSection)} onEnhance={() => enhanceCopy('Advanced copy direction', customizedCopy['Advanced copy direction'] || result.aiAssist, 'rewrite')} />
         <article className="copy-card">
-          <div className="card-title-row"><h3>Follow-up sequence {customizedCopy['Follow-up sequence'] ? <span className="customized-badge">AI customized</span> : null}</h3>{aiEnabled ? <button className="button mini" type="button" onClick={() => enhanceCopy('Follow-up sequence', customizedCopy['Follow-up sequence'] || result.sequence.join('\n'), 'sequence')}>Customize with AI</button> : null}</div>
+          <div className="card-title-row"><h3>Follow-up sequence {customizedCopy['Follow-up sequence'] ? <span className="customized-badge">AI customized</span> : null}</h3>{aiEnabled ? <button className="button mini" type="button" disabled={Boolean(generatingSection)} onClick={() => enhanceCopy('Follow-up sequence', customizedCopy['Follow-up sequence'] || result.sequence.join('\n'), 'sequence')}>{generatingSection === 'Follow-up sequence' ? <><span className="spinner" /> Generating</> : customizedCopy['Follow-up sequence'] ? 'Customize again' : 'Customize with AI'}</button> : null}</div>
           {customizedCopy['Follow-up sequence'] ? <pre>{customizedCopy['Follow-up sequence']}</pre> : <ol className="sequence-list">{result.sequence.map((step) => <li key={step}>{step}</li>)}</ol>}
         </article>
         <article className="copy-card">
@@ -367,10 +372,10 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
   );
 }
 
-function Output({ title, text, customized, aiEnabled, onEnhance }: { title: string; text: string; customized?: boolean; aiEnabled?: boolean; onEnhance?: () => void }) {
+function Output({ title, text, customized, aiEnabled, generating, disabled, onEnhance }: { title: string; text: string; customized?: boolean; aiEnabled?: boolean; generating?: boolean; disabled?: boolean; onEnhance?: () => void }) {
   return (
     <article className="copy-card">
-      <div className="card-title-row"><h3>{title} {customized ? <span className="customized-badge">AI customized</span> : null}</h3>{aiEnabled ? <button className="button mini" type="button" onClick={onEnhance}>{customized ? 'Customize again' : 'Customize with AI'}</button> : null}</div>
+      <div className="card-title-row"><h3>{title} {customized ? <span className="customized-badge">AI customized</span> : null}</h3>{aiEnabled ? <button className="button mini" type="button" disabled={disabled} onClick={onEnhance}>{generating ? <><span className="spinner" /> Generating</> : customized ? 'Customize again' : 'Customize with AI'}</button> : null}</div>
       <pre>{text}</pre>
     </article>
   );

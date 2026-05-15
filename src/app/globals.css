@@ -341,3 +341,19 @@ textarea {
   letter-spacing: .04em;
   text-transform: uppercase;
 }
+.button:disabled {
+  cursor: not-allowed;
+  opacity: .72;
+}
+.spinner {
+  width: .9rem;
+  height: .9rem;
+  border: 2px solid rgba(255,255,255,.45);
+  border-top-color: white;
+  border-radius: 999px;
+  display: inline-block;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
