@@ -385,7 +385,10 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
   const [aiStatus, setAiStatus] = useState('');
   const [generatingSection, setGeneratingSection] = useState<string | null>(null);
   const [accountLoaded, setAccountLoaded] = useState(false);
-  const [activeTab, setActiveTab] = useState<'tool' | 'leads' | 'history'>('tool');
+  const [activeTab, setActiveTab] = useState<'tool' | 'social' | 'leads' | 'history'>('tool');
+  const [socialPlatform, setSocialPlatform] = useState('Facebook');
+  const [socialGoal, setSocialGoal] = useState('Book more estimates');
+  const [socialTopic, setSocialTopic] = useState('seasonal service reminder');
 
   useEffect(() => {
     const quoteRaw = window.localStorage.getItem('quotesprint-quotes');
@@ -489,6 +492,26 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     return { totalQuoted, won: won.length, open: open.length, winRate };
   }, [savedQuotes]);
 
+  const socialPosts = useMemo(() => {
+    const detail = industryDetails[jobType];
+    const playbook = playbooks[jobType];
+    const platformStyle = socialPlatform === 'Instagram'
+      ? 'short, visual, friendly, with a few hashtags'
+      : socialPlatform === 'Google Business Profile'
+        ? 'local, direct, service-focused, with a clear call to book'
+        : socialPlatform === 'LinkedIn'
+          ? 'professional, trust-building, and operationally clear'
+          : socialPlatform === 'Nextdoor'
+            ? 'neighborly, practical, and community-minded'
+            : 'clear, conversational, and easy to respond to';
+    const cta = socialPlatform === 'Instagram' ? 'DM us for an estimate.' : socialPlatform === 'Google Business Profile' ? 'Call or message us to schedule an estimate.' : 'Reply or message us to get on the schedule.';
+    return [
+      `${socialTopic}\n\nIf you’re dealing with ${detail.customerConcerns.slice(0, 2).join(' or ')}, ${business} can help with ${jobType.toLowerCase()} in ${serviceArea}. We focus on ${differentiator}, and we keep the next step simple: clear scope, clear timing, and no surprise changes.\n\n${cta}`,
+      `Before you book ${jobType.toLowerCase()}, make sure your estimate accounts for ${detail.quoteInputs.slice(0, 4).join(', ')}. Those details can change the scope, timing, and final recommendation.\n\nAt ${business}, our approach is ${playbook.proofPoint}. ${cta}`,
+      `${playbook.urgencyReason.charAt(0).toUpperCase() + playbook.urgencyReason.slice(1)}. If ${socialTopic.toLowerCase()} is already on your list, it’s worth getting a clear estimate before the schedule fills.\n\n${business} serves ${serviceArea} with ${brandVoice} communication and ${differentiator}. ${cta}`,
+    ].map((post) => `${post}\n\nStyle: ${platformStyle}`);
+  }, [business, serviceArea, brandVoice, differentiator, jobType, socialPlatform, socialTopic]);
+
   function saveLead() {
     const lead: SavedLead = {
       id: crypto.randomUUID(),
@@ -588,6 +611,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     <>
       <div className="portal-tabs" role="tablist" aria-label="Customer portal sections">
         <button type="button" className={activeTab === 'tool' ? 'active' : ''} onClick={() => setActiveTab('tool')}>Quote tool</button>
+        <button type="button" className={activeTab === 'social' ? 'active' : ''} onClick={() => setActiveTab('social')}>Social posts</button>
         <button type="button" className={activeTab === 'leads' ? 'active' : ''} onClick={() => setActiveTab('leads')}>Saved leads</button>
         <button type="button" className={activeTab === 'history' ? 'active' : ''} onClick={() => setActiveTab('history')}>Saved history</button>
       </div>
@@ -659,6 +683,23 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
         </article>
       </div>
     </section> : null}
+
+      {activeTab === 'social' ? <section className="portal-panel-grid">
+        <article className="builder-panel lead-entry-panel">
+          <div className="form-section-title">Social post generator</div>
+          <label>Platform<select value={socialPlatform} onChange={(e) => setSocialPlatform(e.target.value)}><option>Facebook</option><option>Instagram</option><option>Google Business Profile</option><option>LinkedIn</option><option>Nextdoor</option></select></label>
+          <label>Industry<select value={jobType} onChange={(e) => setJobType(e.target.value)}>{jobTypes.map((type) => <option key={type}>{type}</option>)}</select></label>
+          <label>Post goal<select value={socialGoal} onChange={(e) => setSocialGoal(e.target.value)}><option>Book more estimates</option><option>Promote seasonal maintenance</option><option>Educate customers</option><option>Show trust and proof</option><option>Win urgent calls</option></select></label>
+          <label>Post topic<input value={socialTopic} onChange={(e) => setSocialTopic(e.target.value)} placeholder="storm prep, spring cleaning, no-heat calls, etc." /></label>
+          <p className="fine-print">Posts use the saved company profile plus the selected industry playbook.</p>
+        </article>
+        <article className="copy-card">
+          <h3>{socialPlatform} post options</h3>
+          <div className="social-post-list">
+            {socialPosts.map((post, index) => <article className="social-post-card" key={post}><strong>Option {index + 1}</strong><pre>{post}</pre></article>)}
+          </div>
+        </article>
+      </section> : null}
 
       {activeTab === 'leads' ? <section className="portal-panel-grid">
         <article className="builder-panel lead-entry-panel">

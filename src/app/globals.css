@@ -472,3 +472,18 @@ textarea {
   .row-actions,
   .quote-row-actions { justify-content: flex-start; }
 }
+.social-post-list {
+  display: grid;
+  gap: .9rem;
+}
+.social-post-card {
+  border: 1px solid var(--line);
+  background: rgba(255,250,241,.78);
+  border-radius: 1rem;
+  padding: 1rem;
+}
+.social-post-card strong {
+  display: block;
+  color: var(--green-dark);
+  margin-bottom: .5rem;
+}
