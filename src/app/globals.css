@@ -269,3 +269,31 @@ textarea {
 @media (max-width: 760px) {
   .ai-grid { grid-template-columns: 1fr; }
 }
+.login-form form {
+  display: grid;
+  gap: .9rem;
+}
+.google-button {
+  background: white;
+  color: var(--green-dark);
+  border: 1px solid var(--line);
+  box-shadow: none;
+}
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  color: var(--muted);
+  font-weight: 800;
+  font-size: .82rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin: 1rem 0;
+}
+.login-divider::before,
+.login-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
