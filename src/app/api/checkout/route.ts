@@ -5,7 +5,10 @@ const priceEnv: Record<string, string | undefined> = {
   starter: process.env.STRIPE_PRICE_ID_STARTER,
   pro: process.env.STRIPE_PRICE_ID_PRO,
   agency: process.env.STRIPE_PRICE_ID_AGENCY,
+  live: process.env.STRIPE_PRICE_ID_LIVE_MONTHLY,
 };
+
+const subscriptionPlans = new Set(['live']);
 
 export async function POST(request: Request) {
   const { plan = 'pro' } = await request.json().catch(() => ({ plan: 'pro' }));
@@ -16,14 +19,15 @@ export async function POST(request: Request) {
   if (!secret || !price) {
     return NextResponse.json({
       ok: false,
-      message: 'Stripe is scaffolded but not connected yet. Add STRIPE_SECRET_KEY and the matching STRIPE_PRICE_ID_* value in Vercel.',
-    });
+      message: 'Checkout is temporarily unavailable. Please try again in a few minutes.',
+    }, { status: 503 });
   }
 
   const stripe = new Stripe(secret);
   const session = await stripe.checkout.sessions.create({
-    mode: 'payment',
+    mode: subscriptionPlans.has(plan) ? 'subscription' : 'payment',
     line_items: [{ price, quantity: 1 }],
+    allow_promotion_codes: true,
     success_url: `${siteUrl}/app?success=true`,
     cancel_url: `${siteUrl}/pricing`,
   });

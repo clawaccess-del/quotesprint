@@ -11,6 +11,7 @@ type Plan = {
 };
 
 export function PlanCard({ plan }: { plan: Plan }) {
+  const isSubscription = plan.cadence.includes('month');
   return (
     <article className={`plan-card ${plan.featured ? 'featured' : ''}`}>
       {plan.featured ? <span className="pill">Best fit</span> : null}
@@ -20,7 +21,7 @@ export function PlanCard({ plan }: { plan: Plan }) {
       <ul>
         {plan.features.map((feature) => <li key={feature}>{feature}</li>)}
       </ul>
-      <Link href={`/checkout?plan=${plan.id}`} className="button full">Buy {plan.name}</Link>
+      <Link href={`/checkout?plan=${plan.id}`} className="button full">{isSubscription ? `Start ${plan.name}` : `Buy ${plan.name}`}</Link>
     </article>
   );
 }

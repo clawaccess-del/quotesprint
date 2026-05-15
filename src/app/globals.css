@@ -114,3 +114,56 @@ ul { padding-left: 1.1rem; color: var(--muted); line-height: 1.8; }
   .two-col { grid-template-columns: 1fr; }
   .hero h1, .page-shell h1 { font-size: 3.1rem; }
 }
+
+.subscription-plans {
+  grid-template-columns: minmax(0, 520px);
+  margin-bottom: 1.5rem;
+}
+.pricing-heading { margin-top: 2.5rem; }
+.app-actions { margin-bottom: 1.5rem; }
+.mini-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .7rem;
+}
+.mini-stats div {
+  border: 1px solid var(--line);
+  background: white;
+  border-radius: 1rem;
+  padding: .9rem;
+}
+.mini-stats strong {
+  display: block;
+  font-size: 1.35rem;
+  letter-spacing: -.04em;
+  color: var(--green-dark);
+}
+.mini-stats span, .quote-row span {
+  display: block;
+  color: var(--muted);
+  font-size: .85rem;
+}
+.sequence-list {
+  display: grid;
+  gap: .7rem;
+  padding-left: 1.25rem;
+}
+.sequence-list li {
+  color: var(--muted);
+  line-height: 1.65;
+}
+.quote-list { display: grid; gap: .7rem; }
+.quote-row {
+  display: grid;
+  grid-template-columns: 1fr 130px;
+  gap: .7rem;
+  align-items: center;
+  border: 1px solid var(--line);
+  background: rgba(255,250,241,.7);
+  border-radius: 1rem;
+  padding: .8rem;
+}
+.quote-row select { padding: .65rem; border-radius: .75rem; }
+@media (max-width: 560px) {
+  .mini-stats, .quote-row { grid-template-columns: 1fr; }
+}

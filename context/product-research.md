@@ -1,30 +1,30 @@
-# QuoteSprint product research snapshot
+# QuoteSprint product context
 
-## Selected product
+## Product
 
-QuoteSprint: a speed-to-lead quote and follow-up kit for home-service businesses.
+QuoteSprint is a speed-to-lead quote, follow-up, and tracking system for home-service businesses.
 
-## Why this product
+## Positioning
 
-- Digital products and micro-SaaS are attractive because they can be built once, sold repeatedly, and delivered instantly with high margins.
-- The strongest digital offers solve a narrow, urgent, expensive problem rather than selling generic templates.
-- Home-service leads decay quickly. Faster first response, clearer estimate framing, and confident follow-up directly affect booked work.
-- This can be built without outside help because the first product is a browser-based workflow tool plus templates, not a call center, CRM, or AI receptionist infrastructure.
+QuoteSprint helps contractors and local-service teams respond quickly, present clear estimates, ask for deposits with confidence, and keep open quotes from going cold.
 
-## MVP shipped
+## Current offer ladder
+
+- Starter Kit, $29 one-time
+- Pro Kit, $79 one-time
+- Agency License, $199 one-time
+- QuoteSprint Live, $29/month
+
+## QuoteSprint Live value
+
+QuoteSprint Live adds recurring value through saved quote history, follow-up sequence generation, monthly industry script drops, objection-handling updates, and simple win-rate/pipeline tracking.
+
+## Current implementation
 
 - Marketing homepage
 - Product page
 - Pricing page
-- Resource/ecosystem page
-- Stripe-ready checkout page and API route
-- Working quote builder that generates:
-  - working estimate
-  - deposit amount
-  - SMS follow-up
-  - email follow-up
-  - call script
-
-## Stripe notes
-
-Stripe Checkout is connected in Vercel production/preview/development using live Stripe products and one-time prices. Stored price IDs live in OpenClaw user secrets under projects.quotesprint.stripe.priceIds.
+- Resource page
+- Secure checkout page
+- Working quote builder with estimate, deposit, SMS, email, call script, advanced copy direction, follow-up sequence, saved quote history, and local win-rate tracking
+- Live Stripe Checkout for one-time purchases and monthly subscription

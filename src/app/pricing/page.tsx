@@ -1,13 +1,22 @@
 import { PlanCard } from '@/components/PlanCard';
-import { plans } from '@/lib/content';
+import { oneTimePlans, subscriptionPlans } from '@/lib/content';
 
 export default function PricingPage() {
   return (
     <section className="page-shell">
       <span className="eyebrow">Pricing</span>
-      <h1>Sell it as a high-margin digital product first.</h1>
-      <p className="lead">One-time purchase tiers keep the first version simple. Stripe checkout is already scaffolded so payment can be connected with live price IDs.</p>
-      <div className="plans">{plans.map((plan) => <PlanCard key={plan.id} plan={plan} />)}</div>
+      <h1>Start with the toolkit, or run QuoteSprint every month.</h1>
+      <p className="lead">One-time products are best for owners who want templates and calculators. QuoteSprint Live is best for teams that want saved quote history, active follow-up sequences, monthly scripts, and performance tracking.</p>
+      <div className="section-heading pricing-heading">
+        <h2>Monthly plan</h2>
+        <p>For businesses that quote work every week and need a repeatable follow-up system.</p>
+      </div>
+      <div className="plans subscription-plans">{subscriptionPlans.map((plan) => <PlanCard key={plan.id} plan={plan} />)}</div>
+      <div className="section-heading pricing-heading">
+        <h2>One-time kits</h2>
+        <p>For quick implementation, training, and offline use.</p>
+      </div>
+      <div className="plans">{oneTimePlans.map((plan) => <PlanCard key={plan.id} plan={plan} />)}</div>
     </section>
   );
 }

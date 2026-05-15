@@ -17,7 +17,7 @@ function CheckoutInner() {
     });
     const data = await response.json();
     if (data.url) window.location.href = data.url;
-    else alert(data.message || 'Stripe is not connected yet.');
+    else alert(data.message || 'Checkout is temporarily unavailable. Please try again in a few minutes.');
   }
 
   return (
@@ -28,8 +28,8 @@ function CheckoutInner() {
       <div className="checkout-card">
         <div className="price"><span>{plan.price}</span> <small>{plan.cadence}</small></div>
         <ul>{plan.features.map((feature) => <li key={feature}>{feature}</li>)}</ul>
-        <button className="button full" onClick={startCheckout}>Continue to Stripe</button>
-        <p className="fine-print">Stripe keys and price IDs can be added in Vercel when you are ready to accept payment.</p>
+        <button className="button full" onClick={startCheckout}>Continue to secure checkout</button>
+        <p className="fine-print">Secure payment is handled by Stripe. You can review the order before completing checkout.</p>
       </div>
     </section>
   );
