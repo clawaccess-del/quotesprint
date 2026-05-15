@@ -401,8 +401,10 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
 
   useEffect(() => {
     const quoteRaw = window.localStorage.getItem('quotesprint-quotes');
+    const leadRaw = window.localStorage.getItem('quotesprint-leads');
     const profileRaw = window.localStorage.getItem('quotesprint-company-profile');
     if (quoteRaw) setSavedQuotes(JSON.parse(quoteRaw));
+    if (leadRaw) setSavedLeads(JSON.parse(leadRaw));
     if (profileRaw) {
       const profile = JSON.parse(profileRaw);
       setBusiness(profile.business || 'Acme Home Services');
@@ -424,7 +426,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
           setGuarantee(data.profile.guarantee || 'we explain any change before work begins');
         }
         if (Array.isArray(data.quotes)) setSavedQuotes(data.quotes);
-        if (Array.isArray(data.leads)) setSavedLeads(data.leads);
+        if (Array.isArray(data.leads) && data.leads.length) setSavedLeads(data.leads);
       })
       .catch(() => null)
       .finally(() => setAccountLoaded(true));
@@ -433,6 +435,10 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
   useEffect(() => {
     window.localStorage.setItem('quotesprint-quotes', JSON.stringify(savedQuotes));
   }, [savedQuotes]);
+
+  useEffect(() => {
+    window.localStorage.setItem('quotesprint-leads', JSON.stringify(savedLeads));
+  }, [savedLeads]);
 
   useEffect(() => {
     const profile = { business, serviceArea, brandVoice, differentiator, guarantee };
