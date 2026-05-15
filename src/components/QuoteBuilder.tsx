@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 type QuoteStatus = 'open' | 'won' | 'lost';
+type LeadStatus = 'new' | 'quoted' | 'followed-up' | 'won' | 'lost';
 type SavedQuote = {
   id: string;
   customer: string;
@@ -20,6 +21,7 @@ type SavedLead = {
   email: string;
   address: string;
   notes: string;
+  status?: LeadStatus;
   createdAt: string;
 };
 
@@ -351,6 +353,18 @@ function money(value: number) {
   return value.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 }
 
+const leadStages: { status: LeadStatus; label: string; helper: string }[] = [
+  { status: 'new', label: 'New', helper: 'Fresh inquiries to qualify' },
+  { status: 'quoted', label: 'Quoted', helper: 'Estimate sent, waiting on answer' },
+  { status: 'followed-up', label: 'Followed up', helper: 'Needs another touch or decision' },
+  { status: 'won', label: 'Won', helper: 'Booked or accepted work' },
+  { status: 'lost', label: 'Lost', helper: 'Not moving forward' },
+];
+
+function leadStatus(lead: SavedLead): LeadStatus {
+  return lead.status || 'new';
+}
+
 function servicePhrase(jobType: string) {
   return jobType.startsWith('HVAC') ? jobType : jobType.toLowerCase();
 }
@@ -507,6 +521,13 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     return { totalQuoted, won: won.length, open: open.length, winRate };
   }, [savedQuotes]);
 
+  const pipelineStats = useMemo(() => {
+    const active = savedLeads.filter((lead) => !['won', 'lost'].includes(leadStatus(lead))).length;
+    const won = savedLeads.filter((lead) => leadStatus(lead) === 'won').length;
+    const lost = savedLeads.filter((lead) => leadStatus(lead) === 'lost').length;
+    return { active, won, lost, total: savedLeads.length };
+  }, [savedLeads]);
+
   useEffect(() => {
     setCustomSocialPosts({});
   }, [business, serviceArea, brandVoice, differentiator, guarantee, jobType, socialPlatform, socialGoal, socialTopic]);
@@ -547,6 +568,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       email: leadEmail,
       address: leadAddress,
       notes: leadNotes,
+      status: 'new',
       createdAt: new Date().toISOString(),
     };
     setSavedLeads((leads) => [lead, ...leads].slice(0, 100));
@@ -567,11 +589,29 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       status: 'open',
       createdAt: new Date().toISOString(),
     };
+    const normalizedCustomer = customer.trim().toLowerCase();
+    const existingLead = savedLeads.find((lead) => lead.name.trim().toLowerCase() === normalizedCustomer);
+    const leadFromQuote: SavedLead = {
+      id: existingLead?.id || crypto.randomUUID(),
+      name: customer,
+      phone: existingLead?.phone || leadPhone,
+      email: existingLead?.email || leadEmail,
+      address: existingLead?.address || leadAddress,
+      notes: existingLead?.notes || `${jobType} quote: ${money(result.total)}`,
+      status: 'quoted',
+      createdAt: existingLead?.createdAt || new Date().toISOString(),
+    };
     setSavedQuotes((quotes) => [quote, ...quotes].slice(0, 50));
+    setSavedLeads((leads) => [leadFromQuote, ...leads.filter((lead) => lead.id !== leadFromQuote.id)].slice(0, 100));
     fetch('/api/quotes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ quote }),
+    }).catch(() => null);
+    fetch('/api/leads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lead: leadFromQuote }),
     }).catch(() => null);
   }
 
@@ -593,6 +633,23 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       body: JSON.stringify({ lead: editingLead }),
     }).catch(() => null);
     setEditingLead(null);
+  }
+
+  function updateLeadStatus(id: string, status: LeadStatus) {
+    let updatedLead: SavedLead | null = null;
+    setSavedLeads((leads) => leads.map((lead) => {
+      if (lead.id !== id) return lead;
+      updatedLead = { ...lead, status };
+      return updatedLead;
+    }));
+    window.setTimeout(() => {
+      if (!updatedLead) return;
+      fetch('/api/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lead: updatedLead }),
+      }).catch(() => null);
+    }, 0);
   }
 
   function saveQuoteEdit() {
@@ -775,30 +832,41 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
           <label>Lead notes<textarea value={leadNotes} onChange={(e) => setLeadNotes(e.target.value)} rows={3} placeholder="Gate code, preferred time, issue summary, source, etc." /></label>
           <button type="button" className="button full" onClick={saveLead}>Save lead contact</button>
         </article>
-        <article className="copy-card">
-          <h3>Saved leads</h3>
+        <article className="copy-card pipeline-card">
+          <div className="card-title-row"><div><h3>Lead pipeline</h3><p className="fine-print">Move each lead from inquiry to quote, follow-up, won, or lost.</p></div><span className="pipeline-total">{pipelineStats.active} active</span></div>
+          <div className="pipeline-metrics"><span>{pipelineStats.total} total leads</span><span>{pipelineStats.won} won</span><span>{pipelineStats.lost} lost</span></div>
           {savedLeads.length ? (
-            <div className="quote-list">
-              {savedLeads.map((lead) => (
-                <div className="lead-row" key={lead.id}>
-                  {editingLead?.id === lead.id ? (
-                    <div className="edit-stack">
-                      <label>Name<input value={editingLead.name} onChange={(e) => setEditingLead({ ...editingLead, name: e.target.value })} /></label>
-                      <div className="two-col">
-                        <label>Phone<input value={editingLead.phone} onChange={(e) => setEditingLead({ ...editingLead, phone: e.target.value })} /></label>
-                        <label>Email<input type="email" value={editingLead.email} onChange={(e) => setEditingLead({ ...editingLead, email: e.target.value })} /></label>
+            <div className="pipeline-board">
+              {leadStages.map((stage) => {
+                const stageLeads = savedLeads.filter((lead) => leadStatus(lead) === stage.status);
+                return <section className="pipeline-column" key={stage.status}>
+                  <div className="pipeline-column-head"><strong>{stage.label}</strong><span>{stageLeads.length}</span></div>
+                  <p>{stage.helper}</p>
+                  <div className="pipeline-leads">
+                    {stageLeads.length ? stageLeads.map((lead) => (
+                      <div className="lead-row pipeline-lead-card" key={lead.id}>
+                        {editingLead?.id === lead.id ? (
+                          <div className="edit-stack">
+                            <label>Name<input value={editingLead.name} onChange={(e) => setEditingLead({ ...editingLead, name: e.target.value })} /></label>
+                            <div className="two-col">
+                              <label>Phone<input value={editingLead.phone} onChange={(e) => setEditingLead({ ...editingLead, phone: e.target.value })} /></label>
+                              <label>Email<input type="email" value={editingLead.email} onChange={(e) => setEditingLead({ ...editingLead, email: e.target.value })} /></label>
+                            </div>
+                            <label>Address<input value={editingLead.address} onChange={(e) => setEditingLead({ ...editingLead, address: e.target.value })} /></label>
+                            <label>Status<select value={leadStatus(editingLead)} onChange={(e) => setEditingLead({ ...editingLead, status: e.target.value as LeadStatus })}>{leadStages.map((option) => <option value={option.status} key={option.status}>{option.label}</option>)}</select></label>
+                            <label>Notes<textarea rows={2} value={editingLead.notes} onChange={(e) => setEditingLead({ ...editingLead, notes: e.target.value })} /></label>
+                            <div className="row-actions"><button type="button" className="button mini" onClick={saveLeadEdit}>Save changes</button><button type="button" className="button mini secondary-button" onClick={() => setEditingLead(null)}>Cancel</button></div>
+                          </div>
+                        ) : (
+                          <><div><strong>{lead.name}</strong><span>{[lead.phone, lead.email, lead.address].filter(Boolean).join(' · ') || 'No contact details yet'}</span>{lead.notes ? <small>{lead.notes}</small> : null}</div><div className="lead-card-actions"><select value={leadStatus(lead)} onChange={(e) => updateLeadStatus(lead.id, e.target.value as LeadStatus)} aria-label={`Pipeline status for ${lead.name}`}>{leadStages.map((option) => <option value={option.status} key={option.status}>{option.label}</option>)}</select><button type="button" className="button mini secondary-button" onClick={() => setEditingLead(lead)}>Edit</button></div></>
+                        )}
                       </div>
-                      <label>Address<input value={editingLead.address} onChange={(e) => setEditingLead({ ...editingLead, address: e.target.value })} /></label>
-                      <label>Notes<textarea rows={2} value={editingLead.notes} onChange={(e) => setEditingLead({ ...editingLead, notes: e.target.value })} /></label>
-                      <div className="row-actions"><button type="button" className="button mini" onClick={saveLeadEdit}>Save changes</button><button type="button" className="button mini secondary-button" onClick={() => setEditingLead(null)}>Cancel</button></div>
-                    </div>
-                  ) : (
-                    <><div><strong>{lead.name}</strong><span>{[lead.phone, lead.email, lead.address].filter(Boolean).join(' · ') || 'No contact details yet'}</span>{lead.notes ? <small>{lead.notes}</small> : null}</div><button type="button" className="button mini secondary-button" onClick={() => setEditingLead(lead)}>Edit</button></>
-                  )}
-                </div>
-              ))}
+                    )) : <div className="pipeline-empty">No leads here yet.</div>}
+                  </div>
+                </section>;
+              })}
             </div>
-          ) : <p>Save lead contact details so the customer record is available next time you log in.</p>}
+          ) : <p>Save lead contact details so the pipeline board has customers to track.</p>}
         </article>
       </section> : null}
 
