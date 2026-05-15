@@ -17,6 +17,15 @@ function isStandalone() {
   return window.matchMedia('(display-mode: standalone)').matches || ('standalone' in window.navigator && Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone));
 }
 
+function downloadIconFile() {
+  const link = document.createElement('a');
+  link.href = '/brand/quotesprint-circle-logo.png';
+  link.download = 'quotesprint-home-screen-icon.png';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
+
 export function MobileInstallButton() {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showHelp, setShowHelp] = useState(false);
@@ -48,31 +57,32 @@ export function MobileInstallButton() {
     };
   }, []);
 
-  async function installApp() {
+  async function installIcon() {
     if (installed) return;
-    if (!installPrompt) {
-      setShowHelp((value) => !value);
+    if (installPrompt) {
+      await installPrompt.prompt();
+      await installPrompt.userChoice.catch(() => null);
+      setInstallPrompt(null);
       return;
     }
-    await installPrompt.prompt();
-    await installPrompt.userChoice.catch(() => null);
-    setInstallPrompt(null);
+    downloadIconFile();
+    setShowHelp(true);
   }
 
   if (installed) {
-    return <div className="mobile-install-card installed"><strong>Mobile app icon installed</strong><span>Open QuoteSprint from your phone home screen anytime.</span></div>;
+    return <div className="mobile-install-card installed"><strong>QuoteSprint icon installed</strong><span>Open QuoteSprint from your home screen anytime.</span></div>;
   }
 
   return (
     <div className="mobile-install-card">
       <div>
-        <strong>Add QuoteSprint to your phone</strong>
-        <span>Install a home-screen icon that opens straight into the mobile app.</span>
+        <strong>Add a QuoteSprint icon</strong>
+        <span>Create a home-screen shortcut that opens this URL: quotesprint.vercel.app/app.</span>
       </div>
-      <button type="button" className="button mini" onClick={installApp}>{installPrompt ? 'Download mobile app' : 'Show install steps'}</button>
+      <button type="button" className="button mini" onClick={installIcon}>{installPrompt ? 'Install home-screen icon' : 'Download icon'}</button>
       {showHelp ? (
         <p className="fine-print install-help">
-          {ios ? 'On iPhone: tap Share in Safari, then Add to Home Screen.' : 'On Android: open the browser menu, then tap Install app or Add to Home screen.'}
+          {ios ? 'Browsers do not allow websites to add the linked icon automatically on iPhone. The icon file downloaded; to create the shortcut, open QuoteSprint in Safari, tap Share, then Add to Home Screen.' : 'The icon file downloaded. If your browser did not show an install prompt, open the browser menu and choose Install app or Add to Home screen to create the linked shortcut.'}
         </p>
       ) : null}
     </div>
