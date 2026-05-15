@@ -129,6 +129,14 @@ function money(value: number) {
   return value.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 }
 
+function servicePhrase(jobType: string) {
+  return jobType.startsWith('HVAC') ? jobType : jobType.toLowerCase();
+}
+
+function lowerFirst(text: string) {
+  return text.charAt(0).toLowerCase() + text.slice(1);
+}
+
 export function QuoteBuilder() {
   const [business, setBusiness] = useState('Acme Home Services');
   const [serviceArea, setServiceArea] = useState('the local area');
@@ -173,7 +181,8 @@ export function QuoteBuilder() {
     const depositDue = total * (deposit / 100);
     const firstName = customer.trim().split(' ')[0] || 'there';
     const timePhrase = urgency === 'emergency' ? 'an opening today' : urgency === 'soon' ? 'an opening this week' : 'an opening when your schedule allows';
-    const serviceRequest = jobType.toLowerCase();
+    const serviceRequest = servicePhrase(jobType);
+    const riskSentence = lowerFirst(playbooks[jobType].risk);
     const playbook = playbooks[jobType];
     const tonePhrase = `${tones[tone]}, with a brand voice that feels ${brandVoice}`;
     const bookingReason = urgency === 'emergency'
@@ -188,11 +197,11 @@ export function QuoteBuilder() {
       playbook,
       sms: `Hi ${firstName}, this is ${business}. I reviewed the ${serviceRequest} details and put together a working estimate of ${money(total)}. For ${serviceArea}, our focus is ${differentiator}. We can reserve ${timePhrase} with ${money(depositDue)} down. Want me to hold it?`,
       email: `Subject: ${jobType} estimate from ${business}\n\nHi ${firstName},\n\nThanks for reaching out to ${business}. Your working estimate is ${money(total)} for this ${serviceRequest}. That includes the expected labor, materials, and scheduling priority based on what you shared.\n\nWhat matters for this type of work: ${playbook.risk}\n\nWhy customers choose us: ${differentiator}. Our approach is ${playbook.proofPoint}.\n\nTo reserve the next available opening, the deposit is ${money(depositDue)} (${deposit}%). ${playbook.prepNote}\n\nIf anything changes after we see the job in person, ${guarantee}.\n\nBest,\n${business}`,
-      call: `Open with: “Hi ${firstName}, this is ${business}. I saw your ${serviceRequest} request and wanted to help you get a clear answer quickly.”\n\nMatch the brand voice: ${tonePhrase}.\n\nQualify for this job: ask about ${playbook.qualify}.\n\nBuild confidence: “For this kind of work, we focus on ${playbook.proofPoint}. The main reason to handle it now is that ${playbook.risk}”\n\nClose: “The working estimate is ${money(total)}. I can reserve the next opening with ${money(depositDue)} down because ${bookingReason}. Should I hold that spot for you?”`,
+      call: `Open with: “Hi ${firstName}, this is ${business}. I saw your ${serviceRequest} request and wanted to help you get a clear answer quickly.”\n\nMatch the brand voice: ${tonePhrase}.\n\nQualify for this job: ask about ${playbook.qualify}.\n\nBuild confidence: “For this kind of work, we focus on ${playbook.proofPoint}. The main reason to handle it now is that ${riskSentence}”\n\nClose: “The working estimate is ${money(total)}. I can reserve the next opening with ${money(depositDue)} down because ${bookingReason}. Should I hold that spot for you?”`,
       aiAssist: `Write in a ${tonePhrase} tone for ${business}, serving ${serviceArea}. Do not use generic contractor language. Mention ${differentiator}, explain the ${playbook.label}-specific risk (${playbook.risk}), include this prep note (${playbook.prepNote}), and make the next step simple: reserve the opening with ${money(depositDue)} down or reply with one concern for clarification.`,
       sequence: [
         `Day 0: Hi ${firstName}, this is ${business}. Your ${serviceRequest} estimate is ${money(total)}. Because ${playbook.urgencyReason}, I can reserve the next opening with ${money(depositDue)} down. Want me to hold it?`,
-        `Day 1: Quick follow-up, ${firstName}. For this ${serviceRequest}, the main thing to avoid is this: ${playbook.risk} If you want the current opening, I can reserve it with the ${deposit}% deposit.`,
+        `Day 1: Quick follow-up, ${firstName}. For this ${serviceRequest}, the main thing to avoid is that ${riskSentence} If you want the current opening, I can reserve it with the ${deposit}% deposit.`,
         `Day 3: Hi ${firstName}, checking before we release this ${serviceRequest} estimate window. ${playbook.prepNote} Do you want us to keep the ${money(total)} quote active?`,
         `Day 7: Last touch from ${business}. If this is still on your list, reply “ready” and we will help you ${playbook.closeBenefit}.`
       ],
