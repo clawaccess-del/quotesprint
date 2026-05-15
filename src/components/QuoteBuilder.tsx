@@ -137,7 +137,7 @@ function lowerFirst(text: string) {
   return text.charAt(0).toLowerCase() + text.slice(1);
 }
 
-export function QuoteBuilder({ accountEmail }: { accountEmail?: string }) {
+export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: string; aiEnabled?: boolean }) {
   const [business, setBusiness] = useState('Acme Home Services');
   const [serviceArea, setServiceArea] = useState('the local area');
   const [brandVoice, setBrandVoice] = useState('clear, helpful, and no-pressure');
@@ -152,6 +152,8 @@ export function QuoteBuilder({ accountEmail }: { accountEmail?: string }) {
   const [deposit, setDeposit] = useState(30);
   const [tone, setTone] = useState('direct');
   const [savedQuotes, setSavedQuotes] = useState<SavedQuote[]>([]);
+  const [aiOutput, setAiOutput] = useState<{ title: string; text: string; remaining?: number } | null>(null);
+  const [aiStatus, setAiStatus] = useState('');
 
   useEffect(() => {
     const quoteRaw = window.localStorage.getItem('quotesprint-quotes');
@@ -268,6 +270,30 @@ export function QuoteBuilder({ accountEmail }: { accountEmail?: string }) {
     }).catch(() => null);
   }
 
+  async function enhanceCopy(title: string, text: string, action = 'rewrite') {
+    setAiStatus(`Customizing ${title.toLowerCase()}...`);
+    setAiOutput(null);
+    const company = `Business: ${business}\nService area: ${serviceArea}\nBrand voice: ${brandVoice}\nWhy customers choose us: ${differentiator}\nTrust promise: ${guarantee}`;
+    const response = await fetch('/api/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action,
+        company,
+        industry: jobType,
+        source: text,
+        instruction: `Add a deeper customization layer for ${customer}. Keep it customer-facing, specific to the job type, and ready to send.`,
+      }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      setAiStatus(data.message || 'AI customization is unavailable.');
+      return;
+    }
+    setAiOutput({ title: `AI-customized ${title}`, text: data.output || '', remaining: data.remaining });
+    setAiStatus(`Customized. ${data.remaining} AI credits left this month.`);
+  }
+
   return (
     <section className="builder-grid">
       <form className="builder-panel">
@@ -310,13 +336,15 @@ export function QuoteBuilder({ accountEmail }: { accountEmail?: string }) {
           <div><strong>{money(stats.totalQuoted)}</strong><span>quoted pipeline</span></div>
           <div><strong>{stats.winRate}%</strong><span>tracked win rate</span></div>
         </div>
-        <Output title="SMS follow-up" text={result.sms} />
-        <Output title="Email follow-up" text={result.email} />
-        <Output title="Call script" text={result.call} />
-        <Output title="Objection response" text={result.objectionReply} />
-        <Output title="Advanced copy direction" text={result.aiAssist} />
+        {aiEnabled ? <div className="ai-inline-panel"><span className="eyebrow">AI customization layer</span><p>Use AI only when a generated quote, email, call script, or sequence needs an extra custom pass for the customer, job, and brand voice.</p>{aiStatus ? <p className="fine-print">{aiStatus}</p> : null}</div> : null}
+        <Output title="SMS follow-up" text={result.sms} aiEnabled={aiEnabled} onEnhance={() => enhanceCopy('SMS follow-up', result.sms, 'rewrite')} />
+        <Output title="Email follow-up" text={result.email} aiEnabled={aiEnabled} onEnhance={() => enhanceCopy('Email follow-up', result.email, 'email')} />
+        <Output title="Call script" text={result.call} aiEnabled={aiEnabled} onEnhance={() => enhanceCopy('Call script', result.call, 'rewrite')} />
+        <Output title="Objection response" text={result.objectionReply} aiEnabled={aiEnabled} onEnhance={() => enhanceCopy('Objection response', result.objectionReply, 'objection')} />
+        <Output title="Advanced copy direction" text={result.aiAssist} aiEnabled={aiEnabled} onEnhance={() => enhanceCopy('Advanced copy direction', result.aiAssist, 'rewrite')} />
+        {aiOutput ? <article className="copy-card ai-result-card"><h3>{aiOutput.title}</h3><pre>{aiOutput.text}</pre>{typeof aiOutput.remaining === 'number' ? <p className="fine-print">{aiOutput.remaining} AI credits remaining this month.</p> : null}</article> : null}
         <article className="copy-card">
-          <h3>Follow-up sequence</h3>
+          <div className="card-title-row"><h3>Follow-up sequence</h3>{aiEnabled ? <button className="button mini" type="button" onClick={() => enhanceCopy('Follow-up sequence', result.sequence.join('\n'), 'sequence')}>Customize with AI</button> : null}</div>
           <ol className="sequence-list">{result.sequence.map((step) => <li key={step}>{step}</li>)}</ol>
         </article>
         <article className="copy-card">
@@ -341,10 +369,10 @@ export function QuoteBuilder({ accountEmail }: { accountEmail?: string }) {
   );
 }
 
-function Output({ title, text }: { title: string; text: string }) {
+function Output({ title, text, aiEnabled, onEnhance }: { title: string; text: string; aiEnabled?: boolean; onEnhance?: () => void }) {
   return (
     <article className="copy-card">
-      <h3>{title}</h3>
+      <div className="card-title-row"><h3>{title}</h3>{aiEnabled ? <button className="button mini" type="button" onClick={onEnhance}>Customize with AI</button> : null}</div>
       <pre>{text}</pre>
     </article>
   );

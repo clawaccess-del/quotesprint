@@ -297,3 +297,34 @@ textarea {
   height: 1px;
   background: var(--line);
 }
+.ai-inline-panel {
+  border: 1px solid rgba(215,255,113,.55);
+  background: linear-gradient(135deg, rgba(255,255,255,.82), rgba(255,244,223,.86));
+  border-radius: 1.5rem;
+  padding: 1.1rem;
+}
+.ai-inline-panel p { margin-bottom: 0; }
+.card-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: .8rem;
+}
+.card-title-row h3 { margin-top: 0; }
+.button.mini {
+  padding: .55rem .75rem;
+  font-size: .78rem;
+  box-shadow: none;
+  white-space: nowrap;
+}
+.ai-result-card {
+  border-color: rgba(215,255,113,.7);
+  background: var(--green-dark);
+  color: white;
+}
+.ai-result-card pre,
+.ai-result-card p { color: rgba(255,255,255,.82); }
+@media (max-width: 560px) {
+  .card-title-row { flex-direction: column; }
+  .button.mini { width: 100%; }
+}
