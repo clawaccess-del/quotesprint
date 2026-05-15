@@ -367,6 +367,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
   const [customizedCopy, setCustomizedCopy] = useState<Record<string, string>>({});
   const [aiStatus, setAiStatus] = useState('');
   const [generatingSection, setGeneratingSection] = useState<string | null>(null);
+  const [accountLoaded, setAccountLoaded] = useState(false);
 
   useEffect(() => {
     const quoteRaw = window.localStorage.getItem('quotesprint-quotes');
@@ -394,7 +395,8 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
         }
         if (Array.isArray(data.quotes)) setSavedQuotes(data.quotes);
       })
-      .catch(() => null);
+      .catch(() => null)
+      .finally(() => setAccountLoaded(true));
   }, []);
 
   useEffect(() => {
@@ -404,6 +406,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
   useEffect(() => {
     const profile = { business, serviceArea, brandVoice, differentiator, guarantee };
     window.localStorage.setItem('quotesprint-company-profile', JSON.stringify(profile));
+    if (!accountLoaded) return;
     const timeout = window.setTimeout(() => {
       fetch('/api/account', {
         method: 'POST',
@@ -412,7 +415,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       }).catch(() => null);
     }, 600);
     return () => window.clearTimeout(timeout);
-  }, [business, serviceArea, brandVoice, differentiator, guarantee]);
+  }, [business, serviceArea, brandVoice, differentiator, guarantee, accountLoaded]);
 
   useEffect(() => {
     setCustomizedCopy({});

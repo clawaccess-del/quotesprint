@@ -19,13 +19,16 @@ export type StoredQuote = {
   createdAt: string;
 };
 
-function headers() {
+type ProfileRow = { id: string; email: string; company_name?: string | null };
+type QuoteRow = { id: string; customer_name: string; job_description?: string | null; total_amount?: number; status?: StoredQuote['status']; created_at?: string };
+
+function headers(extra?: Record<string, string>) {
   if (!SUPABASE_SERVICE_ROLE_KEY) throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY');
   return {
     apikey: SUPABASE_SERVICE_ROLE_KEY,
     Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
     'Content-Type': 'application/json',
-    Prefer: 'return=representation',
+    ...extra,
   };
 }
 
@@ -33,7 +36,7 @@ async function supabaseFetch(path: string, init?: RequestInit) {
   if (!SUPABASE_URL) throw new Error('Missing SUPABASE_URL');
   const response = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     ...init,
-    headers: { ...headers(), ...(init?.headers || {}) },
+    headers: headers(init?.headers as Record<string, string> | undefined),
     cache: 'no-store',
   });
   if (!response.ok) {
@@ -43,43 +46,100 @@ async function supabaseFetch(path: string, init?: RequestInit) {
   return response;
 }
 
+function profileFromCompanyName(value?: string | null): CompanyProfile | null {
+  if (!value) return null;
+  try {
+    const parsed = JSON.parse(value);
+    if (parsed && typeof parsed === 'object') return parsed as CompanyProfile;
+  } catch {
+    return { business: value, serviceArea: 'the local area', brandVoice: 'clear, helpful, and no-pressure', differentiator: 'fast response, clean work, and clear next steps', guarantee: 'we explain any change before work begins' };
+  }
+  return null;
+}
+
+async function getOrCreateProfile(email: string): Promise<ProfileRow> {
+  const existingResponse = await supabaseFetch(`profiles?email=eq.${encodeURIComponent(email)}&select=id,email,company_name&limit=1`);
+  const existing = await existingResponse.json();
+  if (existing?.[0]) return existing[0];
+
+  const createResponse = await supabaseFetch('profiles?select=id,email,company_name', {
+    method: 'POST',
+    body: JSON.stringify([{ email, company_name: '' }]),
+    headers: { Prefer: 'return=representation' },
+  });
+  const created = await createResponse.json();
+  return created[0];
+}
+
 export async function getCompanyProfile(email: string) {
-  const response = await supabaseFetch(`quote_profiles?email=eq.${encodeURIComponent(email)}&select=profile&limit=1`);
-  const rows = await response.json();
-  return rows?.[0]?.profile || null;
+  const profile = await getOrCreateProfile(email);
+  return profileFromCompanyName(profile.company_name);
 }
 
 export async function saveCompanyProfile(email: string, profile: CompanyProfile) {
-  await supabaseFetch('quote_profiles?on_conflict=email', {
-    method: 'POST',
-    body: JSON.stringify([{ email, profile, updated_at: new Date().toISOString() }]),
-    headers: { Prefer: 'resolution=merge-duplicates' },
+  const row = await getOrCreateProfile(email);
+  await supabaseFetch(`profiles?id=eq.${encodeURIComponent(row.id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ company_name: JSON.stringify(profile) }),
+    headers: { Prefer: 'return=minimal' },
   });
 }
 
+function parseQuote(row: QuoteRow): StoredQuote {
+  try {
+    const parsed = row.job_description ? JSON.parse(row.job_description) : null;
+    if (parsed?.id) return { ...parsed, status: row.status || parsed.status || 'open' };
+  } catch {}
+  return {
+    id: row.id,
+    customer: row.customer_name,
+    jobType: row.job_description || 'service quote',
+    total: Number(row.total_amount || 0),
+    depositDue: 0,
+    status: row.status || 'open',
+    createdAt: row.created_at || new Date().toISOString(),
+  };
+}
+
 export async function getQuotes(email: string) {
-  const response = await supabaseFetch(`quote_history?email=eq.${encodeURIComponent(email)}&select=quote&order=created_at.desc&limit=50`);
+  const profile = await getOrCreateProfile(email);
+  const response = await supabaseFetch(`quotes?user_id=eq.${encodeURIComponent(profile.id)}&select=id,customer_name,job_description,total_amount,status,created_at&order=created_at.desc&limit=50`);
   const rows = await response.json();
-  return rows.map((row: { quote: StoredQuote }) => row.quote).filter(Boolean);
+  return rows.map(parseQuote);
 }
 
 export async function saveQuote(email: string, quote: StoredQuote) {
-  await supabaseFetch('quote_history?on_conflict=email,id', {
+  const profile = await getOrCreateProfile(email);
+  await supabaseFetch('quotes?on_conflict=id', {
     method: 'POST',
-    body: JSON.stringify([{ email, id: quote.id, quote, status: quote.status, created_at: quote.createdAt }]),
-    headers: { Prefer: 'resolution=merge-duplicates' },
+    body: JSON.stringify([{
+      id: quote.id,
+      user_id: profile.id,
+      customer_name: quote.customer,
+      job_description: JSON.stringify(quote),
+      total_amount: quote.total,
+      status: quote.status,
+      created_at: quote.createdAt,
+    }]),
+    headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
   });
 }
 
 export async function updateQuoteStatus(email: string, id: string, status: StoredQuote['status']) {
-  const response = await supabaseFetch(`quote_history?email=eq.${encodeURIComponent(email)}&id=eq.${encodeURIComponent(id)}&select=quote&limit=1`);
+  const profile = await getOrCreateProfile(email);
+  const response = await supabaseFetch(`quotes?user_id=eq.${encodeURIComponent(profile.id)}&id=eq.${encodeURIComponent(id)}&select=job_description&limit=1`);
   const rows = await response.json();
-  const quote = rows?.[0]?.quote;
-  if (!quote) return;
-  quote.status = status;
-  await supabaseFetch(`quote_history?email=eq.${encodeURIComponent(email)}&id=eq.${encodeURIComponent(id)}`, {
+  let jobDescription = rows?.[0]?.job_description;
+  try {
+    const quote = jobDescription ? JSON.parse(jobDescription) : null;
+    if (quote) {
+      quote.status = status;
+      jobDescription = JSON.stringify(quote);
+    }
+  } catch {}
+  await supabaseFetch(`quotes?user_id=eq.${encodeURIComponent(profile.id)}&id=eq.${encodeURIComponent(id)}`, {
     method: 'PATCH',
-    body: JSON.stringify({ quote, status }),
+    body: JSON.stringify({ status, job_description: jobDescription }),
     headers: { Prefer: 'return=minimal' },
   });
 }
