@@ -202,6 +202,11 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     return () => window.clearTimeout(timeout);
   }, [business, serviceArea, brandVoice, differentiator, guarantee]);
 
+  useEffect(() => {
+    setCustomizedCopy({});
+    setAiStatus('Generated text updated from the current quote options.');
+  }, [business, serviceArea, brandVoice, differentiator, guarantee, customer, jobType, laborHours, laborRate, materials, urgency, deposit, tone]);
+
   const result = useMemo(() => {
     const subtotal = laborHours * laborRate + materials;
     const total = subtotal * urgencyMultipliers[urgency];
@@ -321,6 +326,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
         </div>
         <label>Urgency<select value={urgency} onChange={(e) => setUrgency(e.target.value)}><option value="normal">Flexible</option><option value="soon">Soon</option><option value="emergency">Emergency</option></select></label>
         <label>Copy style<select value={tone} onChange={(e) => setTone(e.target.value)}><option value="direct">Direct</option><option value="warm">Warm</option><option value="premium">Premium</option></select></label>
+        <button type="button" className="button secondary full" onClick={() => { setCustomizedCopy({}); setAiStatus('Generated text refreshed from the current quote options.'); }}>Refresh generated text</button>
         <button type="button" className="button full" onClick={saveQuote}>Save this quote</button>
       </form>
       <div className="output-panel">
@@ -340,7 +346,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
           <div><strong>{money(stats.totalQuoted)}</strong><span>quoted pipeline</span></div>
           <div><strong>{stats.winRate}%</strong><span>tracked win rate</span></div>
         </div>
-        {aiEnabled ? <div className="ai-inline-panel"><span className="eyebrow">AI customization layer</span><p>Use AI only when a generated quote, email, call script, or sequence needs an extra custom pass for the customer, job, and brand voice.</p>{aiStatus ? <p className="fine-print">{aiStatus}</p> : null}</div> : null}
+        <div className="ai-inline-panel"><span className="eyebrow">Live preview</span><p>Change the quote options on the left to update these scripts before saving. Saving only adds the current quote to history.</p>{aiStatus ? <p className="fine-print">{aiStatus}</p> : null}{aiEnabled ? <p className="fine-print">Use AI when a section needs an extra custom pass for the customer, job, and brand voice.</p> : null}</div>
         <Output title="SMS follow-up" text={customizedCopy['SMS follow-up'] || result.sms} customized={Boolean(customizedCopy['SMS follow-up'])} aiEnabled={aiEnabled} generating={generatingSection === 'SMS follow-up'} disabled={Boolean(generatingSection)} onEnhance={() => enhanceCopy('SMS follow-up', customizedCopy['SMS follow-up'] || result.sms, 'rewrite')} />
         <Output title="Email follow-up" text={customizedCopy['Email follow-up'] || result.email} customized={Boolean(customizedCopy['Email follow-up'])} aiEnabled={aiEnabled} generating={generatingSection === 'Email follow-up'} disabled={Boolean(generatingSection)} onEnhance={() => enhanceCopy('Email follow-up', customizedCopy['Email follow-up'] || result.email, 'email')} />
         <Output title="Call script" text={customizedCopy['Call script'] || result.call} customized={Boolean(customizedCopy['Call script'])} aiEnabled={aiEnabled} generating={generatingSection === 'Call script'} disabled={Boolean(generatingSection)} onEnhance={() => enhanceCopy('Call script', customizedCopy['Call script'] || result.call, 'rewrite')} />
