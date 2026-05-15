@@ -11,7 +11,7 @@ export function Footer() {
         <Link href="/product">Product</Link>
         <Link href="/pricing">Pricing</Link>
         <Link href="/resources">Resources</Link>
-        <Link href="/checkout?plan=pro">Checkout</Link>
+        <Link href="/app">Customer access</Link>
       </div>
     </footer>
   );

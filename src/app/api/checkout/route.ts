@@ -24,11 +24,15 @@ export async function POST(request: Request) {
   }
 
   const stripe = new Stripe(secret);
+  const mode = subscriptionPlans.has(plan) ? 'subscription' : 'payment';
   const session = await stripe.checkout.sessions.create({
-    mode: subscriptionPlans.has(plan) ? 'subscription' : 'payment',
+    mode,
     line_items: [{ price, quantity: 1 }],
     allow_promotion_codes: true,
-    success_url: `${siteUrl}/app?success=true`,
+    customer_creation: mode === 'payment' ? 'always' : undefined,
+    metadata: { plan },
+    subscription_data: mode === 'subscription' ? { metadata: { plan } } : undefined,
+    success_url: `${siteUrl}/api/access/claim?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${siteUrl}/pricing`,
   });
 

@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { QuoteBuilder } from '@/components/QuoteBuilder';
 import { PlanCard } from '@/components/PlanCard';
 import { customerBenefits, industries, monthlyScriptDrops, oneTimePlans, subscriptionPlans } from '@/lib/content';
 
@@ -12,7 +11,7 @@ export default function Home() {
           <h1>Company-specific quotes, follow-ups, and booking scripts in minutes.</h1>
           <p>QuoteSprint uses your company profile, brand voice, service area, and industry playbooks to turn new inquiries into professional estimates, tailored follow-up messages, and a cleaner path to booked work.</p>
           <div className="hero-actions">
-            <Link href="/app" className="button">Try the live builder</Link>
+            <Link href="/app" className="button">Open the builder</Link>
             <Link href="/checkout?plan=live" className="button secondary">Start QuoteSprint Live</Link>
           </div>
         </div>
@@ -40,7 +39,20 @@ export default function Home() {
           <h2>Build the quote around the company, not just the job type.</h2>
           <p>Add the business name, service area, brand voice, trust promise, and customer-specific job details. QuoteSprint then changes the actual proof points, risks, prep notes, objections, and follow-up language for each industry.</p>
         </div>
-        <QuoteBuilder />
+        <div className="product-preview-grid">
+          <article className="copy-card">
+            <h3>Company profile</h3>
+            <p>Save the business name, service area, brand voice, differentiators, and trust promise so every quote sounds like the company.</p>
+          </article>
+          <article className="copy-card">
+            <h3>Industry playbook</h3>
+            <p>Switching from HVAC to plumbing, painting, roofing, or cleaning changes the risks, prep notes, proof points, objections, and follow-up strategy.</p>
+          </article>
+          <article className="copy-card">
+            <h3>Paid builder</h3>
+            <p>After checkout, customers get the live builder with saved quote history, follow-up sequences, objection copy, and pipeline tracking.</p>
+          </article>
+        </div>
       </section>
 
       <section className="section">
