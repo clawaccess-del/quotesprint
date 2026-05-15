@@ -12,6 +12,7 @@ export function Header() {
         <Link href="/product">Product</Link>
         <Link href="/pricing">Pricing</Link>
         <Link href="/resources">Resources</Link>
+        <Link href="/login">Log in</Link>
         <Link href="/app" className="nav-cta">Customer access</Link>
       </nav>
     </header>

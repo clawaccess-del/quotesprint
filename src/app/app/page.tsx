@@ -16,12 +16,13 @@ export default async function AppPage() {
         <p className="lead">The full builder is served after checkout. Choose a one-time kit, start QuoteSprint Live, or add AI credits for deeper brand-voice customization.</p>
         <div className="checkout-card">
           <h2>Get access</h2>
-          <p>Secure checkout is handled by Stripe. After payment, QuoteSprint automatically verifies the purchase and opens the builder in this browser.</p>
+          <p>Secure checkout is handled by Stripe. After payment, QuoteSprint automatically verifies the purchase and opens the builder. Returning customers can log in by email.</p>
           <div className="hero-actions">
             <Link href="/checkout?plan=live_ai" className="button">Start Live + AI</Link>
+            <Link href="/login" className="button secondary">Log in by email</Link>
             <Link href="/pricing" className="button secondary">Compare plans</Link>
           </div>
-          <p className="fine-print">Already purchased? Use the confirmation link from checkout to restore access in this browser.</p>
+          <p className="fine-print">Already purchased? Enter the checkout email on the login page and QuoteSprint will send a secure access link.</p>
         </div>
       </section>
     );
