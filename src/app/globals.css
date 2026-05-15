@@ -234,3 +234,29 @@ textarea {
   .product-preview-grid { grid-template-columns: 1fr; }
   .access-banner { align-items: flex-start; flex-direction: column; }
 }
+.ai-panel {
+  margin-top: 1rem;
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.72);
+  border-radius: 1.5rem;
+  padding: 1.2rem;
+  box-shadow: 0 10px 30px rgba(18,72,50,.06);
+}
+.ai-panel.locked {
+  background: var(--panel);
+}
+.ai-panel h2 {
+  font-size: clamp(1.8rem, 3vw, 2.8rem);
+  line-height: .98;
+  letter-spacing: -.05em;
+  margin: .7rem 0;
+}
+.ai-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .8rem;
+  margin: 1rem 0;
+}
+@media (max-width: 760px) {
+  .ai-grid { grid-template-columns: 1fr; }
+}

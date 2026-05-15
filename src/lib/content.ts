@@ -39,9 +39,17 @@ export const subscriptionPlans = [
     name: 'QuoteSprint Live',
     price: '$29',
     cadence: 'per month',
-    blurb: 'Keep every estimate, follow-up, and close opportunity moving with company-specific quote history, sequences, and performance tracking.',
+    blurb: 'Keep every estimate, follow-up, and close opportunity moving with company-specific quote history, sequences, and performance tracking. No AI usage required.',
     features: ['Company profile and brand voice memory', 'Industry-specific quote playbooks', 'Saved quote history', 'Follow-up sequence generator', 'Monthly industry script drops', 'Win-rate and pipeline tracker'],
     featured: true,
+  },
+  {
+    id: 'live_ai',
+    name: 'QuoteSprint Live + AI',
+    price: '$49',
+    cadence: 'per month',
+    blurb: 'Everything in QuoteSprint Live, plus usage-limited AI credits for deeper brand-voice rewrites and job-specific sales copy.',
+    features: ['Everything in QuoteSprint Live', '100 AI credits per month', 'Brand-voice rewrites', 'Custom objection handling', 'Expanded follow-up sequences', 'Hard usage cap to protect cost'],
   },
 ];
 
@@ -58,15 +66,15 @@ export const customerBenefits = [
 
 export const monthlyScriptDrops = [
   {
-    title: 'Seasonal urgency packs',
-    copy: 'Fresh scripts for weather spikes, peak-season demand, slow weeks, storm calls, and end-of-month booking pushes.',
+    title: 'Non-AI core system',
+    copy: 'QuoteSprint Live keeps working with company profiles, industry playbooks, quote history, and tracking even if you never use the AI add-on.',
+  },
+  {
+    title: 'Usage-limited AI layer',
+    copy: 'Live + AI includes monthly credits for brand-voice rewrites, deeper objections, and expanded sequences without unlimited API exposure.',
   },
   {
     title: 'Trade-specific follow-up angles',
     copy: 'HVAC, roofing, plumbing, cleaning, painting, landscaping, handyman, and pest-control language that fits the job.',
-  },
-  {
-    title: 'Objection handling updates',
-    copy: 'New responses for price shoppers, delayed decisions, competitor comparisons, deposit hesitation, and scheduling friction.',
   },
 ];

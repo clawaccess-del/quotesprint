@@ -6,9 +6,10 @@ const priceEnv: Record<string, string | undefined> = {
   pro: process.env.STRIPE_PRICE_ID_PRO,
   agency: process.env.STRIPE_PRICE_ID_AGENCY,
   live: process.env.STRIPE_PRICE_ID_LIVE_MONTHLY,
+  live_ai: process.env.STRIPE_PRICE_ID_LIVE_AI_MONTHLY,
 };
 
-const subscriptionPlans = new Set(['live']);
+const subscriptionPlans = new Set(['live', 'live_ai']);
 
 export async function POST(request: Request) {
   const { plan = 'pro' } = await request.json().catch(() => ({ plan: 'pro' }));
