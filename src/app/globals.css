@@ -116,8 +116,12 @@ ul { padding-left: 1.1rem; color: var(--muted); line-height: 1.8; }
 }
 
 .subscription-plans {
-  grid-template-columns: minmax(0, 520px);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 860px;
   margin-bottom: 1.5rem;
+}
+.subscription-plans .plan-card.featured {
+  transform: none;
 }
 .pricing-heading { margin-top: 2.5rem; }
 .app-actions { margin-bottom: 1.5rem; }
