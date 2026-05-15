@@ -27,6 +27,7 @@ export type StoredQuote = {
   total: number;
   depositDue: number;
   status: 'open' | 'won' | 'lost';
+  winLossReason?: string;
   createdAt: string;
 };
 

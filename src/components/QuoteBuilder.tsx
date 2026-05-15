@@ -11,6 +11,7 @@ type SavedQuote = {
   total: number;
   depositDue: number;
   status: QuoteStatus;
+  winLossReason?: string;
   createdAt: string;
 };
 
@@ -23,6 +24,16 @@ type SavedLead = {
   notes: string;
   status?: LeadStatus;
   createdAt: string;
+};
+
+type ServicePreset = {
+  id: string;
+  name: string;
+  jobType: string;
+  laborHours: number;
+  laborRate: number;
+  materials: number;
+  deposit: number;
 };
 
 type IndustryPlaybook = {
@@ -361,6 +372,16 @@ const leadStages: { status: LeadStatus; label: string; helper: string }[] = [
   { status: 'lost', label: 'Lost', helper: 'Not moving forward' },
 ];
 
+const winReasons = ['Booked quickly', 'Strong fit', 'Trusted the proof', 'Timing worked', 'Price accepted', 'Follow-up converted'];
+const lossReasons = ['Price', 'Timing', 'No response', 'Competitor', 'Not qualified', 'Scope changed'];
+
+const starterServicePresets: ServicePreset[] = [
+  { id: 'preset-diagnostic', name: 'Diagnostic visit', jobType: 'HVAC repair', laborHours: 1, laborRate: 125, materials: 0, deposit: 0 },
+  { id: 'preset-small-repair', name: 'Small repair block', jobType: 'handyman job', laborHours: 2, laborRate: 95, materials: 75, deposit: 30 },
+  { id: 'preset-maintenance', name: 'Maintenance visit', jobType: 'landscaping visit', laborHours: 2, laborRate: 85, materials: 40, deposit: 25 },
+  { id: 'preset-project', name: 'Medium project estimate', jobType: 'painting project', laborHours: 8, laborRate: 85, materials: 350, deposit: 40 },
+];
+
 function leadStatus(lead: SavedLead): LeadStatus {
   return lead.status || 'new';
 }
@@ -417,12 +438,16 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
   const [aiStatus, setAiStatus] = useState('');
   const [generatingSection, setGeneratingSection] = useState<string | null>(null);
   const [accountLoaded, setAccountLoaded] = useState(false);
-  const [activeTab, setActiveTab] = useState<'tool' | 'social' | 'leads' | 'history'>('tool');
+  const [activeTab, setActiveTab] = useState<'tool' | 'social' | 'leads' | 'history' | 'sales'>('tool');
   const [socialPlatform, setSocialPlatform] = useState('Facebook');
   const [socialGoal, setSocialGoal] = useState('Book more estimates');
   const [socialTopic, setSocialTopic] = useState('seasonal service reminder');
   const [customSocialPosts, setCustomSocialPosts] = useState<Record<number, string>>({});
   const [aiUsage, setAiUsage] = useState<{ used: number; remaining: number; total: number; enabled: boolean } | null>(null);
+  const [servicePresets, setServicePresets] = useState<ServicePreset[]>(starterServicePresets);
+  const [presetName, setPresetName] = useState('My saved service');
+  const [customerReply, setCustomerReply] = useState('Can you do any better on price? I am comparing a few quotes.');
+  const [coachedReply, setCoachedReply] = useState('');
 
   useEffect(() => {
     fetch('/api/ai/usage')
@@ -434,9 +459,11 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
   useEffect(() => {
     const localQuotes = safeJsonArray<SavedQuote>(window.localStorage.getItem('quotesprint-quotes'));
     const localLeads = safeJsonArray<SavedLead>(window.localStorage.getItem('quotesprint-leads'));
+    const localPresets = safeJsonArray<ServicePreset>(window.localStorage.getItem('quotesprint-service-presets'));
     const profileRaw = window.localStorage.getItem('quotesprint-company-profile');
     if (localQuotes.length) setSavedQuotes(localQuotes);
     if (localLeads.length) setSavedLeads(localLeads);
+    if (localPresets.length) setServicePresets(mergeById(starterServicePresets, localPresets, 40));
     if (profileRaw) {
       try {
         const profile = JSON.parse(profileRaw);
@@ -495,6 +522,10 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
   useEffect(() => {
     window.localStorage.setItem('quotesprint-leads', JSON.stringify(savedLeads));
   }, [savedLeads]);
+
+  useEffect(() => {
+    window.localStorage.setItem('quotesprint-service-presets', JSON.stringify(servicePresets));
+  }, [servicePresets]);
 
   useEffect(() => {
     const profile = { business, serviceArea, brandVoice, differentiator, guarantee };
@@ -569,6 +600,38 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     const lost = savedLeads.filter((lead) => leadStatus(lead) === 'lost').length;
     return { active, won, lost, total: savedLeads.length };
   }, [savedLeads]);
+
+  const customerProfiles = useMemo(() => savedLeads.map((lead) => {
+    const leadQuotes = savedQuotes.filter((quote) => quote.customer.trim().toLowerCase() === lead.name.trim().toLowerCase());
+    const totalQuoted = leadQuotes.reduce((sum, quote) => sum + quote.total, 0);
+    const lastQuote = leadQuotes[0];
+    return { lead, leadQuotes, totalQuoted, lastQuote };
+  }), [savedLeads, savedQuotes]);
+
+  const monthlyScripts = useMemo(() => {
+    const firstName = customer.trim().split(' ')[0] || 'there';
+    return [
+      { title: 'Slow lead reactivation', text: `Hi ${firstName}, this is ${business}. Just checking whether the ${jobType.toLowerCase()} is still on your list. We still have a few ${serviceArea} openings, and I can help you choose the simplest next step if timing or budget changed.` },
+      { title: 'Seasonal check-in', text: `${business} is helping ${serviceArea} homeowners get ahead of seasonal service issues. If you want us to look at ${jobType.toLowerCase()} before the schedule fills, reply with a good day and I will send the next available options.` },
+      { title: 'Payment plan language', text: `If it helps, we can separate the must-do work from optional upgrades and talk through deposit or phasing options. The goal is to solve the urgent part first without making the decision feel rushed.` },
+      { title: 'Review request', text: `Thanks again for choosing ${business}. If the work felt clear, professional, and easy, would you mind leaving us a quick review? It helps other ${serviceArea} homeowners know who they can trust.` },
+    ];
+  }, [business, customer, jobType, serviceArea]);
+
+  const reviewPrompts = useMemo(() => ({
+    sms: `Hi ${customer.trim().split(' ')[0] || 'there'}, thanks again for choosing ${business}. If everything went smoothly, would you leave us a quick review? It helps local homeowners feel confident reaching out to us.`,
+    email: `Subject: Quick favor after your ${jobType.toLowerCase()}\n\nHi ${customer.trim().split(' ')[0] || 'there'},\n\nThanks again for choosing ${business}. We appreciate the chance to help in ${serviceArea}. If the experience felt clear, professional, and easy, would you leave us a quick review?\n\nYour feedback helps other local homeowners know what to expect before they reach out.\n\nThank you,\n${business}`,
+  }), [business, customer, jobType, serviceArea]);
+
+  const winLossBreakdown = useMemo(() => {
+    const tracked = savedQuotes.filter((quote) => quote.status !== 'open');
+    const reasons = tracked.reduce<Record<string, number>>((acc, quote) => {
+      const reason = quote.winLossReason || 'No reason set';
+      acc[reason] = (acc[reason] || 0) + 1;
+      return acc;
+    }, {});
+    return { tracked: tracked.length, reasons: Object.entries(reasons).sort((a, b) => b[1] - a[1]) };
+  }, [savedQuotes]);
 
   useEffect(() => {
     setCustomSocialPosts({});
@@ -658,12 +721,61 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
   }
 
   function updateStatus(id: string, status: QuoteStatus) {
-    setSavedQuotes((quotes) => quotes.map((quote) => quote.id === id ? { ...quote, status } : quote));
-    fetch('/api/quotes', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, status }),
-    }).catch(() => null);
+    let updatedQuote: SavedQuote | null = null;
+    setSavedQuotes((quotes) => quotes.map((quote) => {
+      if (quote.id !== id) return quote;
+      updatedQuote = { ...quote, status, winLossReason: status === 'open' ? undefined : quote.winLossReason };
+      return updatedQuote;
+    }));
+    window.setTimeout(() => {
+      if (!updatedQuote) return;
+      fetch('/api/quotes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quote: updatedQuote }),
+      }).catch(() => null);
+    }, 0);
+  }
+
+  function updateQuoteReason(id: string, winLossReason: string) {
+    let updatedQuote: SavedQuote | null = null;
+    setSavedQuotes((quotes) => quotes.map((quote) => {
+      if (quote.id !== id) return quote;
+      updatedQuote = { ...quote, winLossReason };
+      return updatedQuote;
+    }));
+    window.setTimeout(() => {
+      if (!updatedQuote) return;
+      fetch('/api/quotes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quote: updatedQuote }),
+      }).catch(() => null);
+    }, 0);
+  }
+
+  function applyServicePreset(preset: ServicePreset) {
+    setJobType(preset.jobType);
+    setLaborHours(preset.laborHours);
+    setLaborRate(preset.laborRate);
+    setMaterials(preset.materials);
+    setDeposit(preset.deposit);
+    setAiStatus(`Applied ${preset.name}.`);
+  }
+
+  function saveCurrentServicePreset() {
+    const preset: ServicePreset = { id: crypto.randomUUID(), name: presetName || `${jobType} preset`, jobType, laborHours, laborRate, materials, deposit };
+    setServicePresets((presets) => [preset, ...presets].slice(0, 40));
+    setAiStatus(`Saved ${preset.name} as a reusable service preset.`);
+  }
+
+  function loadCustomerProfile(lead: SavedLead) {
+    setCustomer(lead.name);
+    setLeadPhone(lead.phone);
+    setLeadEmail(lead.email);
+    setLeadAddress(lead.address);
+    setLeadNotes(lead.notes);
+    setAiStatus(`Loaded ${lead.name}'s contact profile.`);
   }
 
   function saveLeadEdit() {
@@ -763,6 +875,43 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     setGeneratingSection(null);
   }
 
+  async function coachFollowUpReply() {
+    if (generatingSection) return;
+    const fallback = `Hi ${customer.trim().split(' ')[0] || 'there'}, I understand. For this ${jobType.toLowerCase()}, the best next step is to separate the must-handle items from anything optional so you can make a clear decision. The working estimate is ${money(result.total)}, and the deposit to hold the schedule is ${money(result.depositDue)}. If price or timing is the concern, I can walk you through the simplest option first.`;
+
+    if (!aiEnabled) {
+      setCoachedReply(fallback);
+      setAiStatus('Generated a non-AI follow-up coach reply. Live + AI can tailor this from the exact customer message.');
+      return;
+    }
+
+    setGeneratingSection('Follow-up coach');
+    setAiStatus('Coaching the best reply...');
+    const detail = industryDetails[jobType];
+    const response = await fetch('/api/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'follow-up-coach',
+        company: `Business: ${business}\nService area: ${serviceArea}\nBrand voice: ${brandVoice}\nWhy customers choose us: ${differentiator}\nTrust promise: ${guarantee}`,
+        industry: jobType,
+        source: customerReply,
+        instruction: `The customer replied to a quote. Write the best concise SMS reply for ${customer}. It should address the concern, protect trust, avoid sounding desperate, and move toward a clear next step. Quote total: ${money(result.total)}. Deposit: ${money(result.depositDue)}. Industry concerns: ${detail.customerConcerns.join(', ')}. Return only the message to send.`,
+      }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      setCoachedReply(fallback);
+      setAiStatus(data.message || 'AI coach unavailable, showing a strong fallback reply.');
+      setGeneratingSection(null);
+      return;
+    }
+    setCoachedReply(data.output || fallback);
+    if (typeof data.remaining === 'number') setAiUsage({ used: data.used, remaining: data.remaining, total: 100, enabled: true });
+    setAiStatus(`Follow-up coach reply ready. ${data.remaining} AI credits left this month.`);
+    setGeneratingSection(null);
+  }
+
   return (
     <>
       {aiEnabled ? <aside className="ai-credit-widget"><span>AI credits</span><strong>{aiUsage ? aiUsage.remaining : '—'} / {aiUsage ? aiUsage.total : 100}</strong><small>{aiUsage ? `${aiUsage.used} used this month` : 'Loading usage'}</small></aside> : null}
@@ -770,6 +919,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
         <button type="button" className={activeTab === 'tool' ? 'active' : ''} onClick={() => setActiveTab('tool')}>Quote tool</button>
         <button type="button" className={activeTab === 'social' ? 'active' : ''} onClick={() => setActiveTab('social')}>Social posts</button>
         <button type="button" className={activeTab === 'leads' ? 'active' : ''} onClick={() => setActiveTab('leads')}>Lead pipeline</button>
+        <button type="button" className={activeTab === 'sales' ? 'active' : ''} onClick={() => setActiveTab('sales')}>Sales tools</button>
         <button type="button" className={activeTab === 'history' ? 'active' : ''} onClick={() => setActiveTab('history')}>Saved history</button>
       </div>
 
@@ -912,6 +1062,58 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
         </article>
       </section> : null}
 
+      {activeTab === 'sales' ? <section className="portal-panel-grid single">
+        <article className="copy-card">
+          <div className="card-title-row"><div><h3>Customer profiles</h3><p className="fine-print">Saved contact details, quote history, and quick-load customer records.</p></div></div>
+          {customerProfiles.length ? <div className="profile-grid">
+            {customerProfiles.slice(0, 12).map(({ lead, leadQuotes, totalQuoted, lastQuote }) => <article className="social-post-card" key={lead.id}>
+              <div className="card-title-row"><strong>{lead.name}</strong><button type="button" className="button mini secondary-button" onClick={() => loadCustomerProfile(lead)}>Load profile</button></div>
+              <p>{[lead.phone, lead.email, lead.address].filter(Boolean).join(' · ') || 'No contact details yet'}</p>
+              <p className="fine-print">{leadQuotes.length} saved quote{leadQuotes.length === 1 ? '' : 's'} · {money(totalQuoted)} total quoted{lastQuote ? ` · Last: ${lastQuote.jobType}` : ''}</p>
+              {lead.notes ? <p className="fine-print">{lead.notes}</p> : null}
+            </article>)}
+          </div> : <p>Save leads in the pipeline to build reusable customer profiles.</p>}
+        </article>
+
+        <article className="copy-card">
+          <h3>Service menu presets</h3>
+          <div className="preset-save-row"><label>Preset name<input value={presetName} onChange={(e) => setPresetName(e.target.value)} /></label><button type="button" className="button" onClick={saveCurrentServicePreset}>Save current quote settings</button></div>
+          <div className="profile-grid">
+            {servicePresets.map((preset) => <article className="social-post-card" key={preset.id}>
+              <div className="card-title-row"><strong>{preset.name}</strong><button type="button" className="button mini" onClick={() => applyServicePreset(preset)}>Apply</button></div>
+              <p>{preset.jobType} · {preset.laborHours} hrs · {money(preset.laborRate)}/hr · {money(preset.materials)} materials · {preset.deposit}% deposit</p>
+            </article>)}
+          </div>
+        </article>
+
+        <article className="copy-card">
+          <h3>Monthly script drops</h3>
+          <div className="social-post-list">
+            {monthlyScripts.map((script) => <article className="social-post-card" key={script.title}><strong>{script.title}</strong><pre>{script.text}</pre></article>)}
+          </div>
+        </article>
+
+        <article className="copy-card">
+          <div className="card-title-row"><h3>AI follow-up coach</h3><button type="button" className="button mini" disabled={Boolean(generatingSection)} onClick={coachFollowUpReply}>{generatingSection === 'Follow-up coach' ? <><span className="spinner" /> Coaching</> : aiEnabled ? 'Coach reply with AI' : 'Draft reply'}</button></div>
+          <label>Paste the customer's reply<textarea rows={4} value={customerReply} onChange={(e) => setCustomerReply(e.target.value)} /></label>
+          {coachedReply ? <pre>{coachedReply}</pre> : <p className="fine-print">Use this when a customer pushes back, goes quiet, asks about price, or needs a clearer next step.</p>}
+        </article>
+
+        <article className="copy-card">
+          <h3>Review and reputation prompts</h3>
+          <div className="social-post-list">
+            <article className="social-post-card"><strong>Review request SMS</strong><pre>{reviewPrompts.sms}</pre></article>
+            <article className="social-post-card"><strong>Review request email</strong><pre>{reviewPrompts.email}</pre></article>
+          </div>
+        </article>
+
+        <article className="copy-card">
+          <h3>Win/loss tracking</h3>
+          <p className="fine-print">Mark quotes won or lost in Saved history, then set the reason. QuoteSprint will summarize what is actually happening.</p>
+          {winLossBreakdown.tracked ? <div className="pipeline-metrics">{winLossBreakdown.reasons.map(([reason, count]) => <span key={reason}>{reason}: {count}</span>)}</div> : <p>No won/lost reasons tracked yet.</p>}
+        </article>
+      </section> : null}
+
       {activeTab === 'history' ? <section className="portal-panel-grid single">
         <article className="copy-card">
           <h3>Saved quote history</h3>
@@ -929,11 +1131,12 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
                         <label>Total<input type="number" min="0" value={Math.round(editingQuote.total)} onChange={(e) => setEditingQuote({ ...editingQuote, total: Number(e.target.value) })} /></label>
                         <label>Deposit due<input type="number" min="0" value={Math.round(editingQuote.depositDue)} onChange={(e) => setEditingQuote({ ...editingQuote, depositDue: Number(e.target.value) })} /></label>
                       </div>
-                      <label>Status<select value={editingQuote.status} onChange={(e) => setEditingQuote({ ...editingQuote, status: e.target.value as QuoteStatus })}><option value="open">Open</option><option value="won">Won</option><option value="lost">Lost</option></select></label>
+                      <label>Status<select value={editingQuote.status} onChange={(e) => setEditingQuote({ ...editingQuote, status: e.target.value as QuoteStatus, winLossReason: e.target.value === 'open' ? undefined : editingQuote.winLossReason })}><option value="open">Open</option><option value="won">Won</option><option value="lost">Lost</option></select></label>
+                      {editingQuote.status !== 'open' ? <label>{editingQuote.status === 'won' ? 'Win reason' : 'Loss reason'}<select value={editingQuote.winLossReason || ''} onChange={(e) => setEditingQuote({ ...editingQuote, winLossReason: e.target.value })}><option value="">Choose a reason</option>{(editingQuote.status === 'won' ? winReasons : lossReasons).map((reason) => <option key={reason}>{reason}</option>)}</select></label> : null}
                       <div className="row-actions"><button type="button" className="button mini" onClick={saveQuoteEdit}>Save changes</button><button type="button" className="button mini secondary-button" onClick={() => setEditingQuote(null)}>Cancel</button></div>
                     </div>
                   ) : (
-                    <><div><strong>{quote.customer}</strong><span>{quote.jobType} · {money(quote.total)}</span></div><div className="quote-row-actions"><select value={quote.status} onChange={(e) => updateStatus(quote.id, e.target.value as QuoteStatus)} aria-label={`Status for ${quote.customer}`}><option value="open">Open</option><option value="won">Won</option><option value="lost">Lost</option></select><button type="button" className="button mini secondary-button" onClick={() => setEditingQuote(quote)}>Edit</button></div></>
+                    <><div><strong>{quote.customer}</strong><span>{quote.jobType} · {money(quote.total)}</span>{quote.winLossReason ? <small>{quote.status === 'won' ? 'Win' : 'Loss'} reason: {quote.winLossReason}</small> : null}</div><div className="quote-row-actions"><select value={quote.status} onChange={(e) => updateStatus(quote.id, e.target.value as QuoteStatus)} aria-label={`Status for ${quote.customer}`}><option value="open">Open</option><option value="won">Won</option><option value="lost">Lost</option></select>{quote.status !== 'open' ? <select value={quote.winLossReason || ''} onChange={(e) => updateQuoteReason(quote.id, e.target.value)} aria-label={`Reason for ${quote.customer}`}><option value="">Reason</option>{(quote.status === 'won' ? winReasons : lossReasons).map((reason) => <option key={reason}>{reason}</option>)}</select> : null}<button type="button" className="button mini secondary-button" onClick={() => setEditingQuote(quote)}>Edit</button></div></>
                   )}
                 </div>
               ))}

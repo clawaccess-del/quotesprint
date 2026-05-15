@@ -171,6 +171,28 @@ ul { padding-left: 1.1rem; color: var(--muted); line-height: 1.8; }
   padding: .8rem;
 }
 .quote-row select { padding: .65rem; border-radius: .75rem; }
+.quote-row small {
+  display: block;
+  color: var(--muted);
+  margin-top: .25rem;
+}
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .8rem;
+}
+.preset-save-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: .8rem;
+  align-items: end;
+  margin-bottom: 1rem;
+}
+.preset-save-row label { margin: 0; }
+@media (max-width: 800px) {
+  .profile-grid,
+  .preset-save-row { grid-template-columns: 1fr; }
+}
 @media (max-width: 700px) {
   .subscription-plans { grid-template-columns: 1fr; }
 }
