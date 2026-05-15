@@ -1,8 +1,9 @@
 import Link from 'next/link';
 
 const features = [
-  ['Quote builder', 'Calculate a working estimate with labor, materials, urgency, and deposit logic in one clean workflow.'],
-  ['Follow-up engine', 'Generate SMS, email, call, and multi-day follow-up copy that keeps the next step clear.'],
+  ['Company profile memory', 'Save business name, service area, brand voice, differentiators, and trust promises so every output sounds like the company.'],
+  ['Industry-specific quote builder', 'Calculate a working estimate with labor, materials, urgency, deposit logic, and a playbook that changes by trade.'],
+  ['Follow-up engine', 'Generate SMS, email, call, objection, and multi-day follow-up copy that keeps the next step clear.'],
   ['Saved quote history', 'Keep recent estimates organized so open opportunities do not disappear between calls, jobs, and inboxes.'],
   ['Win-rate tracker', 'Mark quotes as open, won, or lost and see the health of your quoted pipeline at a glance.'],
   ['Monthly script drops', 'Get fresh seasonal, trade-specific, and objection-handling copy for the moments that decide the sale.'],
@@ -14,13 +15,13 @@ export default function ProductPage() {
     <section className="page-shell">
       <span className="eyebrow">Product</span>
       <h1>A practical quote-and-follow-up system for local-service teams.</h1>
-      <p className="lead">QuoteSprint helps home-service businesses respond faster, present estimates more clearly, and keep every open quote moving toward a decision.</p>
+      <p className="lead">QuoteSprint helps home-service businesses respond faster, present estimates more clearly, and generate copy that reflects the company, the customer, and the specific trade involved.</p>
       <div className="feature-grid">
         {features.map(([title, copy]) => <article key={title}><h2>{title}</h2><p>{copy}</p></article>)}
       </div>
       <div className="cta-panel">
         <h2>Use the builder free, then upgrade when you want the full operating system.</h2>
-        <p>The one-time kits give you the core templates. QuoteSprint Live adds saved quote history, follow-up sequences, monthly script updates, and pipeline tracking.</p>
+        <p>The one-time kits give you the core templates. QuoteSprint Live adds company profile memory, industry playbooks, saved quote history, follow-up sequences, monthly script updates, and pipeline tracking.</p>
         <div className="hero-actions">
           <Link href="/app" className="button">Open the builder</Link>
           <Link href="/checkout?plan=live" className="button secondary">Start QuoteSprint Live</Link>

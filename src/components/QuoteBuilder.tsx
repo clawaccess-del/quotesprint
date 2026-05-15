@@ -13,7 +13,111 @@ type SavedQuote = {
   createdAt: string;
 };
 
-const jobTypes = ['HVAC repair', 'plumbing repair', 'painting project', 'landscaping visit', 'cleaning service', 'roof inspection', 'handyman job', 'pest control visit'];
+type IndustryPlaybook = {
+  label: string;
+  proofPoint: string;
+  urgencyReason: string;
+  prepNote: string;
+  qualify: string;
+  objection: string;
+  risk: string;
+  closeBenefit: string;
+};
+
+const jobTypes = [
+  'HVAC repair',
+  'plumbing repair',
+  'painting project',
+  'landscaping visit',
+  'cleaning service',
+  'roof inspection',
+  'handyman job',
+  'pest control visit',
+];
+
+const playbooks: Record<string, IndustryPlaybook> = {
+  'HVAC repair': {
+    label: 'HVAC',
+    proofPoint: 'licensed comfort diagnostics, clear repair options, and no-pressure guidance before work begins',
+    urgencyReason: 'temperature swings can turn a small comfort issue into an urgent household problem',
+    prepNote: 'Please make sure the thermostat, indoor unit, outdoor unit, and electrical panel are accessible before we arrive.',
+    qualify: 'system age, thermostat behavior, unusual sounds, airflow, filter condition, and whether the home is losing heating or cooling now',
+    objection: 'If the price feels unexpected, we can separate the must-fix repair from optional efficiency improvements so you can decide clearly.',
+    risk: 'Waiting can strain the system, raise energy use, and make the appointment window harder to hold during peak weather.',
+    closeBenefit: 'restore comfort and avoid a longer outage window',
+  },
+  'plumbing repair': {
+    label: 'plumbing',
+    proofPoint: 'clean repair work, clear water-shutoff guidance, and practical options before anything is opened up',
+    urgencyReason: 'water problems can spread quickly and become more expensive when they sit',
+    prepNote: 'Please clear the area around the fixture or leak and note where the main shutoff is if you know it.',
+    qualify: 'active leak status, fixture location, water shutoff access, drainage symptoms, recent repairs, and photos of the affected area',
+    objection: 'If you want to control cost, we can start with the immediate repair and quote any optional upgrades separately.',
+    risk: 'Delaying can increase water damage, odors, drywall issues, and emergency scheduling costs.',
+    closeBenefit: 'stop the issue before it spreads',
+  },
+  'painting project': {
+    label: 'painting',
+    proofPoint: 'careful prep, clean lines, protected surfaces, and a finish schedule that respects your home',
+    urgencyReason: 'paint schedules fill quickly when weather and room availability line up',
+    prepNote: 'Please note wall condition, color goals, furniture access, and any areas that need patching or trim detail.',
+    qualify: 'square footage, surface condition, color changes, trim needs, ceiling height, furniture moving, and desired finish date',
+    objection: 'If budget is the concern, we can phase the project by room or separate prep, walls, trim, and ceiling options.',
+    risk: 'Waiting can push the project into a busier schedule and delay rooms you want finished for guests, listing photos, or seasonal plans.',
+    closeBenefit: 'lock in the finish date and avoid schedule drift',
+  },
+  'landscaping visit': {
+    label: 'landscaping',
+    proofPoint: 'practical outdoor planning, clean execution, and recommendations that fit the property instead of overbuilding it',
+    urgencyReason: 'landscape timing depends on weather, growth cycles, and crew availability',
+    prepNote: 'Please share photos of the yard, access points, drainage concerns, and the areas you want handled first.',
+    qualify: 'yard size, access, drainage, sun exposure, cleanup needs, plant or mulch preferences, and recurring maintenance goals',
+    objection: 'If the full scope feels large, we can break it into a first cleanup, priority install, and maintenance plan.',
+    risk: 'Delaying can let weeds, drainage, or overgrowth add more labor before the next available visit.',
+    closeBenefit: 'get the property back under control while the timing is right',
+  },
+  'cleaning service': {
+    label: 'cleaning',
+    proofPoint: 'reliable arrival windows, room-by-room scope clarity, and a clean checklist before the visit starts',
+    urgencyReason: 'cleaning slots go quickly before move-outs, events, holidays, and busy weekends',
+    prepNote: 'Please note bedrooms, bathrooms, pets, parking, access instructions, and any priority areas.',
+    qualify: 'home size, room count, cleaning level, pets, access, supplies, priority areas, and whether this is one-time or recurring',
+    objection: 'If the full clean is more than expected, we can focus the first visit on kitchens, baths, floors, and the highest-impact areas.',
+    risk: 'Waiting can make the clean longer, especially before events, move-outs, inspections, or recurring service starts.',
+    closeBenefit: 'secure the cleaning window before the schedule fills',
+  },
+  'roof inspection': {
+    label: 'roofing',
+    proofPoint: 'documented inspection notes, clear photo findings, and repair-first guidance when replacement is not necessary',
+    urgencyReason: 'roof issues can worsen with the next rain, wind, or heat cycle',
+    prepNote: 'Please share any leak photos, ceiling stains, attic access notes, and the approximate roof age if you know it.',
+    qualify: 'roof age, leak location, storm timing, shingle condition, attic access, insurance involvement, and visible interior damage',
+    objection: 'If you are not ready for a large repair, we can start with the inspection and separate urgent fixes from longer-term recommendations.',
+    risk: 'Delaying can turn a small flashing, shingle, or seal issue into interior water damage.',
+    closeBenefit: 'find the issue before the next weather event',
+  },
+  'handyman job': {
+    label: 'handyman',
+    proofPoint: 'clear task lists, practical repair options, and one visit planned around the highest-priority fixes',
+    urgencyReason: 'small repairs stack up and appointment blocks are easiest to use when the list is clear',
+    prepNote: 'Please send photos, measurements, product links if parts are needed, and your top three priorities.',
+    qualify: 'task list, photos, measurements, parts availability, wall type, access, and whether multiple small repairs should be bundled',
+    objection: 'If the list is too much for one visit, we can prioritize safety, function, and the most visible repairs first.',
+    risk: 'Waiting can leave small issues unfinished and make it harder to bundle the work efficiently.',
+    closeBenefit: 'knock out the repair list with a clear plan',
+  },
+  'pest control visit': {
+    label: 'pest control',
+    proofPoint: 'targeted treatment plans, prevention guidance, and clear expectations for what happens after service',
+    urgencyReason: 'pest activity can spread when entry points, nests, or food sources stay active',
+    prepNote: 'Please note where you are seeing activity, whether pets or children are in the home, and any recent treatments.',
+    qualify: 'pest type, activity location, frequency, entry points, pets, children, previous treatments, and indoor or outdoor concerns',
+    objection: 'If you are unsure about treatment, we can begin with inspection and prevention steps before recommending a larger plan.',
+    risk: 'Delaying can allow activity to spread, nests to grow, or entry points to stay open.',
+    closeBenefit: 'identify the source and stop the activity early',
+  },
+};
+
 const urgencyMultipliers: Record<string, number> = { normal: 1, soon: 1.12, emergency: 1.28 };
 const tones: Record<string, string> = {
   direct: 'clear, confident, and to the point',
@@ -27,6 +131,10 @@ function money(value: number) {
 
 export function QuoteBuilder() {
   const [business, setBusiness] = useState('Acme Home Services');
+  const [serviceArea, setServiceArea] = useState('the local area');
+  const [brandVoice, setBrandVoice] = useState('clear, helpful, and no-pressure');
+  const [differentiator, setDifferentiator] = useState('fast response, clean work, and clear next steps');
+  const [guarantee, setGuarantee] = useState('we explain any change before work begins');
   const [customer, setCustomer] = useState('Jordan');
   const [jobType, setJobType] = useState(jobTypes[0]);
   const [laborHours, setLaborHours] = useState(3);
@@ -38,13 +146,26 @@ export function QuoteBuilder() {
   const [savedQuotes, setSavedQuotes] = useState<SavedQuote[]>([]);
 
   useEffect(() => {
-    const raw = window.localStorage.getItem('quotesprint-quotes');
-    if (raw) setSavedQuotes(JSON.parse(raw));
+    const quoteRaw = window.localStorage.getItem('quotesprint-quotes');
+    const profileRaw = window.localStorage.getItem('quotesprint-company-profile');
+    if (quoteRaw) setSavedQuotes(JSON.parse(quoteRaw));
+    if (profileRaw) {
+      const profile = JSON.parse(profileRaw);
+      setBusiness(profile.business || 'Acme Home Services');
+      setServiceArea(profile.serviceArea || 'the local area');
+      setBrandVoice(profile.brandVoice || 'clear, helpful, and no-pressure');
+      setDifferentiator(profile.differentiator || 'fast response, clean work, and clear next steps');
+      setGuarantee(profile.guarantee || 'we explain any change before work begins');
+    }
   }, []);
 
   useEffect(() => {
     window.localStorage.setItem('quotesprint-quotes', JSON.stringify(savedQuotes));
   }, [savedQuotes]);
+
+  useEffect(() => {
+    window.localStorage.setItem('quotesprint-company-profile', JSON.stringify({ business, serviceArea, brandVoice, differentiator, guarantee }));
+  }, [business, serviceArea, brandVoice, differentiator, guarantee]);
 
   const result = useMemo(() => {
     const subtotal = laborHours * laborRate + materials;
@@ -52,28 +173,31 @@ export function QuoteBuilder() {
     const depositDue = total * (deposit / 100);
     const firstName = customer.trim().split(' ')[0] || 'there';
     const timePhrase = urgency === 'emergency' ? 'today' : urgency === 'soon' ? 'this week' : 'when your schedule allows';
-    const tonePhrase = tones[tone];
-    const reason = urgency === 'emergency'
-      ? 'because urgent service windows fill quickly'
+    const playbook = playbooks[jobType];
+    const tonePhrase = `${tones[tone]}, with a brand voice that feels ${brandVoice}`;
+    const bookingReason = urgency === 'emergency'
+      ? `${playbook.urgencyReason}, so reserving the appointment now protects the fastest available response`
       : urgency === 'soon'
-        ? 'so we can keep your project moving while the details are fresh'
-        : 'so you have a clear next step whenever you are ready';
+        ? `${playbook.urgencyReason}, so holding the slot now keeps the project moving`
+        : `it gives you a clear next step without pressure`;
 
     return {
       total,
       depositDue,
-      sms: `Hi ${firstName}, this is ${business}. I put together the ${jobType.toLowerCase()} estimate: ${money(total)}. We can reserve your spot ${timePhrase} with a ${deposit}% deposit of ${money(depositDue)}. Want me to hold that opening?`,
-      email: `Subject: ${jobType} estimate from ${business}\n\nHi ${firstName},\n\nThanks for reaching out. Your working estimate is ${money(total)}. That includes the expected labor, materials, and scheduling priority for this request.\n\nTo reserve the next available opening, the deposit is ${money(depositDue)} (${deposit}%). Once that is confirmed, we will lock in the appointment window and send any prep details you need.\n\nIf anything changes after inspection, we will walk you through it before work begins.\n\nBest,\n${business}`,
-      call: `Open with: “Hi ${firstName}, this is ${business}. I saw your request for ${jobType.toLowerCase()} and wanted to help you get a clear answer quickly.”\n\nQualify: confirm address, timing, access, photos, and whether the issue needs priority scheduling.\n\nClose: “The working estimate is ${money(total)}. I can reserve the next opening with ${money(depositDue)} down ${reason}. Should I hold that spot for you?”`,
-      aiAssist: `Use a ${tonePhrase} tone. Position the estimate as ${money(total)}, explain that the ${money(depositDue)} deposit reserves the appointment, and make the next step easy: reply yes to hold the opening or send one concern for a quick clarification.`,
+      playbook,
+      sms: `Hi ${firstName}, this is ${business}. I reviewed the ${playbook.label.toLowerCase()} details and put together a working estimate of ${money(total)}. For ${serviceArea}, our focus is ${differentiator}. We can reserve your ${timePhrase} opening with ${money(depositDue)} down. Want me to hold it?`,
+      email: `Subject: ${playbook.label} estimate from ${business}\n\nHi ${firstName},\n\nThanks for reaching out to ${business}. Your working estimate is ${money(total)} for this ${playbook.label.toLowerCase()} request. That includes the expected labor, materials, and scheduling priority based on what you shared.\n\nWhat matters for this type of work: ${playbook.risk}\n\nWhy customers choose us: ${differentiator}. Our approach is ${playbook.proofPoint}.\n\nTo reserve the next available opening, the deposit is ${money(depositDue)} (${deposit}%). ${playbook.prepNote}\n\nIf anything changes after we see the job in person, ${guarantee}.\n\nBest,\n${business}`,
+      call: `Open with: “Hi ${firstName}, this is ${business}. I saw your ${playbook.label.toLowerCase()} request and wanted to help you get a clear answer quickly.”\n\nMatch the brand voice: ${tonePhrase}.\n\nQualify for this job: ask about ${playbook.qualify}.\n\nBuild confidence: “For this kind of work, we focus on ${playbook.proofPoint}. The main reason to handle it now is that ${playbook.risk}”\n\nClose: “The working estimate is ${money(total)}. I can reserve the next opening with ${money(depositDue)} down because ${bookingReason}. Should I hold that spot for you?”`,
+      aiAssist: `Write in a ${tonePhrase} tone for ${business}, serving ${serviceArea}. Do not use generic contractor language. Mention ${differentiator}, explain the ${playbook.label.toLowerCase()}-specific risk (${playbook.risk}), include this prep note (${playbook.prepNote}), and make the next step simple: reserve the opening with ${money(depositDue)} down or reply with one concern for clarification.`,
       sequence: [
-        `Day 0: Hi ${firstName}, this is ${business}. Your ${jobType.toLowerCase()} estimate is ${money(total)}. I can reserve the next opening with ${money(depositDue)} down. Want me to hold it?`,
-        `Day 1: Quick follow-up, ${firstName}. I still have your ${jobType.toLowerCase()} estimate ready. If you want the current opening, I can reserve it with the ${deposit}% deposit.`,
-        `Day 3: Hi ${firstName}, checking before we release this estimate window. Do you want us to keep the ${money(total)} ${jobType.toLowerCase()} quote active?`,
-        `Day 7: Last touch from ${business}. If this project is still on your list, reply with “ready” and we will help you get scheduled.`
+        `Day 0: Hi ${firstName}, this is ${business}. Your ${playbook.label.toLowerCase()} estimate is ${money(total)}. Because ${playbook.urgencyReason}, I can reserve the next opening with ${money(depositDue)} down. Want me to hold it?`,
+        `Day 1: Quick follow-up, ${firstName}. For this ${playbook.label.toLowerCase()} job, the main thing to avoid is this: ${playbook.risk} If you want the current opening, I can reserve it with the ${deposit}% deposit.`,
+        `Day 3: Hi ${firstName}, checking before we release this ${playbook.label.toLowerCase()} estimate window. ${playbook.prepNote} Do you want us to keep the ${money(total)} quote active?`,
+        `Day 7: Last touch from ${business}. If this is still on your list, reply “ready” and we will help you ${playbook.closeBenefit}.`
       ],
+      objectionReply: `If ${firstName} hesitates on price: “I understand. ${playbook.objection} The estimate is ${money(total)}, and the ${money(depositDue)} deposit simply reserves the appointment so we can keep the schedule clear for you.”`,
     };
-  }, [business, customer, jobType, laborHours, laborRate, materials, urgency, deposit, tone]);
+  }, [business, serviceArea, brandVoice, differentiator, guarantee, customer, jobType, laborHours, laborRate, materials, urgency, deposit, tone]);
 
   const stats = useMemo(() => {
     const totalQuoted = savedQuotes.reduce((sum, quote) => sum + quote.total, 0);
@@ -103,7 +227,14 @@ export function QuoteBuilder() {
   return (
     <section className="builder-grid">
       <form className="builder-panel">
+        <div className="form-section-title">Company profile</div>
         <label>Business name<input value={business} onChange={(e) => setBusiness(e.target.value)} /></label>
+        <label>Service area<input value={serviceArea} onChange={(e) => setServiceArea(e.target.value)} placeholder="Charleston, SC" /></label>
+        <label>Brand voice<input value={brandVoice} onChange={(e) => setBrandVoice(e.target.value)} placeholder="friendly, expert, premium, direct" /></label>
+        <label>Why customers choose you<textarea value={differentiator} onChange={(e) => setDifferentiator(e.target.value)} rows={3} /></label>
+        <label>Trust promise<textarea value={guarantee} onChange={(e) => setGuarantee(e.target.value)} rows={2} /></label>
+
+        <div className="form-section-title">Quote details</div>
         <label>Customer name<input value={customer} onChange={(e) => setCustomer(e.target.value)} /></label>
         <label>Job type<select value={jobType} onChange={(e) => setJobType(e.target.value)}>{jobTypes.map((type) => <option key={type}>{type}</option>)}</select></label>
         <div className="two-col">
@@ -120,9 +251,14 @@ export function QuoteBuilder() {
       </form>
       <div className="output-panel">
         <div className="estimate-box">
-          <small>Working estimate</small>
+          <small>{result.playbook.label} working estimate</small>
           <strong>{money(result.total)}</strong>
           <span>Deposit due: {money(result.depositDue)}</span>
+        </div>
+        <div className="industry-card">
+          <strong>{result.playbook.label} playbook applied</strong>
+          <p>{result.playbook.risk}</p>
+          <span>{result.playbook.prepNote}</span>
         </div>
         <div className="mini-stats">
           <div><strong>{savedQuotes.length}</strong><span>saved quotes</span></div>
@@ -132,6 +268,7 @@ export function QuoteBuilder() {
         <Output title="SMS follow-up" text={result.sms} />
         <Output title="Email follow-up" text={result.email} />
         <Output title="Call script" text={result.call} />
+        <Output title="Objection response" text={result.objectionReply} />
         <Output title="Advanced copy direction" text={result.aiAssist} />
         <article className="copy-card">
           <h3>Follow-up sequence</h3>

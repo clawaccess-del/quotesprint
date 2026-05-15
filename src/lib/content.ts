@@ -39,8 +39,8 @@ export const subscriptionPlans = [
     name: 'QuoteSprint Live',
     price: '$29',
     cadence: 'per month',
-    blurb: 'Keep every estimate, follow-up, and close opportunity moving with live quote history, sequences, and performance tracking.',
-    features: ['Saved quote history', 'Follow-up sequence generator', 'Monthly industry script drops', 'Win-rate and pipeline tracker', 'Advanced tone and objection copy'],
+    blurb: 'Keep every estimate, follow-up, and close opportunity moving with company-specific quote history, sequences, and performance tracking.',
+    features: ['Company profile and brand voice memory', 'Industry-specific quote playbooks', 'Saved quote history', 'Follow-up sequence generator', 'Monthly industry script drops', 'Win-rate and pipeline tracker'],
     featured: true,
   },
 ];

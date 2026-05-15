@@ -9,8 +9,8 @@ export default function Home() {
       <section className="hero">
         <div className="hero-copy">
           <span className="eyebrow">Built for service businesses that sell on speed</span>
-          <h1>Quote faster, follow up smarter, and keep every open estimate moving.</h1>
-          <p>QuoteSprint helps contractors and local-service teams turn new inquiries into professional estimates, confident follow-up messages, and a cleaner path to booked work.</p>
+          <h1>Company-specific quotes, follow-ups, and booking scripts in minutes.</h1>
+          <p>QuoteSprint uses your company profile, brand voice, service area, and industry playbooks to turn new inquiries into professional estimates, tailored follow-up messages, and a cleaner path to booked work.</p>
           <div className="hero-actions">
             <Link href="/app" className="button">Try the live builder</Link>
             <Link href="/checkout?plan=live" className="button secondary">Start QuoteSprint Live</Link>
@@ -37,8 +37,8 @@ export default function Home() {
       <section className="section">
         <div className="section-heading">
           <span className="eyebrow">Live product</span>
-          <h2>Build the quote, save it, and generate the next follow-up.</h2>
-          <p>Adjust the job details and QuoteSprint creates the estimate, deposit ask, SMS, email, call script, follow-up sequence, and quote tracking record.</p>
+          <h2>Build the quote around the company, not just the job type.</h2>
+          <p>Add the business name, service area, brand voice, trust promise, and customer-specific job details. QuoteSprint then changes the actual proof points, risks, prep notes, objections, and follow-up language for each industry.</p>
         </div>
         <QuoteBuilder />
       </section>
@@ -46,8 +46,8 @@ export default function Home() {
       <section className="section">
         <div className="section-heading">
           <span className="eyebrow">QuoteSprint Live</span>
-          <h2>A monthly layer for teams that want the system to keep improving.</h2>
-          <p>Subscribe for saved quote history, monthly industry scripts, richer follow-up sequences, objection handling updates, and a simple win-rate tracker.</p>
+          <h2>A monthly layer for teams that want more custom, more useful outputs.</h2>
+          <p>Subscribe for company profile memory, industry-specific playbooks, saved quote history, monthly script drops, richer follow-up sequences, objection handling updates, and a simple win-rate tracker.</p>
         </div>
         <div className="feature-grid">
           {monthlyScriptDrops.map((item) => <article key={item.title}><h2>{item.title}</h2><p>{item.copy}</p></article>)}
