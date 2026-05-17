@@ -568,7 +568,9 @@ textarea {
 }
 .pipeline-card,
 .lead-workflow-card {
+  position: relative;
   overflow: hidden;
+  isolation: isolate;
 }
 .workflow-progress {
   display: grid;
@@ -1190,8 +1192,25 @@ textarea {
   }
   .lead-management-layout .copy-card,
   .lead-management-layout .builder-panel {
+    background: #fffdf8;
     border-radius: 1rem;
     padding: .85rem;
+  }
+  .lead-management-layout .pipeline-card {
+    margin-top: .85rem;
+    z-index: 2;
+  }
+  .lead-management-layout .lead-workflow-card,
+  .lead-management-layout .pipeline-card,
+  .lead-management-layout .calendar-card,
+  .lead-management-layout .timeline-event,
+  .lead-management-layout .next-action-box,
+  .lead-management-layout .job-check-item,
+  .lead-management-layout .review-template-card {
+    background-color: #fffdf8;
+  }
+  .lead-management-layout .customer-timeline {
+    margin-bottom: 1rem;
   }
   .lead-selector-list {
     gap: .45rem;
