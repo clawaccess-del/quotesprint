@@ -3,6 +3,7 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 export type CompanyProfile = {
   business: string;
+  businessIndustry?: string;
   serviceArea: string;
   brandVoice: string;
   differentiator: string;
@@ -65,7 +66,7 @@ function profileFromCompanyName(value?: string | null): CompanyProfile | null {
     const parsed = JSON.parse(value);
     if (parsed && typeof parsed === 'object') return parsed as CompanyProfile;
   } catch {
-    return { business: value, serviceArea: 'the local area', brandVoice: 'clear, helpful, and no-pressure', differentiator: 'fast response, clean work, and clear next steps', guarantee: 'we explain any change before work begins' };
+    return { business: value, businessIndustry: 'HVAC', serviceArea: 'the local area', brandVoice: 'clear, helpful, and no-pressure', differentiator: 'fast response, clean work, and clear next steps', guarantee: 'we explain any change before work begins' };
   }
   return null;
 }
