@@ -467,6 +467,20 @@ textarea {
 .portal-panel-grid.single {
   grid-template-columns: 1fr;
 }
+.sales-tools-grid {
+  min-width: 0;
+  overflow: hidden;
+}
+.sales-tools-grid > .copy-card,
+.sales-tools-grid .social-post-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.sales-tools-grid pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: hidden;
+}
 .lead-entry-panel {
   position: static;
 }
@@ -761,10 +775,27 @@ textarea {
 @media (max-width: 700px) {
   .lead-row,
   .quote-row,
-  .calendar-item { grid-template-columns: 1fr; }
+  .calendar-item,
+  .compact-calendar-list .calendar-item { grid-template-columns: 1fr; }
   .month-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .row-actions,
   .quote-row-actions { justify-content: flex-start; }
+  .sales-tools-grid { gap: .8rem; }
+  .sales-tools-grid .copy-card,
+  .sales-tools-grid .social-post-card { padding: .9rem; }
+  .source-roi-table { overflow-x: visible; }
+  .source-roi-head { display: none; }
+  .source-roi-row {
+    min-width: 0;
+    grid-template-columns: 1fr 1fr;
+    gap: .35rem .65rem;
+  }
+  .source-roi-row strong { grid-column: 1 / -1; }
+  .source-roi-row span:nth-child(2)::before { content: 'Leads: '; }
+  .source-roi-row span:nth-child(3)::before { content: 'Won: '; }
+  .source-roi-row span:nth-child(4)::before { content: 'Win rate: '; }
+  .source-roi-row span:nth-child(5)::before { content: 'Quoted: '; }
+  .source-roi-row span:nth-child(6)::before { content: 'Won value: '; }
 }
 .social-post-list {
   display: grid;

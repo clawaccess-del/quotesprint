@@ -1249,7 +1249,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
         </article>
       </section> : null}
 
-      {activeTab === 'sales' ? <section className="portal-panel-grid single">
+      {activeTab === 'sales' ? <section className="portal-panel-grid single sales-tools-grid">
         <article className="copy-card source-roi-card">
           <div className="card-title-row"><div><h3>Lead source ROI</h3><p className="fine-print">See which lead sources produce the most quoted value, won jobs, and revenue.</p></div>{leadSourceRoi.best ? <span className="pipeline-total">Best: {leadSourceRoi.best.source}</span> : null}</div>
           {leadSourceRoi.rows.length ? <div className="source-roi-table">
