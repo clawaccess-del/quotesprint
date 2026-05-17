@@ -224,10 +224,21 @@ function parseClient(row: ClientAccountRow): ClientAccount {
   };
 }
 
-export async function listClientAccounts() {
+export async function listClientAccounts(): Promise<ClientAccount[]> {
   const response = await supabaseFetch('client_accounts?select=id,email,company_name,contact_name,portal_username,plan,status,notes,created_at,updated_at&order=created_at.desc');
-  const rows = await response.json();
+  const rows = await response.json() as ClientAccountRow[];
   return rows.map(parseClient);
+}
+
+
+export type AdminClientAccount = ClientAccount & { companyProfile: CompanyProfile | null };
+
+export async function listAdminClientAccounts(): Promise<AdminClientAccount[]> {
+  const clients = await listClientAccounts();
+  return Promise.all(clients.map(async (client) => ({
+    ...client,
+    companyProfile: await getCompanyProfile(client.email).catch(() => null),
+  })));
 }
 
 export async function upsertClientAccount(input: Partial<ClientAccount> & { password?: string }) {

@@ -1553,3 +1553,64 @@ textarea {
   .admin-grid { grid-template-columns: 1fr; }
   .card-title-row { flex-direction: column; }
 }
+
+.admin-top-nav {
+  position: sticky;
+  top: 5rem;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .7rem;
+  border: 1px solid var(--line);
+  background: rgba(255,250,241,.9);
+  backdrop-filter: blur(16px);
+  border-radius: 999px;
+  padding: .6rem;
+  margin: 1.5rem 0 0;
+}
+.admin-top-nav a {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: .65rem .9rem;
+  background: white;
+  color: var(--green-dark);
+  font-weight: 950;
+  border: 1px solid var(--line);
+}
+.client-create-card { margin-bottom: 1rem; }
+.client-account-list { display: grid; gap: 1rem; }
+.client-account-card {
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.72);
+  border-radius: 1.5rem;
+  box-shadow: 0 10px 30px rgba(18,72,50,.06);
+  overflow: hidden;
+}
+.client-account-card summary {
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem 1.2rem;
+  color: var(--green-dark);
+}
+.client-account-card summary span { color: var(--muted); font-weight: 800; }
+.client-edit-grid { padding: 0 1rem 1rem; }
+@media (max-width: 700px) {
+  .admin-top-nav { border-radius: 1.2rem; }
+  .admin-top-nav a,
+  .client-account-card summary { width: 100%; }
+  .client-account-card summary { align-items: flex-start; flex-direction: column; }
+}
+.owner-nav-link {
+  color: var(--green-dark);
+  background: rgba(255,255,255,.82);
+  border: 1px solid var(--line);
+  padding: .7rem 1rem;
+  border-radius: 999px;
+}
+.owner-nav-link.strong {
+  background: var(--green-dark);
+  color: white;
+}
