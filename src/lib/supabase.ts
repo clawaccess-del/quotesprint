@@ -106,18 +106,38 @@ function profileFromCompanyName(value?: string | null): CompanyProfile | null {
   return null;
 }
 
+async function createAuthBackedProfile(email: string) {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) throw new Error('Missing Supabase auth configuration');
+  const response = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify({
+      email,
+      password: `${crypto.randomUUID()}Aa!`,
+      email_confirm: true,
+      user_metadata: { source: 'leadsprint-server-profile' },
+    }),
+    cache: 'no-store',
+  });
+  if (!response.ok) {
+    const detail = await response.text().catch(() => '');
+    throw new Error(`Supabase auth user create failed: ${response.status} ${detail}`);
+  }
+  const user = await response.json() as { id: string };
+  const createResponse = await supabaseFetch('profiles?select=id,email,company_name', {
+    method: 'POST',
+    body: JSON.stringify([{ id: user.id, email, company_name: '' }]),
+    headers: { Prefer: 'return=representation' },
+  });
+  const created = await createResponse.json();
+  return created[0] as ProfileRow;
+}
+
 async function getOrCreateProfile(email: string): Promise<ProfileRow> {
   const existingResponse = await supabaseFetch(`profiles?email=eq.${encodeURIComponent(email)}&select=id,email,company_name&limit=1`);
   const existing = await existingResponse.json();
   if (existing?.[0]) return existing[0];
-
-  const createResponse = await supabaseFetch('profiles?select=id,email,company_name', {
-    method: 'POST',
-    body: JSON.stringify([{ id: crypto.randomUUID(), email, company_name: '' }]),
-    headers: { Prefer: 'return=representation' },
-  });
-  const created = await createResponse.json();
-  return created[0];
+  return createAuthBackedProfile(email);
 }
 
 export async function getCompanyProfile(email: string) {
