@@ -9,7 +9,7 @@ import Script from 'next/script';
 export const metadata: Metadata = {
   title: `${brand.name} | Lead management for home-service businesses`,
   description: brand.description,
-  metadataBase: new URL('https://quotesprint.vercel.app'),
+  metadataBase: new URL('https://leadsprinthelp.com'),
   manifest: '/manifest.webmanifest',
   applicationName: 'LeadSprint',
   appleWebApp: {
@@ -36,7 +36,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <Header />
         <main>{children}</main>
         <Footer />
-        <Script defer data-domain="quotesprint.vercel.app" src="https://plausible.io/js/script.js" strategy="afterInteractive" />
+        <Script defer data-domain="leadsprinthelp.com" src="https://plausible.io/js/script.js" strategy="afterInteractive" />
         <Analytics />
       </body>
     </html>

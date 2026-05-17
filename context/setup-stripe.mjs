@@ -4,7 +4,7 @@ import Stripe from 'stripe';
 
 const secretsPath = '/data/.openclaw/credentials/user-secrets.json';
 const root = '/data/.openclaw/workspace/projects/quotesprint';
-const siteUrl = 'https://quotesprint.vercel.app';
+const siteUrl = 'https://leadsprinthelp.com';
 const data = JSON.parse(fs.readFileSync(secretsPath, 'utf8'));
 const stripeSecret = data.tokens.stripe.secretKey;
 const vercelToken = data.tokens.vercel.token;
