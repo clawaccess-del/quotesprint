@@ -842,7 +842,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       return;
     }
     if (data.output) setCustomizedCopy((copy) => ({ ...copy, [title]: data.output }));
-    if (typeof data.remaining === 'number') setAiUsage({ used: data.used, remaining: data.remaining, total: 100, enabled: true });
+    if (typeof data.remaining === 'number') setAiUsage({ used: data.used, remaining: data.remaining, total: 50, enabled: true });
     setAiStatus(`Customized ${title.toLowerCase()}. ${data.remaining} AI credits left this month.`);
     setGeneratingSection(null);
   }
@@ -871,7 +871,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       return;
     }
     if (data.output) setCustomSocialPosts((posts) => ({ ...posts, [index]: data.output }));
-    if (typeof data.remaining === 'number') setAiUsage({ used: data.used, remaining: data.remaining, total: 100, enabled: true });
+    if (typeof data.remaining === 'number') setAiUsage({ used: data.used, remaining: data.remaining, total: 50, enabled: true });
     setAiStatus(`Customized social post option ${index + 1}. ${data.remaining} AI credits left this month.`);
     setGeneratingSection(null);
   }
@@ -908,14 +908,14 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       return;
     }
     setCoachedReply(data.output || fallback);
-    if (typeof data.remaining === 'number') setAiUsage({ used: data.used, remaining: data.remaining, total: 100, enabled: true });
+    if (typeof data.remaining === 'number') setAiUsage({ used: data.used, remaining: data.remaining, total: 50, enabled: true });
     setAiStatus(`Follow-up coach reply ready. ${data.remaining} AI credits left this month.`);
     setGeneratingSection(null);
   }
 
   return (
     <>
-      {aiEnabled ? <aside className="ai-credit-widget"><span>AI credits</span><strong>{aiUsage ? aiUsage.remaining : '—'} / {aiUsage ? aiUsage.total : 100}</strong><small>{aiUsage ? `${aiUsage.used} used this month` : 'Loading usage'}</small></aside> : null}
+      {aiEnabled ? <aside className="ai-credit-widget"><span>AI credits</span><strong>{aiUsage ? aiUsage.remaining : '—'} / {aiUsage ? aiUsage.total : 50}</strong><small>{aiUsage ? `${aiUsage.used} used this month` : 'Loading usage'}</small></aside> : null}
       <div className="portal-tabs" role="tablist" aria-label="Customer portal sections">
         <button type="button" className={activeTab === 'tool' ? 'active' : ''} onClick={() => setActiveTab('tool')}>Quote tool</button>
         <button type="button" className={activeTab === 'social' ? 'active' : ''} onClick={() => setActiveTab('social')}>Social posts</button>

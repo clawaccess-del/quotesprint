@@ -35,7 +35,7 @@ export function AIEnhancer({ enabled }: { enabled: boolean }) {
       <section className="ai-panel locked">
         <span className="eyebrow">AI add-on</span>
         <h2>Need deeper customization?</h2>
-        <p>LeadSprint Live works without AI. Upgrade to Live + AI when you want brand-voice rewrites, richer objection handling, and expanded follow-up sequences with 100 monthly AI credits.</p>
+        <p>LeadSprint Live works without AI. Upgrade to Live + AI when you want brand-voice rewrites, richer objection handling, and expanded follow-up sequences with 50 monthly AI credits.</p>
         <a className="button" href="/checkout?plan=live_ai">Upgrade to Live + AI</a>
       </section>
     );
@@ -52,7 +52,7 @@ export function AIEnhancer({ enabled }: { enabled: boolean }) {
             <option value="rewrite">Rewrite or polish, 1 credit</option>
             <option value="objection">Handle an objection, 1 credit</option>
             <option value="email">Write a fuller email, 2 credits</option>
-            <option value="sequence">Create an expanded sequence, 3 credits</option>
+            <option value="sequence">Create an expanded sequence, 4 credits</option>
           </select>
         </label>
         <label>Industry or job type<input value={industry} onChange={(event) => setIndustry(event.target.value)} /></label>
@@ -62,7 +62,7 @@ export function AIEnhancer({ enabled }: { enabled: boolean }) {
       <label>What should AI improve?<textarea rows={2} value={instruction} onChange={(event) => setInstruction(event.target.value)} /></label>
       <button className="button" type="button" onClick={generate}>Use AI credits</button>
       {status ? <p className="fine-print">{status}</p> : null}
-      {remaining !== null ? <p className="fine-print">Monthly cap: {remaining} of 100 credits remaining.</p> : null}
+      {remaining !== null ? <p className="fine-print">Monthly cap: {remaining} of 50 credits remaining.</p> : null}
       {output ? <article className="copy-card"><h3>AI-enhanced copy</h3><pre>{output}</pre></article> : null}
     </section>
   );

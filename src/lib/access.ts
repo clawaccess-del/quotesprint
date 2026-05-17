@@ -15,7 +15,7 @@ export type AiUsage = {
 
 export const ACCESS_COOKIE = 'qs_access';
 export const AI_USAGE_COOKIE = 'qs_ai_usage';
-export const AI_MONTHLY_CREDITS = 100;
+export const AI_MONTHLY_CREDITS = 50;
 
 function signingSecret() {
   return process.env.ACCESS_SIGNING_SECRET || process.env.STRIPE_SECRET_KEY || 'quotesprint-dev-secret';

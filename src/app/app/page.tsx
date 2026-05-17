@@ -36,7 +36,7 @@ export default async function AppPage() {
       <p className="lead">Use LeadSprint to manage customer details, create company-specific estimates, write deposit asks, generate follow-up copy, handle objections, run four-step sequences, and track the pipeline.</p>
       <div className="access-banner">
         <strong>Access active</strong>
-        <span>{aiEnabled ? 'AI credits unlocked with a 100-credit monthly cap.' : access.plan === 'live' ? 'Monthly non-AI system unlocked. Upgrade anytime for AI credits.' : 'One-time product unlocked for this browser.'}</span>
+        <span>{aiEnabled ? 'AI credits unlocked with a 50-credit monthly cap.' : access.plan === 'live' ? 'Monthly non-AI system unlocked. Upgrade anytime for AI credits.' : 'One-time product unlocked for this browser.'}</span>
       </div>
       <div className="download-panel">
         <strong>Downloads included</strong>

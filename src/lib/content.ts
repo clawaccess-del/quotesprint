@@ -49,7 +49,7 @@ export const subscriptionPlans = [
     price: '$49',
     cadence: 'per month',
     blurb: 'Everything in LeadSprint Live, plus usage-limited AI credits for deeper brand-voice rewrites and job-specific sales copy.',
-    features: ['Everything in LeadSprint Live', '100 AI credits per month', 'Brand-voice rewrites', 'Custom objection handling', 'Expanded follow-up sequences', 'Hard usage cap to protect cost'],
+    features: ['Everything in LeadSprint Live', '50 AI credits per month', 'Brand-voice rewrites', 'Custom objection handling', 'Expanded follow-up sequences', 'Hard usage cap to protect cost'],
   },
 ];
 

@@ -13,7 +13,7 @@ const creditCost: Record<string, number> = {
   rewrite: 1,
   objection: 1,
   email: 2,
-  sequence: 3,
+  sequence: 4,
   social: 2,
 };
 
@@ -37,10 +37,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, message: 'Monthly AI credits are used up. Upgrade or wait for next month.', remaining: 0 }, { status: 402 });
   }
 
-  const company = String(body.company || '').slice(0, 1200);
+  const company = String(body.company || '').slice(0, 800);
   const industry = String(body.industry || '').slice(0, 120);
-  const source = String(body.source || '').slice(0, 3000);
-  const instruction = String(body.instruction || '').slice(0, 800);
+  const source = String(body.source || '').slice(0, 2200);
+  const instruction = String(body.instruction || '').slice(0, 500);
 
   const prompt = `Company and brand context:\n${company}\n\nIndustry/job context: ${industry}\n\nCustomer-facing draft or notes:\n${source}\n\nTask: ${action}. ${instruction}\n\nReturn only polished customer-facing copy. Avoid internal notes, placeholders, or explanations.`;
 
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
         { role: 'user', content: prompt },
       ],
       temperature: 0.6,
-      max_tokens: action === 'sequence' || action === 'social' ? 650 : 420,
+      max_tokens: action === 'sequence' ? 520 : action === 'social' ? 420 : 320,
     }),
   });
 
