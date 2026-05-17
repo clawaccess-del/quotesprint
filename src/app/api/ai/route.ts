@@ -15,6 +15,7 @@ const creditCost: Record<string, number> = {
   email: 2,
   sequence: 4,
   social: 2,
+  'follow-up-coach': 1,
 };
 
 export async function POST(request: NextRequest) {
@@ -37,12 +38,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, message: 'Monthly AI credits are used up. Upgrade or wait for next month.', remaining: 0 }, { status: 402 });
   }
 
-  const company = String(body.company || '').slice(0, 800);
-  const industry = String(body.industry || '').slice(0, 120);
+  const company = String(body.company || '').slice(0, 1800);
+  const industry = String(body.industry || '').slice(0, 220);
   const source = String(body.source || '').slice(0, 2200);
-  const instruction = String(body.instruction || '').slice(0, 500);
+  const instruction = String(body.instruction || '').slice(0, 900);
 
-  const prompt = `Company and brand context:\n${company}\n\nIndustry/job context: ${industry}\n\nCustomer-facing draft or notes:\n${source}\n\nTask: ${action}. ${instruction}\n\nReturn only polished customer-facing copy. Avoid internal notes, placeholders, or explanations.`;
+  const prompt = `Company profile, use this as the source of truth:\n${company}\n\nIndustry/job context: ${industry}\n\nCustomer-facing draft or customer notes:\n${source}\n\nTask: ${action}. ${instruction}\n\nBefore writing, adapt the message to the company profile: business name, industry, service area, ideal customer, offer/specialty, brand voice, differentiator, trust promise, contact details, and any provided website/logo context. Preserve the useful facts from the draft, but do not produce generic copy that could fit any company. Return only polished customer-facing copy. Avoid internal notes, placeholders, or explanations.`;
 
   const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
     body: JSON.stringify({
       model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
       messages: [
-        { role: 'system', content: 'You write concise, specific, customer-facing sales copy for home-service businesses. Use the provided company voice and industry context. Never mention that you are AI.' },
+        { role: 'system', content: 'You write concise, specific, customer-facing sales copy for home-service businesses. The company profile is mandatory context, not optional background. Every answer should sound like it came from that exact company, using its industry, local market, offer/specialty, brand voice, differentiator, trust promise, and contact details when relevant. Never mention that you are AI. Never output placeholders or internal notes.' },
         { role: 'user', content: prompt },
       ],
       temperature: 0.6,

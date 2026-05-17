@@ -1086,6 +1086,34 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     downloadCsv('leadsprint-quotes.csv', ['customer', 'job_type', 'total', 'deposit_due', 'status', 'win_loss_reason', 'created_at'], savedQuotes.map((quote) => [quote.customer, quote.jobType, quote.total, quote.depositDue, quote.status, quote.winLossReason || '', quote.createdAt]));
   }
 
+  function companyAiContext(extra = '') {
+    const detail = industryDetails[jobType];
+    const currentLead = leadWorkflow.currentLead;
+    return [
+      `Business: ${business}`,
+      `Business industry: ${businessIndustry}`,
+      `Service/job type: ${jobType}`,
+      `Logo URL: ${companyLogoUrl || 'not set'}`,
+      `Phone: ${companyPhone || 'not set'}`,
+      `Website: ${companyWebsite || 'not set'}`,
+      `Service area: ${serviceArea}`,
+      `Brand voice: ${brandVoice}`,
+      `Ideal customer: ${idealCustomer}`,
+      `Signature offer/specialty: ${companyOffer || 'not set'}`,
+      `Why customers choose us: ${differentiator}`,
+      `Trust promise: ${guarantee}`,
+      `Current customer/lead: ${customer}`,
+      currentLead ? `Lead details: status ${leadStatus(currentLead)}, source ${currentLead.source || 'not set'}, next step ${currentLead.nextStep || 'not set'}, follow-up date ${currentLead.followUpDate || 'not set'}, appointment date ${currentLead.appointmentDate || 'not set'}, notes ${currentLead.notes || 'none'}` : 'Lead details: no selected pipeline lead',
+      `Quote total: ${money(result.total)}`,
+      `Deposit due: ${money(result.depositDue)}`,
+      `Industry customer concerns: ${detail.customerConcerns.join(', ')}`,
+      `Industry quote inputs: ${detail.quoteInputs.join(', ')}`,
+      `Industry trust proof: ${detail.trustProof}`,
+      `Industry follow-up timing: ${detail.followUpTiming}`,
+      extra,
+    ].filter(Boolean).join('\n');
+  }
+
   function saveQuoteEdit() {
     if (!editingQuote) return;
     setSavedQuotes((quotes) => quotes.map((quote) => quote.id === editingQuote.id ? editingQuote : quote));
@@ -1101,8 +1129,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     if (generatingSection) return;
     setGeneratingSection(title);
     setAiStatus(`Customizing ${title.toLowerCase()}...`);
-    const detail = industryDetails[jobType];
-    const company = `Business: ${business}\nBusiness industry: ${businessIndustry}\nLogo URL: ${companyLogoUrl || 'not set'}\nPhone: ${companyPhone || 'not set'}\nWebsite: ${companyWebsite || 'not set'}\nOffer/focus: ${companyOffer || 'not set'}\nIdeal customer: ${idealCustomer}\nService area: ${serviceArea}\nBrand voice: ${brandVoice}\nWhy customers choose us: ${differentiator}\nTrust promise: ${guarantee}\nIndustry customer concerns: ${detail.customerConcerns.join(', ')}\nIndustry quote inputs: ${detail.quoteInputs.join(', ')}\nIndustry trust proof: ${detail.trustProof}\nIndustry follow-up timing: ${detail.followUpTiming}`;
+    const company = companyAiContext(`AI enhancement target: ${title}`);
     const response = await fetch('/api/ai', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1111,7 +1138,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
         company,
         industry: `${businessIndustry} / ${jobType}`,
         source: text,
-        instruction: `Add a deeper customization layer for ${customer}. Keep it customer-facing, specific to the job type, and ready to send. Reflect the industry's real buyer concerns, quote inputs, timing, prep, and objection dynamics.`,
+        instruction: `Add a deeper customization layer for ${customer}. Use the company profile as mandatory source material, especially the ideal customer, offer/specialty, brand voice, differentiator, service area, phone/website when useful, and trust promise. Keep it customer-facing, specific to the job type, and ready to send. Reflect the industry's real buyer concerns, quote inputs, timing, prep, and objection dynamics.`,
       }),
     });
     const data = await response.json();
@@ -1130,8 +1157,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     if (generatingSection) return;
     setGeneratingSection(`Social post ${index + 1}`);
     setAiStatus(`Customizing social post option ${index + 1}...`);
-    const detail = industryDetails[jobType];
-    const company = `Business: ${business}\nBusiness industry: ${businessIndustry}\nLogo URL: ${companyLogoUrl || 'not set'}\nPhone: ${companyPhone || 'not set'}\nWebsite: ${companyWebsite || 'not set'}\nOffer/focus: ${companyOffer || 'not set'}\nIdeal customer: ${idealCustomer}\nService area: ${serviceArea}\nBrand voice: ${brandVoice}\nWhy customers choose us: ${differentiator}\nTrust promise: ${guarantee}\nPlatform: ${socialPlatform}\nPost goal: ${socialGoal}\nPost topic: ${socialTopic}\nIndustry customer concerns: ${detail.customerConcerns.join(', ')}\nIndustry quote inputs: ${detail.quoteInputs.join(', ')}\nIndustry trust proof: ${detail.trustProof}`;
+    const company = companyAiContext(`Platform: ${socialPlatform}\nPost goal: ${socialGoal}\nPost topic: ${socialTopic}`);
     const response = await fetch('/api/ai', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1140,7 +1166,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
         company,
         industry: `${businessIndustry} / ${jobType}`,
         source: text,
-        instruction: `Rewrite this into a more custom ${socialPlatform} post. It must strongly reflect the selected goal (${socialGoal}) and topic (${socialTopic}). Make it specific to the company, industry, customer concerns, and platform. Return only the finished post.`,
+        instruction: `Rewrite this into a more custom ${socialPlatform} post. It must strongly reflect the selected goal (${socialGoal}) and topic (${socialTopic}). Make it specific to this company, including service area, ideal customer, offer/specialty, differentiator, trust promise, and brand voice. Return only the finished post.`,
       }),
     });
     const data = await response.json();
@@ -1168,12 +1194,13 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     setGeneratingSection('Follow-up coach');
     setAiStatus('Coaching the best reply...');
     const detail = industryDetails[jobType];
+    const company = companyAiContext(`Customer reply to handle: ${customerReply}`);
     const response = await fetch('/api/ai', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         action: 'follow-up-coach',
-        company: `Business: ${business}\nBusiness industry: ${businessIndustry}\nLogo URL: ${companyLogoUrl || 'not set'}\nPhone: ${companyPhone || 'not set'}\nWebsite: ${companyWebsite || 'not set'}\nOffer/focus: ${companyOffer || 'not set'}\nIdeal customer: ${idealCustomer}\nService area: ${serviceArea}\nBrand voice: ${brandVoice}\nWhy customers choose us: ${differentiator}\nTrust promise: ${guarantee}`,
+        company,
         industry: `${businessIndustry} / ${jobType}`,
         source: customerReply,
         instruction: `The customer replied to a quote. Write the best concise SMS reply for ${customer}. It should address the concern, protect trust, avoid sounding desperate, and move toward a clear next step. Quote total: ${money(result.total)}. Deposit: ${money(result.depositDue)}. Industry concerns: ${detail.customerConcerns.join(', ')}. Return only the message to send.`,
