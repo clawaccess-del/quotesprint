@@ -25,6 +25,7 @@ type SavedLead = {
   source?: string;
   nextStep?: string;
   followUpDate?: string;
+  appointmentDate?: string;
   status?: LeadStatus;
   createdAt: string;
 };
@@ -441,13 +442,14 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
   const [leadSource, setLeadSource] = useState('Website form');
   const [leadNextStep, setLeadNextStep] = useState('Send first response and confirm details');
   const [leadFollowUpDate, setLeadFollowUpDate] = useState('');
+  const [leadAppointmentDate, setLeadAppointmentDate] = useState('');
   const [editingLead, setEditingLead] = useState<SavedLead | null>(null);
   const [editingQuote, setEditingQuote] = useState<SavedQuote | null>(null);
   const [customizedCopy, setCustomizedCopy] = useState<Record<string, string>>({});
   const [aiStatus, setAiStatus] = useState('');
   const [generatingSection, setGeneratingSection] = useState<string | null>(null);
   const [accountLoaded, setAccountLoaded] = useState(false);
-  const [activeTab, setActiveTab] = useState<'tool' | 'social' | 'leads' | 'history' | 'sales'>('tool');
+  const [activeTab, setActiveTab] = useState<'tool' | 'social' | 'leads' | 'calendar' | 'history' | 'sales'>('tool');
   const [socialPlatform, setSocialPlatform] = useState('Facebook');
   const [socialGoal, setSocialGoal] = useState('Book more estimates');
   const [socialTopic, setSocialTopic] = useState('seasonal service reminder');
@@ -629,6 +631,33 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     return { currentLead, currentStage, stageIndex, stage, latestQuote, checklist };
   }, [customer, savedLeads, savedQuotes]);
 
+  const calendarItems = useMemo(() => {
+    const items = savedLeads.flatMap((lead) => {
+      const base = { lead, status: leadStatus(lead) };
+      return [
+        lead.followUpDate ? { ...base, date: lead.followUpDate, type: 'Follow-up', detail: lead.nextStep || 'Follow up with this lead' } : null,
+        lead.appointmentDate ? { ...base, date: lead.appointmentDate, type: 'Sales appointment', detail: 'Booked sales call, estimate visit, or job decision' } : null,
+      ].filter(Boolean) as { lead: SavedLead; status: LeadStatus; date: string; type: string; detail: string }[];
+    });
+    return items.sort((a, b) => a.date.localeCompare(b.date));
+  }, [savedLeads]);
+
+  const upcomingCalendarItems = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    return calendarItems.filter((item) => item.date >= today).slice(0, 12);
+  }, [calendarItems]);
+
+  const calendarDays = useMemo(() => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    return Array.from({ length: daysInMonth }, (_, index) => {
+      const date = `${year}-${String(month + 1).padStart(2, '0')}-${String(index + 1).padStart(2, '0')}`;
+      return { date, day: index + 1, items: calendarItems.filter((item) => item.date === date) };
+    });
+  }, [calendarItems]);
+
   const customerProfiles = useMemo(() => savedLeads.map((lead) => {
     const leadQuotes = savedQuotes.filter((quote) => quote.customer.trim().toLowerCase() === lead.name.trim().toLowerCase());
     const totalQuoted = leadQuotes.reduce((sum, quote) => sum + quote.total, 0);
@@ -704,6 +733,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       source: leadSource,
       nextStep: leadNextStep,
       followUpDate: leadFollowUpDate,
+      appointmentDate: leadAppointmentDate,
       status: 'new',
       createdAt: new Date().toISOString(),
     };
@@ -737,6 +767,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       source: existingLead?.source || leadSource,
       nextStep: 'Follow up on estimate and ask for a yes/no decision',
       followUpDate: existingLead?.followUpDate || leadFollowUpDate,
+      appointmentDate: existingLead?.appointmentDate || leadAppointmentDate,
       status: 'quoted',
       createdAt: existingLead?.createdAt || new Date().toISOString(),
     };
@@ -812,6 +843,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     setLeadSource(lead.source || 'Website form');
     setLeadNextStep(lead.nextStep || leadStages.find((stage) => stage.status === leadStatus(lead))?.action || 'Confirm the next step');
     setLeadFollowUpDate(lead.followUpDate || '');
+    setLeadAppointmentDate(lead.appointmentDate || '');
     setActiveTab('leads');
     setAiStatus(`Loaded ${lead.name}'s contact profile.`);
   }
@@ -968,6 +1000,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
         <button type="button" className={activeTab === 'tool' ? 'active' : ''} onClick={() => setActiveTab('tool')}>Quote tool</button>
         <button type="button" className={activeTab === 'social' ? 'active' : ''} onClick={() => setActiveTab('social')}>Social posts</button>
         <button type="button" className={activeTab === 'leads' ? 'active' : ''} onClick={() => setActiveTab('leads')}>Lead pipeline</button>
+        <button type="button" className={activeTab === 'calendar' ? 'active' : ''} onClick={() => setActiveTab('calendar')}>Calendar</button>
         <button type="button" className={activeTab === 'sales' ? 'active' : ''} onClick={() => setActiveTab('sales')}>Sales tools</button>
         <button type="button" className={activeTab === 'history' ? 'active' : ''} onClick={() => setActiveTab('history')}>Saved history</button>
       </div>
@@ -1074,6 +1107,10 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
             <label>Lead source<input value={leadSource} onChange={(e) => setLeadSource(e.target.value)} placeholder="Google, referral, Facebook, phone call" /></label>
             <label>Follow-up date<input type="date" value={leadFollowUpDate} onChange={(e) => setLeadFollowUpDate(e.target.value)} /></label>
           </div>
+          <div className="two-col">
+            <label>Sales / appointment date<input type="date" value={leadAppointmentDate} onChange={(e) => setLeadAppointmentDate(e.target.value)} /></label>
+            <label>Pipeline stage<select value={leadWorkflow.currentStage} onChange={(e) => leadWorkflow.currentLead ? updateLeadStatus(leadWorkflow.currentLead.id, e.target.value as LeadStatus) : null}>{leadStages.map((option) => <option value={option.status} key={option.status}>{option.label}</option>)}</select></label>
+          </div>
           <label>Next step<input value={leadNextStep} onChange={(e) => setLeadNextStep(e.target.value)} placeholder="Send estimate, call back Friday, request photos" /></label>
           <label>Lead notes<textarea value={leadNotes} onChange={(e) => setLeadNotes(e.target.value)} rows={3} placeholder="Gate code, preferred time, issue summary, budget, photos needed, decision maker, etc." /></label>
           <button type="button" className="button full" onClick={saveLead}>Save lead contact</button>
@@ -1082,7 +1119,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
           <div className="card-title-row"><div><h3>Lead-to-answer guide</h3><p className="fine-print">Use this as the daily command center for the current lead.</p></div>{leadWorkflow.currentLead ? <span className="pipeline-total">{leadWorkflow.stage.label}</span> : null}</div>
           {leadWorkflow.currentLead ? <>
             <div className="workflow-progress" aria-label="Lead workflow progress">{leadStages.map((stage, index) => <button key={stage.status} type="button" className={index <= leadWorkflow.stageIndex ? 'complete' : ''} onClick={() => moveCurrentLead(stage.status)}>{stage.label}</button>)}</div>
-            <div className="next-action-box"><strong>Recommended next action</strong><p>{leadWorkflow.currentLead.nextStep || leadWorkflow.stage.action}</p>{leadWorkflow.currentLead.followUpDate ? <span>Follow up on {leadWorkflow.currentLead.followUpDate}</span> : null}</div>
+            <div className="next-action-box"><strong>Recommended next action</strong><p>{leadWorkflow.currentLead.nextStep || leadWorkflow.stage.action}</p>{leadWorkflow.currentLead.followUpDate ? <span>Follow up on {leadWorkflow.currentLead.followUpDate}</span> : null}{leadWorkflow.currentLead.appointmentDate ? <span>Sales/appointment date: {leadWorkflow.currentLead.appointmentDate}</span> : null}</div>
             <div className="lead-checklist">{leadWorkflow.checklist.map((item) => <span key={item.label} className={item.done ? 'done' : ''}>{item.done ? '✓' : '○'} {item.label}</span>)}</div>
             <div className="hero-actions"><button type="button" className="button secondary" onClick={() => moveCurrentLead('qualified')}>Qualified</button><button type="button" className="button secondary" onClick={saveQuote}>Save quote + mark quoted</button><button type="button" className="button secondary" onClick={() => moveCurrentLead('followed-up')}>Followed up</button><button type="button" className="button" onClick={() => moveCurrentLead('won')}>Won</button><button type="button" className="button secondary" onClick={() => moveCurrentLead('lost')}>Lost</button></div>
           </> : <p>Save a lead or load a customer profile to see the guided workflow from first contact to final answer.</p>}
@@ -1109,13 +1146,14 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
                             </div>
                             <label>Address<input value={editingLead.address} onChange={(e) => setEditingLead({ ...editingLead, address: e.target.value })} /></label>
                             <div className="two-col"><label>Source<input value={editingLead.source || ''} onChange={(e) => setEditingLead({ ...editingLead, source: e.target.value })} /></label><label>Follow-up date<input type="date" value={editingLead.followUpDate || ''} onChange={(e) => setEditingLead({ ...editingLead, followUpDate: e.target.value })} /></label></div>
+                            <label>Sales / appointment date<input type="date" value={editingLead.appointmentDate || ''} onChange={(e) => setEditingLead({ ...editingLead, appointmentDate: e.target.value })} /></label>
                             <label>Next step<input value={editingLead.nextStep || ''} onChange={(e) => setEditingLead({ ...editingLead, nextStep: e.target.value })} /></label>
                             <label>Status<select value={leadStatus(editingLead)} onChange={(e) => setEditingLead({ ...editingLead, status: e.target.value as LeadStatus })}>{leadStages.map((option) => <option value={option.status} key={option.status}>{option.label}</option>)}</select></label>
                             <label>Notes<textarea rows={2} value={editingLead.notes} onChange={(e) => setEditingLead({ ...editingLead, notes: e.target.value })} /></label>
                             <div className="row-actions"><button type="button" className="button mini" onClick={saveLeadEdit}>Save changes</button><button type="button" className="button mini secondary-button" onClick={() => setEditingLead(null)}>Cancel</button></div>
                           </div>
                         ) : (
-                          <><div><strong>{lead.name}</strong><span>{[lead.phone, lead.email, lead.address].filter(Boolean).join(' · ') || 'No contact details yet'}</span>{lead.source ? <small>Source: {lead.source}</small> : null}{lead.nextStep ? <small>Next: {lead.nextStep}</small> : null}{lead.followUpDate ? <small>Follow-up: {lead.followUpDate}</small> : null}{lead.notes ? <small>{lead.notes}</small> : null}</div><div className="lead-card-actions"><select value={leadStatus(lead)} onChange={(e) => updateLeadStatus(lead.id, e.target.value as LeadStatus)} aria-label={`Pipeline status for ${lead.name}`}>{leadStages.map((option) => <option value={option.status} key={option.status}>{option.label}</option>)}</select><button type="button" className="button mini secondary-button" onClick={() => loadCustomerProfile(lead)}>Load</button><button type="button" className="button mini secondary-button" onClick={() => setEditingLead(lead)}>Edit</button></div></>
+                          <><div><strong>{lead.name}</strong><span>{[lead.phone, lead.email, lead.address].filter(Boolean).join(' · ') || 'No contact details yet'}</span>{lead.source ? <small>Source: {lead.source}</small> : null}{lead.nextStep ? <small>Next: {lead.nextStep}</small> : null}{lead.followUpDate ? <small>Follow-up: {lead.followUpDate}</small> : null}{lead.appointmentDate ? <small>Sales/appointment: {lead.appointmentDate}</small> : null}{lead.notes ? <small>{lead.notes}</small> : null}</div><div className="lead-card-actions"><select value={leadStatus(lead)} onChange={(e) => updateLeadStatus(lead.id, e.target.value as LeadStatus)} aria-label={`Pipeline status for ${lead.name}`}>{leadStages.map((option) => <option value={option.status} key={option.status}>{option.label}</option>)}</select><button type="button" className="button mini secondary-button" onClick={() => loadCustomerProfile(lead)}>Load</button><button type="button" className="button mini secondary-button" onClick={() => setEditingLead(lead)}>Edit</button></div></>
                         )}
                       </div>
                     )) : <div className="pipeline-empty">No leads here yet.</div>}
@@ -1124,6 +1162,28 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
               })}
             </div>
           ) : <p>Save lead contact details so the pipeline board has customers to track.</p>}
+        </article>
+      </section> : null}
+
+      {activeTab === 'calendar' ? <section className="portal-panel-grid single">
+        <article className="copy-card calendar-card">
+          <div className="card-title-row"><div><h3>My Calendar</h3><p className="fine-print">See upcoming lead follow-ups, sales calls, estimate visits, and decision dates.</p></div><span className="pipeline-total">{upcomingCalendarItems.length} upcoming</span></div>
+          {upcomingCalendarItems.length ? <div className="calendar-list">
+            {upcomingCalendarItems.map((item) => <article className="calendar-item" key={`${item.lead.id}-${item.type}-${item.date}`}>
+              <div><strong>{item.date}</strong><span>{item.type}</span></div>
+              <div><b>{item.lead.name}</b><p>{item.detail}</p><small>{[item.lead.phone, item.lead.email, item.lead.address].filter(Boolean).join(' · ') || 'No contact details yet'} · {leadStages.find((stage) => stage.status === item.status)?.label}</small></div>
+              <button type="button" className="button mini secondary-button" onClick={() => loadCustomerProfile(item.lead)}>Open lead</button>
+            </article>)}
+          </div> : <p>No upcoming lead contacts yet. Add follow-up dates or sales/appointment dates on the Lead pipeline tab.</p>}
+        </article>
+        <article className="copy-card calendar-card">
+          <h3>This month at a glance</h3>
+          <div className="month-grid">
+            {calendarDays.map((day) => <div className={day.items.length ? 'has-items' : ''} key={day.date}>
+              <strong>{day.day}</strong>
+              {day.items.slice(0, 3).map((item) => <button type="button" key={`${item.lead.id}-${item.type}`} onClick={() => loadCustomerProfile(item.lead)}>{item.type}: {item.lead.name}</button>)}
+            </div>)}
+          </div>
         </article>
       </section> : null}
 

@@ -555,6 +555,58 @@ textarea {
   color: var(--green-dark);
   background: rgba(215,255,113,.28);
 }
+.calendar-list {
+  display: grid;
+  gap: .75rem;
+  margin-top: 1rem;
+}
+.calendar-item {
+  display: grid;
+  grid-template-columns: 130px 1fr auto;
+  gap: .8rem;
+  align-items: center;
+  border: 1px solid var(--line);
+  background: rgba(255,250,241,.78);
+  border-radius: 1rem;
+  padding: .85rem;
+}
+.calendar-item strong,
+.calendar-item b { color: var(--green-dark); }
+.calendar-item span,
+.calendar-item small { color: var(--muted); display: block; }
+.calendar-item p { margin: .2rem 0; }
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: .45rem;
+  margin-top: 1rem;
+}
+.month-grid > div {
+  min-height: 92px;
+  border: 1px solid var(--line);
+  border-radius: .85rem;
+  background: rgba(255,255,255,.62);
+  padding: .5rem;
+}
+.month-grid > div.has-items {
+  background: rgba(215,255,113,.2);
+  border-color: rgba(18,72,50,.2);
+}
+.month-grid strong { color: var(--green-dark); display: block; margin-bottom: .35rem; }
+.month-grid button {
+  display: block;
+  width: 100%;
+  border: 0;
+  border-radius: .55rem;
+  background: var(--green-dark);
+  color: white;
+  font-size: .72rem;
+  line-height: 1.25;
+  margin-top: .25rem;
+  padding: .3rem;
+  text-align: left;
+  cursor: pointer;
+}
 .pipeline-total {
   border-radius: 999px;
   background: var(--lime);
@@ -653,7 +705,9 @@ textarea {
 }
 @media (max-width: 700px) {
   .lead-row,
-  .quote-row { grid-template-columns: 1fr; }
+  .quote-row,
+  .calendar-item { grid-template-columns: 1fr; }
+  .month-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .row-actions,
   .quote-row-actions { justify-content: flex-start; }
 }
