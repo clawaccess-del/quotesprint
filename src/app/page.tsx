@@ -7,18 +7,18 @@ export default function Home() {
     <>
       <section className="hero">
         <div className="hero-copy">
-          <span className="eyebrow">Lead management for service businesses that sell on speed</span>
-          <h1>Capture leads, quote jobs, follow up, and track the pipeline in one simple system.</h1>
-          <p>LeadSprint uses your company profile, brand voice, service area, customer details, and industry playbooks to turn new inquiries into organized leads, professional estimates, tailored follow-up, and a cleaner path to booked work.</p>
+          <span className="eyebrow">10 founding partner spots · 6 months free</span>
+          <h1>Help shape LeadSprint while using it free for 6 months.</h1>
+          <p>We’re selecting 10 home-service businesses and sales teams for more than a trial. Founding partners get free access, an open communication line with us, and a real voice in the features, workflows, and integrations we build next.</p>
           <div className="hero-actions">
-            <Link href="/app" className="button">Open the builder</Link>
-            <Link href="/founding-teams" className="button secondary">Apply for a founding partner spot</Link>
+            <Link href="/founding-teams" className="button">Apply for one of the 10 spots</Link>
+            <Link href="/product" className="button secondary">See how LeadSprint works</Link>
           </div>
         </div>
         <div className="hero-card">
-          <div className="stat"><strong>5 min</strong><span>response window worth protecting</span></div>
-          <div className="stat"><strong>5-stage</strong><span>lead pipeline from new to won</span></div>
-          <div className="stat"><strong>$29/mo</strong><span>live lead, quote, and follow-up tracking</span></div>
+          <div className="stat"><strong>10</strong><span>founding partner businesses selected</span></div>
+          <div className="stat"><strong>6 mo</strong><span>free access with no card upfront</span></div>
+          <div className="stat"><strong>Direct</strong><span>input on features, workflows, and integrations</span></div>
         </div>
       </section>
 
