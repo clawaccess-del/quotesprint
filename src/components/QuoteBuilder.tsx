@@ -1232,6 +1232,11 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
         <button type="button" className={activeTab === 'sales' ? 'active' : ''} onClick={() => setActiveTab('sales')}>Sales tools</button>
         <button type="button" className={activeTab === 'history' ? 'active' : ''} onClick={() => setActiveTab('history')}>Saved history</button>
       </div>
+      <div className="company-brand-strip">
+        <div className="brand-strip-logo">{companyLogoUrl ? <img src={companyLogoUrl} alt={`${business} logo`} /> : <span>{business.slice(0, 2).toUpperCase()}</span>}</div>
+        <div><strong>{business}</strong><span>{businessIndustry} · {serviceArea}</span></div>
+        <button type="button" className="button mini secondary-button" onClick={() => setActiveTab('company')}>{companyLogoUrl ? 'Edit brand' : 'Add logo'}</button>
+      </div>
 
       {activeTab === 'hub' ? <section className="portal-panel-grid single hub-grid">
         <article className="copy-card hub-hero-card">
