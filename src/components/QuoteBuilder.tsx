@@ -737,6 +737,22 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     email: `Subject: Quick favor after your ${jobType.toLowerCase()}\n\nHi ${customer.trim().split(' ')[0] || 'there'},\n\nThanks again for choosing ${business}. We appreciate the chance to help in ${serviceArea}. If the experience felt clear, professional, and easy, would you leave us a quick review?\n\nYour feedback helps other local homeowners know what to expect before they reach out.\n\nThank you,\n${business}`,
   }), [business, customer, jobType, serviceArea]);
 
+  const stageTemplates = useMemo(() => {
+    const firstName = customer.trim().split(' ')[0] || 'there';
+    const lead = leadWorkflow.currentLead;
+    const phoneOrEmail = lead ? [lead.phone, lead.email].filter(Boolean).join(' / ') : '';
+    return [
+      { stage: 'New lead reply', text: `Hi ${firstName}, this is ${business}. Thanks for reaching out about ${jobType.toLowerCase()}. I can help. Can you send the service address, a quick description of what is going on, and a couple photos if possible? Once I have that, I’ll give you the clearest next step.` },
+      { stage: 'Need photos/details', text: `Hi ${firstName}, to keep this accurate, can you send photos and any details about access, timing, and what you have already tried? For ${jobType.toLowerCase()}, the details that matter most are ${result.quoteInputs.slice(0, 4).join(', ')}.` },
+      { stage: 'Estimate sent', text: `Hi ${firstName}, I sent over the ${jobType.toLowerCase()} estimate. The working total is ${money(result.total)}, and ${money(result.depositDue)} reserves the appointment. Do you want me to hold the next available opening?` },
+      { stage: '24-hour follow-up', text: `Hi ${firstName}, quick follow-up from ${business}. Did you want to move forward with the ${jobType.toLowerCase()} estimate, or is there anything you want me to clarify before you decide?` },
+      { stage: 'Final check-in', text: `Hi ${firstName}, last check-in on this ${jobType.toLowerCase()} estimate before I close the loop. If timing or budget changed, no problem. If you still want help, reply “ready” and I’ll help with the next step.` },
+      { stage: 'Won job confirmation', text: `Great, ${firstName}. You’re confirmed with ${business}. We have ${lead?.appointmentDate ? `the appointment set for ${lead.appointmentDate}` : 'the next step ready'}, and the deposit/booking amount is ${money(result.depositDue)} if required. We’ll keep the process ${brandVoice} and let you know if anything changes.` },
+      { stage: 'Lost lead reactivation', text: `Hi ${firstName}, this is ${business}. Just checking whether the ${jobType.toLowerCase()} is still on your list. If the timing, scope, or budget changed, I can help you choose the simplest next step.` },
+      { stage: 'Contact note', text: `Lead: ${customer}\nContact: ${phoneOrEmail || 'No contact saved'}\nSource: ${lead?.source || leadSource || 'Unknown'}\nNext step: ${lead?.nextStep || leadNextStep}\nFollow-up: ${lead?.followUpDate || leadFollowUpDate || 'Not set'}` },
+    ];
+  }, [business, brandVoice, customer, jobType, leadFollowUpDate, leadNextStep, leadSource, leadWorkflow.currentLead, result, serviceArea]);
+
   const winLossBreakdown = useMemo(() => {
     const tracked = savedQuotes.filter((quote) => quote.status !== 'open');
     const reasons = tracked.reduce<Record<string, number>>((acc, quote) => {
@@ -942,6 +958,15 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     }
     updateLeadStatus(currentLead.id, status);
     setAiStatus(`${currentLead.name} moved to ${leadStages.find((stage) => stage.status === status)?.label || status}.`);
+  }
+
+  async function copyText(text: string, label: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setAiStatus(`Copied ${label}.`);
+    } catch {
+      setAiStatus('Copy failed. Select the text and copy manually.');
+    }
   }
 
   function saveQuoteEdit() {
@@ -1302,6 +1327,13 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
               <div className="card-title-row"><strong>{preset.name}</strong><button type="button" className="button mini" onClick={() => applyServicePreset(preset)}>Apply</button></div>
               <p>{preset.jobType} · {preset.laborHours} hrs · {money(preset.laborRate)}/hr · {money(preset.materials)} materials · {preset.deposit}% deposit</p>
             </article>)}
+          </div>
+        </article>
+
+        <article className="copy-card">
+          <div className="card-title-row"><div><h3>Message templates by stage</h3><p className="fine-print">Copy the right message for each step from first contact to final answer.</p></div></div>
+          <div className="template-grid">
+            {stageTemplates.map((template) => <article className="social-post-card template-card" key={template.stage}><div className="card-title-row"><strong>{template.stage}</strong><button type="button" className="button mini secondary-button" onClick={() => copyText(template.text, template.stage)}>Copy</button></div><pre>{template.text}</pre></article>)}
           </div>
         </article>
 

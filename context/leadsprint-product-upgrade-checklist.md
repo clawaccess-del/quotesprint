@@ -18,10 +18,10 @@ Work through these one by one until complete. Keep each item scoped, build/test,
 - Displayed timeline in the lead workflow and mini timeline in customer profiles.
 - Kept it lightweight using existing lead/quote data.
 
-## 4. Message templates by stage
-- Add templates for: new lead reply, need photos/details, estimate sent, 24-hour follow-up, final check-in, won job confirmation, lost lead reactivation.
-- Make templates use company profile, customer name, job type, service area, and lead stage.
-- Add copy buttons if simple.
+## 4. Message templates by stage ✅
+- Added templates for: new lead reply, need photos/details, estimate sent, 24-hour follow-up, final check-in, won job confirmation, lost lead reactivation, and contact notes.
+- Templates use company profile, customer name, job type, service area, quote values, and lead data.
+- Added copy buttons.
 
 ## 5. Quote-to-job checklist
 - Add checklist for won/near-won work: deposit collected, appointment scheduled, prep instructions sent, materials confirmed, review request sent.
