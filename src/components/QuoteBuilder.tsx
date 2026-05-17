@@ -482,6 +482,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
   const [customerReply, setCustomerReply] = useState('Can you do any better on price? I am comparing a few quotes.');
   const [coachedReply, setCoachedReply] = useState('');
   const [leadStageFilter, setLeadStageFilter] = useState<LeadStatus | 'all'>('all');
+  const [selectedQuoteLeadId, setSelectedQuoteLeadId] = useState('');
 
   useEffect(() => {
     const savedTab = window.localStorage.getItem('leadsprint-active-tab') as PortalTab | null;
@@ -584,7 +585,8 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
 
   const customerContext = useMemo(() => {
     const normalizedCustomer = customer.trim().toLowerCase();
-    const lead = savedLeads.find((item) => item.name.trim().toLowerCase() === normalizedCustomer) || savedLeads[0] || null;
+    const selectedLead = selectedQuoteLeadId ? savedLeads.find((item) => item.id === selectedQuoteLeadId) : null;
+    const lead = selectedLead || savedLeads.find((item) => item.name.trim().toLowerCase() === normalizedCustomer) || null;
     const notes = lead?.notes || leadNotes;
     const nextStep = lead?.nextStep || leadNextStep;
     const address = lead?.address || leadAddress;
@@ -599,7 +601,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     ].filter(Boolean);
     const summary = detailParts.length ? detailParts.join(' · ') : `the ${jobType.toLowerCase()} request`;
     return { lead, notes, nextStep, address, source, appointmentDate, summary };
-  }, [customer, jobType, leadAddress, leadAppointmentDate, leadNextStep, leadNotes, leadSource, savedLeads]);
+  }, [customer, jobType, leadAddress, leadAppointmentDate, leadNextStep, leadNotes, leadSource, savedLeads, selectedQuoteLeadId]);
 
   useEffect(() => {
     const profile = { business, businessIndustry, companyLogoUrl, companyPhone, companyWebsite, companyOffer, idealCustomer, serviceArea, brandVoice, differentiator, guarantee };
@@ -965,7 +967,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       createdAt: new Date().toISOString(),
     };
     const normalizedCustomer = customer.trim().toLowerCase();
-    const existingLead = savedLeads.find((lead) => lead.name.trim().toLowerCase() === normalizedCustomer);
+    const existingLead = (selectedQuoteLeadId ? savedLeads.find((lead) => lead.id === selectedQuoteLeadId) : null) || savedLeads.find((lead) => lead.name.trim().toLowerCase() === normalizedCustomer);
     const leadFromQuote: SavedLead = {
       id: existingLead?.id || crypto.randomUUID(),
       name: customer,
@@ -981,6 +983,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       status: 'quoted',
       createdAt: existingLead?.createdAt || new Date().toISOString(),
     };
+    setSelectedQuoteLeadId(leadFromQuote.id);
     setSavedQuotes((quotes) => [quote, ...quotes].slice(0, 50));
     setSavedLeads((leads) => [leadFromQuote, ...leads.filter((lead) => lead.id !== leadFromQuote.id)].slice(0, 100));
     fetch('/api/quotes', {
@@ -1054,11 +1057,13 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     setLeadNextStep(lead.nextStep || leadStages.find((stage) => stage.status === leadStatus(lead))?.action || 'Confirm the next step');
     setLeadFollowUpDate(lead.followUpDate || '');
     setLeadAppointmentDate(lead.appointmentDate || '');
+    setSelectedQuoteLeadId(lead.id);
     setActiveTab('leads');
     setAiStatus(`Loaded ${lead.name}'s contact profile.`);
   }
 
   function startQuoteFromLead(lead: SavedLead) {
+    setSelectedQuoteLeadId(lead.id);
     setCustomer(lead.name);
     setLeadPhone(lead.phone);
     setLeadEmail(lead.email);
@@ -1071,6 +1076,12 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     setCustomizedCopy({});
     setActiveTab('tool');
     setAiStatus(`Generating quote for ${lead.name}. Review the job type, price, and deposit, then save the quote.`);
+  }
+
+  function selectQuoteLead(leadId: string) {
+    setSelectedQuoteLeadId(leadId);
+    const lead = savedLeads.find((item) => item.id === leadId);
+    if (lead) startQuoteFromLead(lead);
   }
 
   function toggleJobChecklist(id: string, key: JobChecklistKey) {
@@ -1366,6 +1377,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     sales: { title: 'Sales tools', helper: 'Review revenue, lead-source performance, win/loss notes, and reusable sales templates.' },
     history: { title: 'Saved history', helper: 'Review saved quotes and export lead or quote records when needed.' },
   };
+  const selectedQuoteLead = selectedQuoteLeadId ? savedLeads.find((lead) => lead.id === selectedQuoteLeadId) || null : null;
 
   return (
     <>
@@ -1429,6 +1441,10 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       {activeTab === 'tool' ? <section className="builder-grid">
       <form className="builder-panel">
         <div className="form-section-title">Quote details</div>
+        <div className="quote-lead-picker">
+          <label>Start from saved lead<select value={selectedQuoteLeadId} onChange={(e) => selectQuoteLead(e.target.value)}><option value="">Choose a saved lead...</option>{savedLeads.map((lead) => <option value={lead.id} key={lead.id}>{lead.name} {lead.address ? `· ${lead.address}` : ''}</option>)}</select></label>
+          {selectedQuoteLead ? <div className="selected-quote-lead"><strong>{selectedQuoteLead.name}</strong><span>{[selectedQuoteLead.phone, selectedQuoteLead.email, selectedQuoteLead.address].filter(Boolean).join(' · ') || 'No contact details saved yet'}</span>{selectedQuoteLead.notes ? <small>Lead notes used in quote copy: {selectedQuoteLead.notes}</small> : null}{selectedQuoteLead.nextStep ? <small>Next step: {selectedQuoteLead.nextStep}</small> : null}</div> : <p className="fine-print">Pick a lead to pull in their saved notes, contact info, address, source, next step, and appointment context.</p>}
+        </div>
         <label>Lead / customer name<input value={customer} onChange={(e) => setCustomer(e.target.value)} /></label>
         <label>Job type<select value={jobType} onChange={(e) => setJobType(e.target.value)}>{jobTypes.map((type) => <option key={type}>{type}</option>)}</select></label>
         <div className="two-col">

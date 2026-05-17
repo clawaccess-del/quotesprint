@@ -1759,3 +1759,26 @@ textarea {
   .dashboard-topbar { align-items: stretch; flex-direction: column; }
   .dashboard-quick-actions { justify-content: flex-start; }
 }
+.quote-lead-picker {
+  display: grid;
+  gap: .65rem;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: rgba(255,250,241,.78);
+  padding: .85rem;
+  margin-bottom: .85rem;
+}
+.selected-quote-lead {
+  display: grid;
+  gap: .25rem;
+  border: 1px solid rgba(31,107,75,.16);
+  border-radius: .9rem;
+  background: rgba(255,255,255,.76);
+  padding: .75rem;
+}
+.selected-quote-lead strong { color: var(--green-dark); }
+.selected-quote-lead span,
+.selected-quote-lead small {
+  color: var(--muted);
+  line-height: 1.45;
+}
