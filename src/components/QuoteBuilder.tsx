@@ -475,7 +475,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       } catch {}
     }
 
-    fetch('/api/account')
+    fetch('/api/account', { cache: 'no-store' })
       .then((response) => response.ok ? response.json() : null)
       .then((data) => {
         if (!data?.ok) return;
@@ -534,6 +534,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     const timeout = window.setTimeout(() => {
       fetch('/api/account', {
         method: 'POST',
+        cache: 'no-store',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ profile }),
       }).catch(() => null);
