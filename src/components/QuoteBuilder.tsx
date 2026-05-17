@@ -531,7 +531,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
         if (data.profile) {
           setBusiness(data.profile.business || 'Acme Home Services');
           setBusinessIndustry(data.profile.businessIndustry || 'HVAC');
-          setCompanyLogoUrl(data.profile.companyLogoUrl || '');
+          setCompanyLogoUrl(data.profile.companyLogoUrl || companyLogoUrl || '');
           setCompanyPhone(data.profile.companyPhone || '');
           setCompanyWebsite(data.profile.companyWebsite || '');
           setCompanyOffer(data.profile.companyOffer || '');
@@ -1037,19 +1037,52 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       setAiStatus('Logo upload needs an image file.');
       return;
     }
-    if (file.size > 700_000) {
-      setAiStatus('Logo is too large. Use an image under 700 KB so it can save with the profile.');
+    if (file.type === 'image/svg+xml') {
+      if (file.size > 120_000) {
+        setAiStatus('SVG logo is too large. Use an SVG under 120 KB or paste a hosted logo URL.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          setCompanyLogoUrl(reader.result);
+          setAiStatus('Logo uploaded and saved to the company profile.');
+        }
+      };
+      reader.onerror = () => setAiStatus('Logo upload failed. Try a smaller SVG or paste a logo URL.');
+      reader.readAsDataURL(file);
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        setCompanyLogoUrl(reader.result);
-        setAiStatus('Logo uploaded and saved to the company profile.');
+
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const maxSize = 260;
+      const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+      canvas.width = Math.max(1, Math.round(img.width * scale));
+      canvas.height = Math.max(1, Math.round(img.height * scale));
+      const context = canvas.getContext('2d');
+      if (!context) {
+        URL.revokeObjectURL(objectUrl);
+        setAiStatus('Logo upload failed. Try a PNG, JPG, WebP, SVG, or hosted logo URL.');
+        return;
       }
+      context.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/webp', 0.82);
+      URL.revokeObjectURL(objectUrl);
+      if (dataUrl.length > 180_000) {
+        setAiStatus('Logo is still too large after resizing. Try a simpler logo file or paste a hosted logo URL.');
+        return;
+      }
+      setCompanyLogoUrl(dataUrl);
+      setAiStatus('Logo uploaded, optimized, and saved to the company profile.');
     };
-    reader.onerror = () => setAiStatus('Logo upload failed. Try a smaller PNG, JPG, or SVG.');
-    reader.readAsDataURL(file);
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      setAiStatus('Logo upload failed. Try a PNG, JPG, WebP, SVG, or hosted logo URL.');
+    };
+    img.src = objectUrl;
   }
 
   async function copyText(text: string, label: string) {
@@ -1259,7 +1292,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
               <label>Upload logo<input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={(e) => uploadCompanyLogo(e.target.files?.[0])} /></label>
               <label>Logo URL<input value={companyLogoUrl} onChange={(e) => setCompanyLogoUrl(e.target.value)} placeholder="https://your-site.com/logo.png" /></label>
               {companyLogoUrl ? <button type="button" className="button mini secondary-button" onClick={() => setCompanyLogoUrl('')}>Remove logo</button> : null}
-              <p className="fine-print">Upload a PNG, JPG, WebP, or SVG under 700 KB, or paste a hosted logo URL.</p>
+              <p className="fine-print">Upload a PNG, JPG, WebP, or small SVG. Large image files are optimized before saving, or you can paste a hosted logo URL.</p>
             </div>
           </div>
           <label>Business name<input value={business} onChange={(e) => setBusiness(e.target.value)} /></label>
