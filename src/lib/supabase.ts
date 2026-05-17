@@ -209,129 +209,127 @@ export async function saveLead(email: string, lead: StoredLead) {
   });
 }
 
-function parseClient(row: ClientAccountRow): ClientAccount {
-  return {
-    id: row.id,
-    email: row.email,
-    companyName: row.company_name || '',
-    contactName: row.contact_name || '',
-    portalUsername: row.portal_username || '',
-    plan: row.plan || 'live_ai',
-    status: row.status || 'trial',
-    notes: row.notes || '',
-    createdAt: row.created_at || new Date().toISOString(),
-    updatedAt: row.updated_at || new Date().toISOString(),
-  };
+
+type SystemStored<T> = T & { kind: string; passwordHash?: string };
+
+const SYSTEM_EMAILS = {
+  clients: '__leadsprint_clients@system.local',
+  tickets: '__leadsprint_tickets@system.local',
+  updates: '__leadsprint_updates@system.local',
+};
+
+async function getSystemRows<T>(email: string, kind: string): Promise<Array<{ rowId: string; data: SystemStored<T> }>> {
+  const profile = await getOrCreateProfile(email);
+  const response = await supabaseFetch(`leads?user_id=eq.${encodeURIComponent(profile.id)}&select=id,lead,created_at&order=created_at.desc&limit=1000`);
+  const rows = await response.json() as LeadRow[];
+  return rows
+    .map((row) => row.lead ? { rowId: row.id, data: row.lead as unknown as SystemStored<T> } : null)
+    .filter((row): row is { rowId: string; data: SystemStored<T> } => Boolean(row && row.data.kind === kind));
+}
+
+async function saveSystemRecord<T extends { id: string; createdAt?: string; updatedAt?: string }>(email: string, kind: string, record: T) {
+  const profile = await getOrCreateProfile(email);
+  const now = new Date().toISOString();
+  const existing = await getSystemRows<T>(email, kind);
+  const match = existing.find((row) => row.data.id === record.id);
+  const rowId = match?.rowId || crypto.randomUUID();
+  const createdAt = record.createdAt || match?.data.createdAt || now;
+  const payload = { ...match?.data, ...record, id: record.id, kind, createdAt, updatedAt: now };
+  await supabaseFetch('leads?on_conflict=id', {
+    method: 'POST',
+    body: JSON.stringify([{ id: rowId, user_id: profile.id, lead: payload, created_at: createdAt }]),
+    headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+  });
+  return payload as T;
+}
+
+function stripPassword(client: ClientAccount & { passwordHash?: string }): ClientAccount {
+  const { passwordHash: _passwordHash, ...safe } = client;
+  return safe;
 }
 
 export async function listClientAccounts(): Promise<ClientAccount[]> {
-  const response = await supabaseFetch('client_accounts?select=id,email,company_name,contact_name,portal_username,plan,status,notes,created_at,updated_at&order=created_at.desc');
-  const rows = await response.json() as ClientAccountRow[];
-  return rows.map(parseClient);
+  const rows = await getSystemRows<ClientAccount & { passwordHash?: string }>(SYSTEM_EMAILS.clients, 'client_account');
+  return rows.map((row) => stripPassword(row.data)).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
-
 
 export type AdminClientAccount = ClientAccount & { companyProfile: CompanyProfile | null };
 
 export async function listAdminClientAccounts(): Promise<AdminClientAccount[]> {
   const clients = await listClientAccounts();
-  return Promise.all(clients.map(async (client) => ({
+  return Promise.all(clients.map(async (client: ClientAccount) => ({
     ...client,
     companyProfile: await getCompanyProfile(client.email).catch(() => null),
   })));
 }
 
 export async function upsertClientAccount(input: Partial<ClientAccount> & { password?: string }) {
-  const id = input.id || crypto.randomUUID();
+  const existing = await getSystemRows<ClientAccount & { passwordHash?: string }>(SYSTEM_EMAILS.clients, 'client_account');
+  const matched = input.id ? existing.find((row) => row.data.id === input.id) : undefined;
   const now = new Date().toISOString();
-  const body: Record<string, string> = {
+  const id = input.id || crypto.randomUUID();
+  const email = (input.email || matched?.data.email || '').trim().toLowerCase();
+  const record: ClientAccount & { passwordHash?: string } = {
     id,
-    email: (input.email || '').trim().toLowerCase(),
-    company_name: input.companyName || '',
-    contact_name: input.contactName || '',
-    portal_username: (input.portalUsername || '').trim().toLowerCase(),
-    plan: input.plan || 'live_ai',
-    status: input.status || 'trial',
-    notes: input.notes || '',
-    updated_at: now,
+    email,
+    companyName: input.companyName ?? matched?.data.companyName ?? '',
+    contactName: input.contactName ?? matched?.data.contactName ?? '',
+    portalUsername: (input.portalUsername ?? matched?.data.portalUsername ?? '').trim().toLowerCase(),
+    plan: input.plan ?? matched?.data.plan ?? 'live_ai',
+    status: input.status ?? matched?.data.status ?? 'trial',
+    notes: input.notes ?? matched?.data.notes ?? '',
+    createdAt: matched?.data.createdAt || now,
+    updatedAt: now,
+    passwordHash: input.password ? hashPassword(input.password) : matched?.data.passwordHash,
   };
-  if (!input.id) body.created_at = now;
-  if (input.password) body.password_hash = hashPassword(input.password);
-
-  await getOrCreateProfile(body.email);
-  const response = await supabaseFetch('client_accounts?on_conflict=id&select=id,email,company_name,contact_name,portal_username,plan,status,notes,created_at,updated_at', {
-    method: 'POST',
-    body: JSON.stringify([body]),
-    headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
-  });
-  const rows = await response.json();
-  return parseClient(rows[0]);
+  await getOrCreateProfile(email);
+  const saved = await saveSystemRecord(SYSTEM_EMAILS.clients, 'client_account', record);
+  return stripPassword(saved as ClientAccount & { passwordHash?: string });
 }
 
 export async function verifyClientPasswordLogin(username: string, password: string) {
-  const response = await supabaseFetch(`client_accounts?portal_username=eq.${encodeURIComponent(username.trim().toLowerCase())}&select=id,email,plan,status,password_hash&limit=1`);
-  const rows = await response.json() as ClientAccountRow[];
-  const row = rows?.[0];
+  const rows = await getSystemRows<ClientAccount & { passwordHash?: string }>(SYSTEM_EMAILS.clients, 'client_account');
+  const row = rows.find((item) => item.data.portalUsername === username.trim().toLowerCase())?.data;
   if (!row || row.status === 'cancelled' || row.status === 'paused') return null;
-  if (!verifyPassword(password, row.password_hash)) return null;
+  if (!verifyPassword(password, row.passwordHash)) return null;
   await getOrCreateProfile(row.email);
   return { email: row.email, plan: row.plan || 'live_ai', accountId: row.id };
 }
 
-function parseTicket(row: TicketRow): SupportTicket {
-  return {
-    id: row.id,
-    customerEmail: row.customer_email,
-    subject: row.subject,
-    message: row.message,
-    status: row.status || 'new',
-    priority: row.priority || 'normal',
-    adminResponse: row.admin_response || '',
-    createdAt: row.created_at || new Date().toISOString(),
-    updatedAt: row.updated_at || new Date().toISOString(),
-  };
-}
-
 export async function listTickets(email?: string) {
-  const filter = email ? `customer_email=eq.${encodeURIComponent(email.toLowerCase())}&` : '';
-  const response = await supabaseFetch(`support_tickets?${filter}select=id,customer_email,subject,message,status,priority,admin_response,created_at,updated_at&order=updated_at.desc`);
-  const rows = await response.json();
-  return rows.map(parseTicket);
+  const rows = await getSystemRows<SupportTicket>(SYSTEM_EMAILS.tickets, 'support_ticket');
+  return rows
+    .map((row) => row.data)
+    .filter((ticket) => !email || ticket.customerEmail === email.toLowerCase())
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
 
 export async function createTicket(email: string, input: { subject: string; message: string; priority?: SupportTicket['priority'] }) {
   const now = new Date().toISOString();
-  const response = await supabaseFetch('support_tickets?select=id,customer_email,subject,message,status,priority,admin_response,created_at,updated_at', {
-    method: 'POST',
-    body: JSON.stringify([{
-      id: crypto.randomUUID(),
-      customer_email: email.toLowerCase(),
-      subject: input.subject,
-      message: input.message,
-      priority: input.priority || 'normal',
-      status: 'new',
-      admin_response: '',
-      created_at: now,
-      updated_at: now,
-    }]),
-    headers: { Prefer: 'return=representation' },
-  });
-  const rows = await response.json();
-  return parseTicket(rows[0]);
+  const ticket: SupportTicket = {
+    id: crypto.randomUUID(),
+    customerEmail: email.toLowerCase(),
+    subject: input.subject,
+    message: input.message,
+    priority: input.priority || 'normal',
+    status: 'new',
+    adminResponse: '',
+    createdAt: now,
+    updatedAt: now,
+  };
+  return saveSystemRecord(SYSTEM_EMAILS.tickets, 'support_ticket', ticket);
 }
 
 export async function updateTicket(id: string, input: Partial<Pick<SupportTicket, 'status' | 'priority' | 'adminResponse'>>) {
-  const body: Record<string, string> = { updated_at: new Date().toISOString() };
-  if (input.status) body.status = input.status;
-  if (input.priority) body.priority = input.priority;
-  if (typeof input.adminResponse === 'string') body.admin_response = input.adminResponse;
-  const response = await supabaseFetch(`support_tickets?id=eq.${encodeURIComponent(id)}&select=id,customer_email,subject,message,status,priority,admin_response,created_at,updated_at`, {
-    method: 'PATCH',
-    body: JSON.stringify(body),
-    headers: { Prefer: 'return=representation' },
+  const rows = await getSystemRows<SupportTicket>(SYSTEM_EMAILS.tickets, 'support_ticket');
+  const existing = rows.find((row) => row.data.id === id)?.data;
+  if (!existing) throw new Error('Ticket not found');
+  return saveSystemRecord(SYSTEM_EMAILS.tickets, 'support_ticket', {
+    ...existing,
+    status: input.status || existing.status,
+    priority: input.priority || existing.priority,
+    adminResponse: typeof input.adminResponse === 'string' ? input.adminResponse : existing.adminResponse,
   });
-  const rows = await response.json();
-  return parseTicket(rows[0]);
 }
 
 export type ClientUpdate = {
@@ -345,42 +343,26 @@ export type ClientUpdate = {
   createdAt: string;
 };
 
-type ClientUpdateRow = { id: string; customer_email: string; title: string; message: string; image_url?: string | null; link_url?: string | null; video_url?: string | null; created_at?: string };
-
-function parseClientUpdate(row: ClientUpdateRow): ClientUpdate {
-  return {
-    id: row.id,
-    customerEmail: row.customer_email,
-    title: row.title,
-    message: row.message,
-    imageUrl: row.image_url || '',
-    linkUrl: row.link_url || '',
-    videoUrl: row.video_url || '',
-    createdAt: row.created_at || new Date().toISOString(),
-  };
-}
-
 export async function listClientUpdates(email: string) {
-  const response = await supabaseFetch(`client_updates?customer_email=in.(${encodeURIComponent(email.toLowerCase())},all)&select=id,customer_email,title,message,image_url,link_url,video_url,created_at&order=created_at.desc&limit=50`);
-  const rows = await response.json();
-  return rows.map(parseClientUpdate);
+  const rows = await getSystemRows<ClientUpdate>(SYSTEM_EMAILS.updates, 'client_update');
+  return rows
+    .map((row) => row.data)
+    .filter((update) => update.customerEmail === 'all' || update.customerEmail === email.toLowerCase())
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, 50);
 }
 
 export async function createClientUpdate(input: { customerEmail: string; title: string; message: string; imageUrl?: string; linkUrl?: string; videoUrl?: string }) {
-  const response = await supabaseFetch('client_updates?select=id,customer_email,title,message,image_url,link_url,video_url,created_at', {
-    method: 'POST',
-    body: JSON.stringify([{
-      id: crypto.randomUUID(),
-      customer_email: input.customerEmail.trim().toLowerCase() || 'all',
-      title: input.title,
-      message: input.message,
-      image_url: input.imageUrl || '',
-      link_url: input.linkUrl || '',
-      video_url: input.videoUrl || '',
-      created_at: new Date().toISOString(),
-    }]),
-    headers: { Prefer: 'return=representation' },
-  });
-  const rows = await response.json();
-  return parseClientUpdate(rows[0]);
+  const now = new Date().toISOString();
+  const update: ClientUpdate = {
+    id: crypto.randomUUID(),
+    customerEmail: input.customerEmail.trim().toLowerCase() || 'all',
+    title: input.title,
+    message: input.message,
+    imageUrl: input.imageUrl || '',
+    linkUrl: input.linkUrl || '',
+    videoUrl: input.videoUrl || '',
+    createdAt: now,
+  };
+  return saveSystemRecord(SYSTEM_EMAILS.updates, 'client_update', update);
 }
