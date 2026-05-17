@@ -36,9 +36,10 @@ Work through these one by one until complete. Keep each item scoped, build/test,
 - Added CSV export for quotes/history.
 - Import remains a later option after export is stable.
 
-## 8. Lead scoring
-- Add hot/warm/cold scoring using urgency, status, follow-up date, appointment date, notes/source, and quote amount.
-- Show score on lead cards and use it to prioritize today’s work.
+## 8. Lead scoring ✅
+- Added hot/warm/cold scoring using status, follow-up date, appointment date, contact info, notes/source, and quote amount.
+- Show score on lead cards, selected lead workflow, lead selector, Hub current lead, and Hub top-priority list.
+- All leads by stage now sorts stage cards by score so the best next leads surface first.
 
 ## 9. Appointment prep notes
 - Generate prep notes based on job type, lead notes, address/contact state, photos/details needed, appointment date, and industry playbook.

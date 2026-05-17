@@ -694,6 +694,47 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
   const overdueFollowUps = useMemo(() => calendarItems.filter((item) => item.type === 'Follow-up' && item.date < todayKey && !['won', 'lost'].includes(item.status)), [calendarItems, todayKey]);
 
   const upcomingCalendarItems = useMemo(() => calendarItems.filter((item) => item.date >= todayKey).slice(0, 12), [calendarItems, todayKey]);
+  const leadScores = useMemo(() => {
+    const scores = new Map<string, { label: 'Hot' | 'Warm' | 'Cold'; score: number; reasons: string[] }>();
+    savedLeads.forEach((lead) => {
+      const status = leadStatus(lead);
+      const normalizedName = lead.name.trim().toLowerCase();
+      const leadQuotes = savedQuotes.filter((quote) => quote.customer.trim().toLowerCase() === normalizedName);
+      const quoteValue = leadQuotes.reduce((sum, quote) => sum + quote.total, 0);
+      const reasons: string[] = [];
+      let score = 20;
+
+      if (status === 'quoted') { score += 24; reasons.push('quote sent'); }
+      if (status === 'qualified') { score += 18; reasons.push('qualified'); }
+      if (status === 'followed-up') { score += 14; reasons.push('active follow-up'); }
+      if (status === 'new') { score += 8; reasons.push('new lead'); }
+      if (status === 'won') { score = 95; reasons.push('won customer'); }
+      if (status === 'lost') { score = 5; reasons.push('lost lead'); }
+
+      if (lead.followUpDate) {
+        if (lead.followUpDate < todayKey && !['won', 'lost'].includes(status)) { score += 24; reasons.push('overdue follow-up'); }
+        else if (lead.followUpDate === todayKey) { score += 20; reasons.push('due today'); }
+        else { score += 6; reasons.push('follow-up scheduled'); }
+      }
+      if (lead.appointmentDate) { score += lead.appointmentDate >= todayKey ? 18 : 6; reasons.push('appointment set'); }
+      if (lead.phone || lead.email) { score += 6; reasons.push('contact ready'); }
+      if (lead.notes && lead.notes.length > 20) { score += 8; reasons.push('detailed notes'); }
+      if (lead.source) { score += 4; reasons.push(`${lead.source} source`); }
+      if (quoteValue >= 2500) { score += 16; reasons.push('high quote value'); }
+      else if (quoteValue >= 1000) { score += 10; reasons.push('meaningful quote value'); }
+      else if (quoteValue > 0) { score += 6; reasons.push('quoted value'); }
+
+      const capped = Math.max(0, Math.min(100, Math.round(score)));
+      scores.set(lead.id, { label: capped >= 72 ? 'Hot' : capped >= 42 ? 'Warm' : 'Cold', score: capped, reasons: reasons.slice(0, 3) });
+    });
+    return scores;
+  }, [savedLeads, savedQuotes, todayKey]);
+
+  const priorityLeads = useMemo(() => savedLeads
+    .filter((lead) => !['won', 'lost'].includes(leadStatus(lead)))
+    .sort((a, b) => (leadScores.get(b.id)?.score || 0) - (leadScores.get(a.id)?.score || 0))
+    .slice(0, 4), [leadScores, savedLeads]);
+
 
   const calendarDays = useMemo(() => {
     const today = new Date();
@@ -765,7 +806,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
 
   const visibleLeadStages = useMemo(() => leadStages
     .filter((stage) => leadStageFilter === 'all' || stage.status === leadStageFilter)
-    .map((stage) => ({ ...stage, leads: savedLeads.filter((lead) => leadStatus(lead) === stage.status) })), [leadStageFilter, savedLeads]);
+    .map((stage) => ({ ...stage, leads: savedLeads.filter((lead) => leadStatus(lead) === stage.status).sort((a, b) => (leadScores.get(b.id)?.score || 0) - (leadScores.get(a.id)?.score || 0)) })), [leadScores, leadStageFilter, savedLeads]);
 
   const customerProfiles = useMemo(() => savedLeads.map((lead) => {
     const leadQuotes = savedQuotes.filter((quote) => quote.customer.trim().toLowerCase() === lead.name.trim().toLowerCase());
@@ -1280,7 +1321,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
         <article className="copy-card"><h3>Money snapshot</h3><div className="hub-metrics"><span><strong>{money(revenueDashboard.openValue)}</strong>Open quoted</span><span><strong>{money(revenueDashboard.wonValue)}</strong>Won revenue</span><span><strong>{revenueDashboard.closedWinRate}%</strong>Closed win rate</span><span><strong>{money(revenueDashboard.avgQuote)}</strong>Average quote</span></div></article>
         <article className="copy-card"><div className="card-title-row"><h3>Needs attention</h3><button type="button" className="button mini secondary-button" onClick={() => setActiveTab('calendar')}>View all</button></div><div className="pipeline-metrics"><span>{todaysFollowUps.length} due today</span><span>{overdueFollowUps.length} overdue</span><span>{upcomingCalendarItems.length} upcoming</span></div>{[...overdueFollowUps, ...todaysFollowUps].slice(0, 4).map((item) => <div className="hub-list-item" key={`${item.lead.id}-${item.date}-${item.type}`}><strong>{item.lead.name}</strong><span>{item.type} · {item.date} · {item.detail}</span><button type="button" className="button mini secondary-button" onClick={() => loadCustomerProfile(item.lead)}>Open</button></div>)}</article>
         <article className="copy-card"><div className="card-title-row"><h3>Best lead source</h3><button type="button" className="button mini secondary-button" onClick={() => setActiveTab('sales')}>Sales tools</button></div>{leadSourceRoi.best ? <div className="hub-highlight"><strong>{leadSourceRoi.best.source}</strong><span>{leadSourceRoi.best.total} leads · {leadSourceRoi.best.winRate}% win rate · {money(leadSourceRoi.best.wonValue)} won value</span></div> : <p>Add lead sources to see what is working.</p>}</article>
-        <article className="copy-card"><h3>Current lead</h3>{leadWorkflow.currentLead ? <div className="hub-highlight"><strong>{leadWorkflow.currentLead.name}</strong><span>{leadWorkflow.stage.label} · {leadWorkflow.currentLead.nextStep || leadWorkflow.stage.action}</span><button type="button" className="button mini" onClick={() => setActiveTab('leads')}>Continue</button></div> : <p>No current lead yet. Add one from Lead pipeline.</p>}</article>
+        <article className="copy-card"><h3>Current lead</h3>{leadWorkflow.currentLead ? <div className="hub-highlight"><strong>{leadWorkflow.currentLead.name}</strong><span>{leadWorkflow.stage.label} · {leadWorkflow.currentLead.nextStep || leadWorkflow.stage.action}</span>{leadScores.get(leadWorkflow.currentLead.id) ? <span className={`lead-score-pill ${leadScores.get(leadWorkflow.currentLead.id)?.label.toLowerCase()}`}>{leadScores.get(leadWorkflow.currentLead.id)?.label} · {leadScores.get(leadWorkflow.currentLead.id)?.score}</span> : null}<button type="button" className="button mini" onClick={() => setActiveTab('leads')}>Continue</button></div> : <p>No current lead yet. Add one from Lead pipeline.</p>}</article><article className="copy-card"><div className="card-title-row"><h3>Top priority leads</h3><button type="button" className="button mini secondary-button" onClick={() => setActiveTab('leads')}>Open pipeline</button></div>{priorityLeads.length ? priorityLeads.map((lead) => <div className="hub-list-item" key={`priority-${lead.id}`}><strong>{lead.name}</strong><span>{leadScores.get(lead.id)?.reasons.join(' · ') || 'Needs review'}</span><span className={`lead-score-pill ${leadScores.get(lead.id)?.label.toLowerCase()}`}>{leadScores.get(lead.id)?.label} · {leadScores.get(lead.id)?.score}</span><button type="button" className="button mini secondary-button" onClick={() => loadCustomerProfile(lead)}>Work</button></div>) : <p>No active leads to score yet.</p>}</article>
       </section> : null}
 
       {activeTab === 'company' ? <section className="portal-panel-grid single company-info-grid">
@@ -1397,7 +1438,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       {activeTab === 'leads' ? <section className="portal-panel-grid single lead-management-layout">
         <article className="copy-card lead-selector-card">
           <div className="card-title-row"><div><h3>Select a lead</h3><p className="fine-print">Choose the lead up top, then update contact details, stage, follow-up dates, and next actions below.</p></div><span className="pipeline-total">{savedLeads.length} total</span></div>
-          {savedLeads.length ? <div className="lead-selector-list">{savedLeads.map((lead) => <button type="button" key={lead.id} className={leadWorkflow.currentLead?.id === lead.id ? 'active' : ''} onClick={() => loadCustomerProfile(lead)}><strong>{lead.name}</strong><span>{leadStages.find((stage) => stage.status === leadStatus(lead))?.label}</span>{lead.followUpDate ? <small>Follow-up {lead.followUpDate}</small> : null}</button>)}</div> : <p>No leads yet. Add the first lead below.</p>}
+          {savedLeads.length ? <div className="lead-selector-list">{savedLeads.map((lead) => <button type="button" key={lead.id} className={leadWorkflow.currentLead?.id === lead.id ? 'active' : ''} onClick={() => loadCustomerProfile(lead)}><strong>{lead.name}</strong><span>{leadStages.find((stage) => stage.status === leadStatus(lead))?.label}</span>{leadScores.get(lead.id) ? <small>{leadScores.get(lead.id)?.label} lead · {leadScores.get(lead.id)?.score}</small> : null}{lead.followUpDate ? <small>Follow-up {lead.followUpDate}</small> : null}</button>)}</div> : <p>No leads yet. Add the first lead below.</p>}
         </article>
         <div className="lead-options-grid">
         <article className="builder-panel lead-entry-panel">
@@ -1423,7 +1464,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
         <article className="copy-card lead-workflow-card">
           <div className="card-title-row"><div><h3>Selected lead workflow</h3><p className="fine-print">Pick a lead below, then use this guided panel to move it to the next answer.</p></div>{leadWorkflow.currentLead ? <span className="pipeline-total">{leadWorkflow.stage.label}</span> : null}</div>
           {leadWorkflow.currentLead ? <>
-            <div className="selected-lead-title"><strong>{leadWorkflow.currentLead.name}</strong><span>{[leadWorkflow.currentLead.phone, leadWorkflow.currentLead.email].filter(Boolean).join(' · ') || 'No contact details yet'}</span></div>
+            <div className="selected-lead-title"><strong>{leadWorkflow.currentLead.name}</strong><span>{[leadWorkflow.currentLead.phone, leadWorkflow.currentLead.email].filter(Boolean).join(' · ') || 'No contact details yet'}</span>{leadScores.get(leadWorkflow.currentLead.id) ? <span className={`lead-score-pill ${leadScores.get(leadWorkflow.currentLead.id)?.label.toLowerCase()}`}>{leadScores.get(leadWorkflow.currentLead.id)?.label} · {leadScores.get(leadWorkflow.currentLead.id)?.score} · {leadScores.get(leadWorkflow.currentLead.id)?.reasons.join(', ')}</span> : null}</div>
             <div className="workflow-progress" aria-label="Lead workflow progress">{leadStages.map((stage, index) => <button key={stage.status} type="button" className={index <= leadWorkflow.stageIndex ? 'complete' : ''} onClick={() => moveCurrentLead(stage.status)}><span>{index + 1}</span>{stage.label}</button>)}</div>
             <div className="next-action-box"><strong>Recommended next action</strong><p>{leadWorkflow.currentLead.nextStep || leadWorkflow.stage.action}</p>{leadWorkflow.currentLead.followUpDate ? <span>Follow up on {leadWorkflow.currentLead.followUpDate}</span> : null}{leadWorkflow.currentLead.appointmentDate ? <span>Sales/appointment date: {leadWorkflow.currentLead.appointmentDate}</span> : null}</div>
             <div className="lead-checklist">{leadWorkflow.checklist.map((item) => <span key={item.label} className={item.done ? 'done' : ''}>{item.done ? '✓' : '○'} {item.label}</span>)}</div>
@@ -1435,7 +1476,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
         </div>
         <article className="copy-card pipeline-card">
           <div className="card-title-row"><div><h3>All leads by stage</h3><p className="fine-print">Tap Load to focus one lead, or use Quick move to advance it without opening the full editor.</p></div><span className="pipeline-total">{pipelineStats.active} active</span></div>
-          <div className="pipeline-metrics"><span>{pipelineStats.total} total leads</span><span>{pipelineStats.won} won</span><span>{pipelineStats.lost} lost</span><span>{todaysFollowUps.length} due today</span><span>{overdueFollowUps.length} overdue</span></div>
+          <div className="pipeline-metrics"><span>{pipelineStats.total} total leads</span><span>{pipelineStats.won} won</span><span>{pipelineStats.lost} lost</span><span>{priorityLeads.filter((lead) => leadScores.get(lead.id)?.label === 'Hot').length} hot</span><span>{todaysFollowUps.length} due today</span><span>{overdueFollowUps.length} overdue</span></div>
           <div className="stage-filter"><button type="button" className={leadStageFilter === 'all' ? 'active' : ''} onClick={() => setLeadStageFilter('all')}>All</button>{leadStages.map((stage) => <button type="button" key={stage.status} className={leadStageFilter === stage.status ? 'active' : ''} onClick={() => setLeadStageFilter(stage.status)}>{stage.label}</button>)}</div>
           {savedLeads.length ? (
             <div className="all-leads-stack">
@@ -1463,7 +1504,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
                             <div className="row-actions"><button type="button" className="button mini" onClick={saveLeadEdit}>Save changes</button><button type="button" className="button mini secondary-button" onClick={() => setEditingLead(null)}>Cancel</button></div>
                           </div>
                         ) : (
-                          <><div><div className="lead-card-topline"><strong>{lead.name}</strong><span>{leadStages.find((item) => item.status === leadStatus(lead))?.label}</span></div><span>{[lead.phone, lead.email, lead.address].filter(Boolean).join(' · ') || 'No contact details yet'}</span>{lead.source ? <small>Source: {lead.source}</small> : null}{lead.nextStep ? <small>Next: {lead.nextStep}</small> : null}<div className="lead-date-row">{lead.followUpDate ? <span>Follow-up {lead.followUpDate}</span> : null}{lead.appointmentDate ? <span>Appt {lead.appointmentDate}</span> : null}</div>{lead.notes ? <small>{lead.notes}</small> : null}</div><div className="lead-card-actions"><select value={leadStatus(lead)} onChange={(e) => updateLeadStatus(lead.id, e.target.value as LeadStatus)} aria-label={`Pipeline status for ${lead.name}`}>{leadStages.map((option) => <option value={option.status} key={option.status}>{option.label}</option>)}</select><button type="button" className="button mini" onClick={() => loadCustomerProfile(lead)}>Load</button><button type="button" className="button mini secondary-button" onClick={() => setEditingLead(lead)}>Edit</button></div></>
+                          <><div><div className="lead-card-topline"><strong>{lead.name}</strong><span>{leadStages.find((item) => item.status === leadStatus(lead))?.label}</span></div>{leadScores.get(lead.id) ? <span className={`lead-score-pill ${leadScores.get(lead.id)?.label.toLowerCase()}`}>{leadScores.get(lead.id)?.label} · {leadScores.get(lead.id)?.score} · {leadScores.get(lead.id)?.reasons.join(', ')}</span> : null}<span>{[lead.phone, lead.email, lead.address].filter(Boolean).join(' · ') || 'No contact details yet'}</span>{lead.source ? <small>Source: {lead.source}</small> : null}{lead.nextStep ? <small>Next: {lead.nextStep}</small> : null}<div className="lead-date-row">{lead.followUpDate ? <span>Follow-up {lead.followUpDate}</span> : null}{lead.appointmentDate ? <span>Appt {lead.appointmentDate}</span> : null}</div>{lead.notes ? <small>{lead.notes}</small> : null}</div><div className="lead-card-actions"><select value={leadStatus(lead)} onChange={(e) => updateLeadStatus(lead.id, e.target.value as LeadStatus)} aria-label={`Pipeline status for ${lead.name}`}>{leadStages.map((option) => <option value={option.status} key={option.status}>{option.label}</option>)}</select><button type="button" className="button mini" onClick={() => loadCustomerProfile(lead)}>Load</button><button type="button" className="button mini secondary-button" onClick={() => setEditingLead(lead)}>Edit</button></div></>
                         )}
                       </div>
                     )) : <div className="pipeline-empty">No leads here yet.</div>}

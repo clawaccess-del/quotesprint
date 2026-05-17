@@ -822,6 +822,33 @@ textarea {
   font-size: .78rem;
   font-weight: 950;
 }
+.lead-score-pill {
+  display: inline-flex !important;
+  align-items: center;
+  width: fit-content;
+  border-radius: 999px;
+  padding: .34rem .55rem;
+  background: rgba(255,250,241,.95);
+  border: 1px solid var(--line);
+  color: var(--green-dark) !important;
+  font-size: .76rem;
+  font-weight: 950;
+  line-height: 1.2;
+}
+.lead-score-pill.hot {
+  background: rgba(232, 88, 52, .12);
+  border-color: rgba(232, 88, 52, .3);
+  color: #a33a1d !important;
+}
+.lead-score-pill.warm {
+  background: rgba(230, 166, 67, .16);
+  border-color: rgba(230, 166, 67, .35);
+  color: #8a5616 !important;
+}
+.lead-score-pill.cold {
+  background: rgba(68, 122, 98, .1);
+  border-color: rgba(68, 122, 98, .24);
+}
 .pipeline-column p {
   margin: 0;
   color: var(--muted);
