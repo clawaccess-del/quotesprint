@@ -789,6 +789,16 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     return { rows, best: rows[0] || null };
   }, [savedLeads, savedQuotes]);
 
+  function appointmentPrepNote(lead: SavedLead) {
+    const detail = industryDetails[jobType];
+    const missingContact = !lead.phone && !lead.email ? ' Confirm the best phone or email before the appointment.' : '';
+    const addressNote = lead.address ? `Address on file: ${lead.address}.` : 'Get the service address before dispatch or the sales visit.';
+    const photoNote = detail.quoteInputs.slice(0, 3).join(', ');
+    const appointmentNote = lead.appointmentDate ? `Appointment/date: ${lead.appointmentDate}.` : 'No appointment date set yet.';
+    const leadContext = lead.notes ? `Customer notes: ${lead.notes}` : 'No detailed customer notes yet, ask for symptoms, timing, access, and photos.';
+    return `${appointmentNote} ${addressNote}${missingContact} Prep: review ${photoNote}. ${playbooks[jobType].prepNote} ${leadContext}`;
+  }
+
   const currentLeadTimeline = useMemo(() => {
     const lead = leadWorkflow.currentLead;
     if (!lead) return [];
@@ -1466,7 +1476,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
           {leadWorkflow.currentLead ? <>
             <div className="selected-lead-title"><strong>{leadWorkflow.currentLead.name}</strong><span>{[leadWorkflow.currentLead.phone, leadWorkflow.currentLead.email].filter(Boolean).join(' · ') || 'No contact details yet'}</span>{leadScores.get(leadWorkflow.currentLead.id) ? <span className={`lead-score-pill ${leadScores.get(leadWorkflow.currentLead.id)?.label.toLowerCase()}`}>{leadScores.get(leadWorkflow.currentLead.id)?.label} · {leadScores.get(leadWorkflow.currentLead.id)?.score} · {leadScores.get(leadWorkflow.currentLead.id)?.reasons.join(', ')}</span> : null}</div>
             <div className="workflow-progress" aria-label="Lead workflow progress">{leadStages.map((stage, index) => <button key={stage.status} type="button" className={index <= leadWorkflow.stageIndex ? 'complete' : ''} onClick={() => moveCurrentLead(stage.status)}><span>{index + 1}</span>{stage.label}</button>)}</div>
-            <div className="next-action-box"><strong>Recommended next action</strong><p>{leadWorkflow.currentLead.nextStep || leadWorkflow.stage.action}</p>{leadWorkflow.currentLead.followUpDate ? <span>Follow up on {leadWorkflow.currentLead.followUpDate}</span> : null}{leadWorkflow.currentLead.appointmentDate ? <span>Sales/appointment date: {leadWorkflow.currentLead.appointmentDate}</span> : null}</div>
+            <div className="next-action-box"><strong>Recommended next action</strong><p>{leadWorkflow.currentLead.nextStep || leadWorkflow.stage.action}</p>{leadWorkflow.currentLead.followUpDate ? <span>Follow up on {leadWorkflow.currentLead.followUpDate}</span> : null}{leadWorkflow.currentLead.appointmentDate ? <span>Sales/appointment date: {leadWorkflow.currentLead.appointmentDate}</span> : null}</div><div className="next-action-box prep-note-box"><strong>Appointment prep notes</strong><p>{appointmentPrepNote(leadWorkflow.currentLead)}</p><button type="button" className="button mini secondary-button" onClick={() => copyText(appointmentPrepNote(leadWorkflow.currentLead!), 'appointment prep notes')}>Copy prep notes</button></div>
             <div className="lead-checklist">{leadWorkflow.checklist.map((item) => <span key={item.label} className={item.done ? 'done' : ''}>{item.done ? '✓' : '○'} {item.label}</span>)}</div>
             <div className="hero-actions"><button type="button" className="button secondary" onClick={() => moveCurrentLead('qualified')}>Qualified</button><button type="button" className="button secondary" onClick={saveQuote}>Save quote + mark quoted</button><button type="button" className="button secondary" onClick={() => moveCurrentLead('followed-up')}>Followed up</button><button type="button" className="button" onClick={() => moveCurrentLead('won')}>Won</button><button type="button" className="button secondary" onClick={() => moveCurrentLead('lost')}>Lost</button></div>
             <div className="job-checklist"><h3>Quote-to-job checklist</h3><p className="fine-print">Use this once the customer is close to saying yes or the job is won.</p>{jobChecklistItems.map((item) => <label className="job-check-item" key={item.key}><input type="checkbox" checked={Boolean(leadWorkflow.currentLead?.jobChecklist?.[item.key])} onChange={() => toggleJobChecklist(leadWorkflow.currentLead!.id, item.key)} /><span><strong>{item.label}</strong><small>{item.helper}</small></span></label>)}</div>
@@ -1542,7 +1552,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
           {upcomingCalendarItems.length ? <div className="calendar-list">
             {upcomingCalendarItems.map((item) => <article className="calendar-item" key={`${item.lead.id}-${item.type}-${item.date}`}>
               <div><strong>{item.date}</strong><span>{item.type}</span></div>
-              <div><b>{item.lead.name}</b><p>{item.detail}</p><small>{[item.lead.phone, item.lead.email, item.lead.address].filter(Boolean).join(' · ') || 'No contact details yet'} · {leadStages.find((stage) => stage.status === item.status)?.label}</small></div>
+              <div><b>{item.lead.name}</b><p>{item.detail}</p>{item.type === 'Sales appointment' ? <p className="prep-note-inline">{appointmentPrepNote(item.lead)}</p> : null}<small>{[item.lead.phone, item.lead.email, item.lead.address].filter(Boolean).join(' · ') || 'No contact details yet'} · {leadStages.find((stage) => stage.status === item.status)?.label}</small></div>
               <button type="button" className="button mini secondary-button" onClick={() => loadCustomerProfile(item.lead)}>Open lead</button>
             </article>)}
           </div> : <p>No upcoming lead contacts yet. Add follow-up dates or sales/appointment dates on the Lead pipeline tab.</p>}

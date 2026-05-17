@@ -601,6 +601,17 @@ textarea {
 .next-action-box strong { color: var(--green-dark); }
 .next-action-box p { margin: .35rem 0; }
 .next-action-box span { color: var(--muted); font-size: .86rem; font-weight: 850; }
+.prep-note-box {
+  background: rgba(68,122,98,.08);
+}
+.prep-note-inline {
+  margin-top: .35rem !important;
+  padding: .55rem .65rem;
+  border-radius: .8rem;
+  background: rgba(68,122,98,.08);
+  color: var(--green-dark) !important;
+  font-size: .86rem;
+}
 .lead-checklist {
   display: flex;
   flex-wrap: wrap;

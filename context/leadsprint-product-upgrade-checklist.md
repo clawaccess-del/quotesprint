@@ -41,9 +41,10 @@ Work through these one by one until complete. Keep each item scoped, build/test,
 - Show score on lead cards, selected lead workflow, lead selector, Hub current lead, and Hub top-priority list.
 - All leads by stage now sorts stage cards by score so the best next leads surface first.
 
-## 9. Appointment prep notes
+## 9. Appointment prep notes ✅
 - Generate prep notes based on job type, lead notes, address/contact state, photos/details needed, appointment date, and industry playbook.
-- Show in calendar item and lead workflow.
+- Show prep notes in selected lead workflow with a copy button.
+- Show prep notes on calendar sales appointment items.
 
 ## 10. Review/referral loop
 - After a lead is won, show review request and referral ask templates.
