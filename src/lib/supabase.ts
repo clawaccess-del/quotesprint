@@ -25,6 +25,7 @@ export type StoredLead = {
   email: string;
   address: string;
   notes: string;
+  industry?: string;
   status?: 'new' | 'quoted' | 'followed-up' | 'won' | 'lost';
   createdAt: string;
 };

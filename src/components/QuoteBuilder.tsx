@@ -25,6 +25,7 @@ type SavedLead = {
   email: string;
   address: string;
   notes: string;
+  industry?: string;
   source?: string;
   nextStep?: string;
   followUpDate?: string;
@@ -461,6 +462,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
   const [leadEmail, setLeadEmail] = useState('');
   const [leadAddress, setLeadAddress] = useState('');
   const [leadNotes, setLeadNotes] = useState('');
+  const [leadIndustry, setLeadIndustry] = useState('HVAC');
   const [leadSource, setLeadSource] = useState('Website form');
   const [leadNextStep, setLeadNextStep] = useState('Send first response and confirm details');
   const [leadFollowUpDate, setLeadFollowUpDate] = useState('');
@@ -513,6 +515,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
         const profile = JSON.parse(profileRaw);
         setBusiness(profile.business || 'Acme Home Services');
         setBusinessIndustry(profile.businessIndustry || 'HVAC');
+        setLeadIndustry(profile.businessIndustry || 'HVAC');
         setCompanyLogoUrl(profile.companyLogoUrl || '');
         setCompanyPhone(profile.companyPhone || '');
         setCompanyWebsite(profile.companyWebsite || '');
@@ -532,6 +535,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
         if (data.profile) {
           setBusiness(data.profile.business || 'Acme Home Services');
           setBusinessIndustry(data.profile.businessIndustry || 'HVAC');
+          setLeadIndustry(data.profile.businessIndustry || 'HVAC');
           setCompanyLogoUrl(data.profile.companyLogoUrl || companyLogoUrl || '');
           setCompanyPhone(data.profile.companyPhone || '');
           setCompanyWebsite(data.profile.companyWebsite || '');
@@ -591,8 +595,10 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     const nextStep = lead?.nextStep || leadNextStep;
     const address = lead?.address || leadAddress;
     const source = lead?.source || leadSource;
+    const industry = lead?.industry || leadIndustry || businessIndustry;
     const appointmentDate = lead?.appointmentDate || leadAppointmentDate;
     const detailParts = [
+      industry ? `lead industry: ${industry}` : '',
       notes ? `notes mention: ${notes}` : '',
       nextStep ? `next step: ${nextStep}` : '',
       address ? `service address/location: ${address}` : '',
@@ -600,8 +606,8 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       appointmentDate ? `appointment/date: ${appointmentDate}` : '',
     ].filter(Boolean);
     const summary = detailParts.length ? detailParts.join(' · ') : `the ${jobType.toLowerCase()} request`;
-    return { lead, notes, nextStep, address, source, appointmentDate, summary };
-  }, [customer, jobType, leadAddress, leadAppointmentDate, leadNextStep, leadNotes, leadSource, savedLeads, selectedQuoteLeadId]);
+    return { lead, notes, nextStep, address, source, industry, appointmentDate, summary };
+  }, [businessIndustry, customer, jobType, leadAddress, leadAppointmentDate, leadIndustry, leadNextStep, leadNotes, leadSource, savedLeads, selectedQuoteLeadId]);
 
   useEffect(() => {
     const profile = { business, businessIndustry, companyLogoUrl, companyPhone, companyWebsite, companyOffer, idealCustomer, serviceArea, brandVoice, differentiator, guarantee };
@@ -940,6 +946,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       email: leadEmail,
       address: leadAddress,
       notes: leadNotes,
+      industry: leadIndustry || businessIndustry,
       source: leadSource,
       nextStep: leadNextStep,
       followUpDate: leadFollowUpDate,
@@ -975,6 +982,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       email: existingLead?.email || leadEmail,
       address: existingLead?.address || leadAddress,
       notes: existingLead?.notes || `${jobType} quote: ${money(result.total)}`,
+      industry: existingLead?.industry || leadIndustry || businessIndustry,
       source: existingLead?.source || leadSource,
       nextStep: 'Follow up on estimate and ask for a yes/no decision',
       followUpDate: existingLead?.followUpDate || leadFollowUpDate,
@@ -1053,6 +1061,8 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     setLeadEmail(lead.email);
     setLeadAddress(lead.address);
     setLeadNotes(lead.notes);
+    setLeadIndustry(lead.industry || businessIndustry);
+    setBusinessIndustry(lead.industry || businessIndustry);
     setLeadSource(lead.source || 'Website form');
     setLeadNextStep(lead.nextStep || leadStages.find((stage) => stage.status === leadStatus(lead))?.action || 'Confirm the next step');
     setLeadFollowUpDate(lead.followUpDate || '');
@@ -1069,6 +1079,8 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     setLeadEmail(lead.email);
     setLeadAddress(lead.address);
     setLeadNotes(lead.notes);
+    setLeadIndustry(lead.industry || businessIndustry);
+    setBusinessIndustry(lead.industry || businessIndustry);
     setLeadSource(lead.source || 'Website form');
     setLeadNextStep(lead.nextStep || leadStages.find((stage) => stage.status === leadStatus(lead))?.action || 'Follow up on estimate and ask for a yes/no decision');
     setLeadFollowUpDate(lead.followUpDate || '');
@@ -1095,6 +1107,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       email: leadEmail,
       address: leadAddress,
       notes: leadNotes,
+      industry: leadIndustry || businessIndustry,
       source: leadSource,
       nextStep: leadNextStep,
       followUpDate: leadFollowUpDate,
@@ -1468,11 +1481,12 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
         <div className="form-section-title">Quote details</div>
         <div className="quote-lead-picker">
           <label>Start from saved lead<select value={selectedQuoteLeadId} onChange={(e) => selectQuoteLead(e.target.value)}><option value="">Choose a saved lead...</option>{savedLeads.map((lead) => <option value={lead.id} key={lead.id}>{lead.name} {lead.address ? `· ${lead.address}` : ''}</option>)}</select></label>
-          {selectedQuoteLead ? <div className="selected-quote-lead"><strong>{selectedQuoteLead.name}</strong><span>{[selectedQuoteLead.phone, selectedQuoteLead.email, selectedQuoteLead.address].filter(Boolean).join(' · ') || 'No contact details saved yet'}</span>{selectedQuoteLead.notes ? <small>Lead notes used in quote copy: {selectedQuoteLead.notes}</small> : null}{selectedQuoteLead.nextStep ? <small>Next step: {selectedQuoteLead.nextStep}</small> : null}</div> : <p className="fine-print">Pick a lead to pull in their saved notes, contact info, address, source, next step, and appointment context.</p>}
+          {selectedQuoteLead ? <div className="selected-quote-lead"><strong>{selectedQuoteLead.name}</strong><span>{[selectedQuoteLead.industry, selectedQuoteLead.phone, selectedQuoteLead.email, selectedQuoteLead.address].filter(Boolean).join(' · ') || 'No contact details saved yet'}</span>{selectedQuoteLead.notes ? <small>Lead notes used in quote copy: {selectedQuoteLead.notes}</small> : null}{selectedQuoteLead.nextStep ? <small>Next step: {selectedQuoteLead.nextStep}</small> : null}</div> : <p className="fine-print">Pick a lead to pull in their saved notes, contact info, address, source, next step, and appointment context.</p>}
           {selectedQuoteLead ? <div className="quote-lead-edit-grid">
             <label>Phone<input value={leadPhone} onChange={(e) => setLeadPhone(e.target.value)} placeholder="Customer phone" /></label>
             <label>Email<input type="email" value={leadEmail} onChange={(e) => setLeadEmail(e.target.value)} placeholder="Customer email" /></label>
             <label>Address<input value={leadAddress} onChange={(e) => setLeadAddress(e.target.value)} placeholder="Service address" /></label>
+            <label>Industry<select value={leadIndustry} onChange={(e) => { setLeadIndustry(e.target.value); setBusinessIndustry(e.target.value); }}>{businessIndustries.map((industry) => <option key={industry}>{industry}</option>)}</select></label>
             <label>Source<input value={leadSource} onChange={(e) => setLeadSource(e.target.value)} placeholder="Lead source" /></label>
             <label>Follow-up date<input type="date" value={leadFollowUpDate} onChange={(e) => setLeadFollowUpDate(e.target.value)} /></label>
             <label>Appointment date<input type="date" value={leadAppointmentDate} onChange={(e) => setLeadAppointmentDate(e.target.value)} /></label>
@@ -1575,13 +1589,14 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
           </div>
           <label>Lead address<input value={leadAddress} onChange={(e) => setLeadAddress(e.target.value)} placeholder="Street, city, ZIP" /></label>
           <div className="two-col">
+            <label>Industry<select value={leadIndustry} onChange={(e) => { setLeadIndustry(e.target.value); setBusinessIndustry(e.target.value); }}>{businessIndustries.map((industry) => <option key={industry}>{industry}</option>)}</select></label>
             <label>Lead source<input value={leadSource} onChange={(e) => setLeadSource(e.target.value)} placeholder="Google, referral, Facebook, phone call" /></label>
-            <label>Follow-up date<input type="date" value={leadFollowUpDate} onChange={(e) => setLeadFollowUpDate(e.target.value)} /></label>
           </div>
           <div className="two-col">
+            <label>Follow-up date<input type="date" value={leadFollowUpDate} onChange={(e) => setLeadFollowUpDate(e.target.value)} /></label>
             <label>Sales / appointment date<input type="date" value={leadAppointmentDate} onChange={(e) => setLeadAppointmentDate(e.target.value)} /></label>
-            <label>Pipeline stage<select value={leadWorkflow.currentStage} onChange={(e) => leadWorkflow.currentLead ? updateLeadStatus(leadWorkflow.currentLead.id, e.target.value as LeadStatus) : null}>{leadStages.map((option) => <option value={option.status} key={option.status}>{option.label}</option>)}</select></label>
           </div>
+          <label>Pipeline stage<select value={leadWorkflow.currentStage} onChange={(e) => leadWorkflow.currentLead ? updateLeadStatus(leadWorkflow.currentLead.id, e.target.value as LeadStatus) : null}>{leadStages.map((option) => <option value={option.status} key={option.status}>{option.label}</option>)}</select></label>
           <label>Next step<input value={leadNextStep} onChange={(e) => setLeadNextStep(e.target.value)} placeholder="Send estimate, call back Friday, request photos" /></label>
           <label>Lead notes<textarea value={leadNotes} onChange={(e) => setLeadNotes(e.target.value)} rows={3} placeholder="Gate code, preferred time, issue summary, budget, photos needed, decision maker, etc." /></label>
           <button type="button" className="button full" onClick={saveLead}>Save lead contact</button>
@@ -1622,7 +1637,8 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
                               <label>Email<input type="email" value={editingLead.email} onChange={(e) => setEditingLead({ ...editingLead, email: e.target.value })} /></label>
                             </div>
                             <label>Address<input value={editingLead.address} onChange={(e) => setEditingLead({ ...editingLead, address: e.target.value })} /></label>
-                            <div className="two-col"><label>Source<input value={editingLead.source || ''} onChange={(e) => setEditingLead({ ...editingLead, source: e.target.value })} /></label><label>Follow-up date<input type="date" value={editingLead.followUpDate || ''} onChange={(e) => setEditingLead({ ...editingLead, followUpDate: e.target.value })} /></label></div>
+                            <div className="two-col"><label>Industry<select value={editingLead.industry || businessIndustry} onChange={(e) => setEditingLead({ ...editingLead, industry: e.target.value })}>{businessIndustries.map((industry) => <option key={industry}>{industry}</option>)}</select></label><label>Source<input value={editingLead.source || ''} onChange={(e) => setEditingLead({ ...editingLead, source: e.target.value })} /></label></div>
+                            <label>Follow-up date<input type="date" value={editingLead.followUpDate || ''} onChange={(e) => setEditingLead({ ...editingLead, followUpDate: e.target.value })} /></label>
                             <label>Sales / appointment date<input type="date" value={editingLead.appointmentDate || ''} onChange={(e) => setEditingLead({ ...editingLead, appointmentDate: e.target.value })} /></label>
                             <label>Next step<input value={editingLead.nextStep || ''} onChange={(e) => setEditingLead({ ...editingLead, nextStep: e.target.value })} /></label>
                             <label>Status<select value={leadStatus(editingLead)} onChange={(e) => setEditingLead({ ...editingLead, status: e.target.value as LeadStatus })}>{leadStages.map((option) => <option value={option.status} key={option.status}>{option.label}</option>)}</select></label>
