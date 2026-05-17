@@ -30,28 +30,16 @@ export default async function AppPage() {
   const aiEnabled = access.plan === 'live_ai';
 
   return (
-    <section className="page-shell wide">
-      <span className="eyebrow">{aiEnabled ? 'LeadSprint Live + AI' : access.plan === 'live' ? 'LeadSprint Live' : 'LeadSprint customer access'}</span>
-      <h1>Capture the lead, generate the quote, save the opportunity, and send the next message.</h1>
-      <p className="lead">Use LeadSprint to manage customer details, create company-specific estimates, write deposit asks, generate follow-up copy, handle objections, run four-step sequences, and track the pipeline.</p>
-      <div className="access-banner">
-        <strong>Access active</strong>
-        <span>{aiEnabled ? 'AI credits unlocked with a 50-credit monthly cap.' : access.plan === 'live' ? 'Monthly non-AI system unlocked. Upgrade anytime for AI credits.' : 'One-time product unlocked for this browser.'}</span>
-      </div>
-      <div className="download-panel">
-        <strong>Support portal included</strong>
-        <span>Submit tickets, request features or integrations, see status updates, and read account notifications from LeadSprint.</span>
-        <div className="hero-actions">
-          <Link href="/support" className="button secondary">Open support portal</Link>
+    <section className="page-shell wide dashboard-shell">
+      <div className="dashboard-topbar">
+        <div>
+          <span className="eyebrow">{aiEnabled ? 'LeadSprint Live + AI' : access.plan === 'live' ? 'LeadSprint Live' : 'LeadSprint customer access'}</span>
+          <h1>Client dashboard</h1>
+          <p>Manage leads, quotes, follow-ups, sales activity, and saved customer history.</p>
         </div>
-      </div>
-      <div className="download-panel">
-        <strong>Downloads included</strong>
-        <span>Save the relevant LeadSprint kit for offline use, onboarding, or team reference.</span>
-        <div className="hero-actions">
-          <a className="button secondary" href="/api/download?product=starter">Download Starter Kit</a>
-          {['pro', 'agency', 'live', 'live_ai'].includes(access.plan) ? <a className="button secondary" href="/api/download?product=pro">Download Pro Kit</a> : null}
-          {access.plan === 'agency' ? <a className="button secondary" href="/api/download?product=agency">Download Agency Kit</a> : null}
+        <div className="dashboard-quick-actions">
+          <Link href="/support" className="button secondary">Support</Link>
+          <a className="button secondary" href="/api/download?product=starter">Download kit</a>
         </div>
       </div>
       <QuoteBuilder accountEmail={access.customerEmail} aiEnabled={aiEnabled} />

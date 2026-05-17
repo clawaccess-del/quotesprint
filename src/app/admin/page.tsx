@@ -6,6 +6,12 @@ const priorities = ['low', 'normal', 'high', 'urgent'];
 const plans = ['starter', 'pro', 'agency', 'live', 'live_ai'];
 const accountStatuses = ['trial', 'active', 'paused', 'cancelled'];
 const tabs = ['overview', 'accounts', 'updates', 'tickets'] as const;
+const adminTabInfo: Record<AdminTab, { title: string; helper: string }> = {
+  overview: { title: 'Overview', helper: 'Quick account and ticket summary with shortcuts into client records.' },
+  accounts: { title: 'Client accounts', helper: 'Create accounts, edit login access, and update client company profiles.' },
+  updates: { title: 'Updates', helper: 'Send dashboard notifications to all clients or selected accounts.' },
+  tickets: { title: 'Tickets', helper: 'Review support requests and update statuses clients can see.' },
+};
 const companyFields = [
   ['business', 'Business name'],
   ['businessIndustry', 'Industry'],
@@ -60,9 +66,17 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
 
   return (
     <section className="page-shell wide admin-page">
-      <span className="eyebrow">Owner backend</span>
-      <h1>Manage LeadSprint.</h1>
-      <p className="lead">Review the business, manage client accounts, send updates into dashboards, and keep ticket statuses visible to everyone.</p>
+      <div className="dashboard-topbar admin-dashboard-topbar">
+        <div>
+          <span className="eyebrow">Owner backend</span>
+          <h1>{adminTabInfo[activeTab].title}</h1>
+          <p>{adminTabInfo[activeTab].helper}</p>
+        </div>
+        <div className="dashboard-quick-actions">
+          <a className="button secondary" href="/">View front end</a>
+          <a className="button secondary" href="/admin?tab=overview">Backend home</a>
+        </div>
+      </div>
 
       <nav className="admin-tab-nav">
         <a className={activeTab === 'overview' ? 'active' : ''} href="/admin?tab=overview">Overview</a>

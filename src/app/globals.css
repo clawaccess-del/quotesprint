@@ -1697,3 +1697,65 @@ textarea {
   background: white;
 }
 .admin-row.clickable small { color: var(--green-dark); font-weight: 900; }
+
+.dashboard-shell,
+.admin-page {
+  padding-top: 1.4rem;
+}
+.dashboard-topbar,
+.dashboard-tab-context {
+  border: 1px solid var(--line);
+  border-radius: 1.25rem;
+  background: rgba(255,255,255,.78);
+  box-shadow: 0 12px 34px rgba(18,72,50,.07);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+.dashboard-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.dashboard-topbar h1,
+.dashboard-tab-context h2 {
+  font-size: clamp(1.45rem, 3vw, 2.15rem);
+  line-height: 1.05;
+  letter-spacing: -.045em;
+  margin: .35rem 0 .2rem;
+  max-width: none;
+}
+.dashboard-topbar p,
+.dashboard-tab-context p {
+  color: var(--muted);
+  font-weight: 750;
+  margin: 0;
+  max-width: 760px;
+}
+.dashboard-quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .6rem;
+  justify-content: flex-end;
+}
+.dashboard-tab-context {
+  margin-top: 1rem;
+  margin-bottom: .75rem;
+}
+.admin-page .section-heading h2,
+.admin-page .checkout-card h2,
+.copy-card h3,
+.builder-panel h3 {
+  letter-spacing: -.035em;
+}
+.admin-page .section-heading h2 {
+  font-size: clamp(1.35rem, 2vw, 1.85rem);
+  line-height: 1.1;
+}
+.admin-page .section-heading {
+  margin-bottom: .8rem;
+}
+@media (max-width: 760px) {
+  .dashboard-topbar { align-items: stretch; flex-direction: column; }
+  .dashboard-quick-actions { justify-content: flex-start; }
+}

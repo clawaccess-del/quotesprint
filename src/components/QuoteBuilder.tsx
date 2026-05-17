@@ -1356,9 +1356,23 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     setGeneratingSection(null);
   }
 
+  const activeTabInfo: Record<PortalTab, { title: string; helper: string }> = {
+    hub: { title: 'Hub', helper: 'See the day’s pipeline, follow-ups, priority leads, and revenue snapshot.' },
+    company: { title: 'Company info', helper: 'Update the business details used across quotes, follow-ups, social posts, and AI rewrites.' },
+    tool: { title: 'Quote tool', helper: 'Build an estimate, generate customer-ready copy, and save the quote to the lead record.' },
+    social: { title: 'Social posts', helper: 'Create practical posts for Facebook, Google Business Profile, LinkedIn, Nextdoor, or Instagram.' },
+    leads: { title: 'Lead pipeline', helper: 'Add leads, open a lead, generate a quote, move stages, and schedule follow-ups.' },
+    calendar: { title: 'Calendar', helper: 'Review today’s follow-ups, overdue contacts, appointments, and upcoming sales tasks.' },
+    sales: { title: 'Sales tools', helper: 'Review revenue, lead-source performance, win/loss notes, and reusable sales templates.' },
+    history: { title: 'Saved history', helper: 'Review saved quotes and export lead or quote records when needed.' },
+  };
+
   return (
     <>
       {aiEnabled ? <aside className="ai-credit-widget"><span>AI credits</span><strong>{aiUsage ? aiUsage.remaining : '—'} / {aiUsage ? aiUsage.total : 50}</strong><small>{aiUsage ? `${aiUsage.used} used this month` : 'Loading usage'}</small></aside> : null}
+      <div className="dashboard-tab-context">
+        <div><span className="eyebrow">Current tab</span><h2>{activeTabInfo[activeTab].title}</h2><p>{activeTabInfo[activeTab].helper}</p></div>
+      </div>
       <div className="portal-tabs" role="tablist" aria-label="Customer portal sections">
         <button type="button" className={activeTab === 'hub' ? 'active' : ''} onClick={() => setActiveTab('hub')}>Hub</button>
         <button type="button" className={activeTab === 'company' ? 'active' : ''} onClick={() => setActiveTab('company')}>Company Info</button>
@@ -1376,10 +1390,6 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       </div>
 
       {activeTab === 'hub' ? <section className="portal-panel-grid single hub-grid">
-        <article className="copy-card hub-hero-card">
-          <div><span className="eyebrow">LeadSprint Hub</span><h2>Today’s sales command center</h2><p>See what needs attention, where the pipeline stands, and which leads to work next.</p></div>
-          <div className="hub-actions"><button type="button" className="button" onClick={() => setActiveTab('leads')}>Work leads</button><button type="button" className="button secondary" onClick={() => setActiveTab('calendar')}>Open calendar</button></div>
-        </article>
         <article className="copy-card"><h3>Pipeline snapshot</h3><div className="hub-metrics"><span><strong>{pipelineStats.total}</strong>Total leads</span><span><strong>{pipelineStats.active}</strong>Active</span><span><strong>{pipelineStats.won}</strong>Won</span><span><strong>{pipelineStats.lost}</strong>Lost</span></div></article>
         <article className="copy-card"><h3>Money snapshot</h3><div className="hub-metrics"><span><strong>{money(revenueDashboard.openValue)}</strong>Open quoted</span><span><strong>{money(revenueDashboard.wonValue)}</strong>Won revenue</span><span><strong>{revenueDashboard.closedWinRate}%</strong>Closed win rate</span><span><strong>{money(revenueDashboard.avgQuote)}</strong>Average quote</span></div></article>
         <article className="copy-card"><div className="card-title-row"><h3>Needs attention</h3><button type="button" className="button mini secondary-button" onClick={() => setActiveTab('calendar')}>View all</button></div><div className="pipeline-metrics"><span>{todaysFollowUps.length} due today</span><span>{overdueFollowUps.length} overdue</span><span>{upcomingCalendarItems.length} upcoming</span></div>{[...overdueFollowUps, ...todaysFollowUps].slice(0, 4).map((item) => <div className="hub-list-item" key={`${item.lead.id}-${item.date}-${item.type}`}><strong>{item.lead.name}</strong><span>{item.type} · {item.date} · {item.detail}</span><button type="button" className="button mini secondary-button" onClick={() => loadCustomerProfile(item.lead)}>Open</button></div>)}</article>
