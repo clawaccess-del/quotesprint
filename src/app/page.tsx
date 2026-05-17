@@ -12,13 +12,27 @@ export default function Home() {
           <p>LeadSprint uses your company profile, brand voice, service area, customer details, and industry playbooks to turn new inquiries into organized leads, professional estimates, tailored follow-up, and a cleaner path to booked work.</p>
           <div className="hero-actions">
             <Link href="/app" className="button">Open the builder</Link>
-            <Link href="/founding-teams" className="button secondary">Apply for 6 months free</Link>
+            <Link href="/founding-teams" className="button secondary">Apply for a founding partner spot</Link>
           </div>
         </div>
         <div className="hero-card">
           <div className="stat"><strong>5 min</strong><span>response window worth protecting</span></div>
           <div className="stat"><strong>5-stage</strong><span>lead pipeline from new to won</span></div>
           <div className="stat"><strong>$29/mo</strong><span>live lead, quote, and follow-up tracking</span></div>
+        </div>
+      </section>
+
+      <section className="section split">
+        <div>
+          <span className="eyebrow">Limited founding partner offer</span>
+          <h2>10 businesses get 6 months free and a direct voice in what LeadSprint becomes.</h2>
+          <p>Because LeadSprint is new, we’re selecting 10 home-service businesses or sales teams for more than a trial. Founding partners get free access, an open communication line with us, and a chance to shape the features, workflows, and integrations we build around real lead follow-up problems.</p>
+        </div>
+        <div className="note-stack">
+          <p>6 months free for selected founding partners.</p>
+          <p>Tell us what features, reminders, reports, and integrations would help your team most.</p>
+          <p>If LeadSprint genuinely helps, honest feedback or a review helps us grow.</p>
+          <p><Link href="/founding-teams">Apply for one of the 10 spots →</Link></p>
         </div>
       </section>
 
