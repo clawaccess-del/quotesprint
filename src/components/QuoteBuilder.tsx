@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 type QuoteStatus = 'open' | 'won' | 'lost';
 type LeadStatus = 'new' | 'qualified' | 'quoted' | 'followed-up' | 'won' | 'lost';
-type PortalTab = 'hub' | 'tool' | 'social' | 'leads' | 'calendar' | 'history' | 'sales';
+type PortalTab = 'hub' | 'company' | 'tool' | 'social' | 'leads' | 'calendar' | 'history' | 'sales';
 type SavedQuote = {
   id: string;
   customer: string;
@@ -464,7 +464,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
 
   useEffect(() => {
     const savedTab = window.localStorage.getItem('leadsprint-active-tab') as PortalTab | null;
-    if (savedTab && ['hub', 'tool', 'social', 'leads', 'calendar', 'history', 'sales'].includes(savedTab)) setActiveTab(savedTab);
+    if (savedTab && ['hub', 'company', 'tool', 'social', 'leads', 'calendar', 'history', 'sales'].includes(savedTab)) setActiveTab(savedTab);
   }, []);
 
   useEffect(() => {
@@ -1087,6 +1087,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       {aiEnabled ? <aside className="ai-credit-widget"><span>AI credits</span><strong>{aiUsage ? aiUsage.remaining : '—'} / {aiUsage ? aiUsage.total : 50}</strong><small>{aiUsage ? `${aiUsage.used} used this month` : 'Loading usage'}</small></aside> : null}
       <div className="portal-tabs" role="tablist" aria-label="Customer portal sections">
         <button type="button" className={activeTab === 'hub' ? 'active' : ''} onClick={() => setActiveTab('hub')}>Hub</button>
+        <button type="button" className={activeTab === 'company' ? 'active' : ''} onClick={() => setActiveTab('company')}>Company Info</button>
         <button type="button" className={activeTab === 'tool' ? 'active' : ''} onClick={() => setActiveTab('tool')}>Quote tool</button>
         <button type="button" className={activeTab === 'social' ? 'active' : ''} onClick={() => setActiveTab('social')}>Social posts</button>
         <button type="button" className={activeTab === 'leads' ? 'active' : ''} onClick={() => setActiveTab('leads')}>Lead pipeline</button>
@@ -1107,15 +1108,24 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
         <article className="copy-card"><h3>Current lead</h3>{leadWorkflow.currentLead ? <div className="hub-highlight"><strong>{leadWorkflow.currentLead.name}</strong><span>{leadWorkflow.stage.label} · {leadWorkflow.currentLead.nextStep || leadWorkflow.stage.action}</span><button type="button" className="button mini" onClick={() => setActiveTab('leads')}>Continue</button></div> : <p>No current lead yet. Add one from Lead pipeline.</p>}</article>
       </section> : null}
 
+      {activeTab === 'company' ? <section className="portal-panel-grid single company-info-grid">
+        <article className="builder-panel company-info-panel">
+          <div className="card-title-row"><div><h3>Company information</h3><p className="fine-print">This is the source of truth for quotes, follow-ups, social posts, AI rewrites, review prompts, and customer messages.</p></div><span className="pipeline-total">Auto-saved</span></div>
+          <label>Business name<input value={business} onChange={(e) => setBusiness(e.target.value)} /></label>
+          <label>Service area<input value={serviceArea} onChange={(e) => setServiceArea(e.target.value)} placeholder="Charleston, SC" /></label>
+          <label>Brand voice<input value={brandVoice} onChange={(e) => setBrandVoice(e.target.value)} placeholder="friendly, expert, premium, direct" /></label>
+          <label>Why customers choose you<textarea value={differentiator} onChange={(e) => setDifferentiator(e.target.value)} rows={4} /></label>
+          <label>Trust promise<textarea value={guarantee} onChange={(e) => setGuarantee(e.target.value)} rows={3} /></label>
+        </article>
+        <article className="copy-card">
+          <h3>Where this appears</h3>
+          <div className="lead-checklist"><span className="done">✓ Quote messages</span><span className="done">✓ Follow-up sequences</span><span className="done">✓ Social posts</span><span className="done">✓ AI enhancements</span><span className="done">✓ Review prompts</span><span className="done">✓ Sales templates</span></div>
+          <p className="fine-print">Update this once, and the rest of LeadSprint uses the latest company profile.</p>
+        </article>
+      </section> : null}
+
       {activeTab === 'tool' ? <section className="builder-grid">
       <form className="builder-panel">
-        <div className="form-section-title">Company profile</div>
-        <label>Business name<input value={business} onChange={(e) => setBusiness(e.target.value)} /></label>
-        <label>Service area<input value={serviceArea} onChange={(e) => setServiceArea(e.target.value)} placeholder="Charleston, SC" /></label>
-        <label>Brand voice<input value={brandVoice} onChange={(e) => setBrandVoice(e.target.value)} placeholder="friendly, expert, premium, direct" /></label>
-        <label>Why customers choose you<textarea value={differentiator} onChange={(e) => setDifferentiator(e.target.value)} rows={3} /></label>
-        <label>Trust promise<textarea value={guarantee} onChange={(e) => setGuarantee(e.target.value)} rows={2} /></label>
-
         <div className="form-section-title">Quote details</div>
         <label>Lead / customer name<input value={customer} onChange={(e) => setCustomer(e.target.value)} /></label>
         <label>Job type<select value={jobType} onChange={(e) => setJobType(e.target.value)}>{jobTypes.map((type) => <option key={type}>{type}</option>)}</select></label>

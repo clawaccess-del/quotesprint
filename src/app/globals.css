@@ -1132,3 +1132,9 @@ textarea {
     grid-template-columns: 1fr 1fr;
   }
 }
+.company-info-grid {
+  max-width: 920px;
+}
+.company-info-panel {
+  position: static;
+}
