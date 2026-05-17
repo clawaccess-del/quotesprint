@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 type QuoteStatus = 'open' | 'won' | 'lost';
 type LeadStatus = 'new' | 'qualified' | 'quoted' | 'followed-up' | 'won' | 'lost';
+type PortalTab = 'tool' | 'social' | 'leads' | 'calendar' | 'history' | 'sales';
 type SavedQuote = {
   id: string;
   customer: string;
@@ -449,7 +450,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
   const [aiStatus, setAiStatus] = useState('');
   const [generatingSection, setGeneratingSection] = useState<string | null>(null);
   const [accountLoaded, setAccountLoaded] = useState(false);
-  const [activeTab, setActiveTab] = useState<'tool' | 'social' | 'leads' | 'calendar' | 'history' | 'sales'>('tool');
+  const [activeTab, setActiveTab] = useState<PortalTab>('tool');
   const [socialPlatform, setSocialPlatform] = useState('Facebook');
   const [socialGoal, setSocialGoal] = useState('Book more estimates');
   const [socialTopic, setSocialTopic] = useState('seasonal service reminder');
@@ -459,6 +460,15 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
   const [presetName, setPresetName] = useState('My saved service');
   const [customerReply, setCustomerReply] = useState('Can you do any better on price? I am comparing a few quotes.');
   const [coachedReply, setCoachedReply] = useState('');
+
+  useEffect(() => {
+    const savedTab = window.localStorage.getItem('leadsprint-active-tab') as PortalTab | null;
+    if (savedTab && ['tool', 'social', 'leads', 'calendar', 'history', 'sales'].includes(savedTab)) setActiveTab(savedTab);
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem('leadsprint-active-tab', activeTab);
+  }, [activeTab]);
 
   useEffect(() => {
     fetch('/api/ai/usage')
