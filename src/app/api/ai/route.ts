@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
   const source = String(body.source || '').slice(0, 2200);
   const instruction = String(body.instruction || '').slice(0, 900);
 
-  const prompt = `Company profile, use this as the source of truth:\n${company}\n\nIndustry/job context: ${industry}\n\nCustomer-facing draft or customer notes:\n${source}\n\nTask: ${action}. ${instruction}\n\nBefore writing, adapt the message to the company profile: business name, industry, service area, ideal customer, offer/specialty, brand voice, differentiator, trust promise, contact details, and any provided website/logo context. Preserve the useful facts from the draft, but do not produce generic copy that could fit any company. Return only polished customer-facing copy. Avoid internal notes, placeholders, or explanations.`;
+  const prompt = `Company profile, use this as the source of truth:\n${company}\n\nIndustry/job context: ${industry}\n\nCustomer-facing draft or customer notes:\n${source}\n\nTask: ${action}. ${instruction}\n\nBefore writing, adapt the message to BOTH the company profile and the customer/lead information. If lead notes, next step, address, source, requested service, customer reply, appointment date, or quote details mention a specific service or situation, speak directly to that service/situation instead of relying only on the generic job type. Preserve useful facts from the draft, but do not produce generic copy that could fit any company or any customer. Return only polished customer-facing copy. Avoid internal notes, placeholders, or explanations.`;
 
   const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     body: JSON.stringify({
       model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
       messages: [
-        { role: 'system', content: 'You write concise, specific, customer-facing sales copy for home-service businesses. The company profile is mandatory context, not optional background. Every answer should sound like it came from that exact company, using its industry, local market, offer/specialty, brand voice, differentiator, trust promise, and contact details when relevant. Never mention that you are AI. Never output placeholders or internal notes.' },
+        { role: 'system', content: 'You write concise, specific, customer-facing sales copy for home-service businesses. The company profile and customer/lead information are mandatory context, not optional background. Every answer should sound like it came from that exact company to that exact customer. Use the lead notes, requested service, customer reply, address/service area, next step, appointment date, source, quote amount, industry, offer/specialty, brand voice, differentiator, trust promise, and contact details when relevant. Never mention that you are AI. Never output placeholders or internal notes.' },
         { role: 'user', content: prompt },
       ],
       temperature: 0.6,
