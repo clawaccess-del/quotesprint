@@ -38,6 +38,15 @@ export default async function AppPage() {
         <strong>Access active</strong>
         <span>{aiEnabled ? 'AI credits unlocked with a 100-credit monthly cap.' : access.plan === 'live' ? 'Monthly non-AI system unlocked. Upgrade anytime for AI credits.' : 'One-time product unlocked for this browser.'}</span>
       </div>
+      <div className="download-panel">
+        <strong>Downloads included</strong>
+        <span>Save the relevant LeadSprint kit for offline use, onboarding, or team reference.</span>
+        <div className="hero-actions">
+          <a className="button secondary" href="/api/download?product=starter">Download Starter Kit</a>
+          {['pro', 'agency', 'live', 'live_ai'].includes(access.plan) ? <a className="button secondary" href="/api/download?product=pro">Download Pro Kit</a> : null}
+          {access.plan === 'agency' ? <a className="button secondary" href="/api/download?product=agency">Download Agency Kit</a> : null}
+        </div>
+      </div>
       <QuoteBuilder accountEmail={access.customerEmail} aiEnabled={aiEnabled} />
     </section>
   );

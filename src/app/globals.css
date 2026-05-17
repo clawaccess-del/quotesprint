@@ -262,6 +262,18 @@ textarea {
   margin: 1.2rem 0;
 }
 .access-banner span { color: rgba(255,255,255,.78); }
+.download-panel {
+  display: grid;
+  gap: .7rem;
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.72);
+  border-radius: 1.2rem;
+  padding: 1rem 1.1rem;
+  margin: 0 0 1.2rem;
+}
+.download-panel strong { color: var(--green-dark); }
+.download-panel span { color: var(--muted); }
+.download-panel .hero-actions { margin-top: .2rem; }
 @media (max-width: 900px) {
   .product-preview-grid { grid-template-columns: 1fr; }
   .access-banner { align-items: flex-start; flex-direction: column; }
