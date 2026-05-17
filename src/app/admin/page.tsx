@@ -26,10 +26,11 @@ function statusCount<T extends { status: string }>(items: T[], status: string) {
   return items.filter((item) => item.status === status).length;
 }
 
-export default async function AdminPage({ searchParams }: { searchParams?: Promise<{ error?: string; tab?: string }> }) {
+export default async function AdminPage({ searchParams }: { searchParams?: Promise<{ error?: string; tab?: string; account?: string }> }) {
   const params = await searchParams;
   const session = await getAdminSession();
   const activeTab = tabs.includes(params?.tab as AdminTab) ? params?.tab as AdminTab : 'overview';
+  const selectedAccountId = params?.account || '';
 
   if (!session) {
     return (
@@ -83,7 +84,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
             <article className="checkout-card">
               <h2>Recent accounts</h2>
               <div className="admin-table">
-                {clients.slice(0, 6).map((client) => <div className="admin-row" key={client.id}><strong>{client.companyName || client.companyProfile?.business || client.email}</strong><span>{client.email} · {client.status} · {client.plan}</span></div>)}
+                {clients.slice(0, 6).map((client) => <a className="admin-row clickable" href={`/admin?tab=accounts&account=${client.id}`} key={client.id}><strong>{client.companyName || client.companyProfile?.business || client.email}</strong><span>{client.email} · {client.status} · {client.plan}</span><small>Click to edit this account</small></a>)}
                 {!clients.length ? <p>No client accounts yet.</p> : null}
               </div>
             </article>
@@ -117,7 +118,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
             {clients.length ? clients.map((client) => {
               const profile = client.companyProfile;
               return (
-                <details className="client-account-card" key={client.id}>
+                <details className="client-account-card" key={client.id} id={`account-${client.id}`} open={selectedAccountId === client.id}>
                   <summary><strong>{client.companyName || profile?.business || client.email}</strong><span>{client.email} · {client.status} · {client.plan}</span></summary>
                   <div className="admin-grid client-edit-grid">
                     <article className="checkout-card">
