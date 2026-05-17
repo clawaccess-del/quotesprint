@@ -1293,6 +1293,23 @@ textarea {
 .job-check-item small { display: block; }
 .job-check-item strong { color: var(--green-dark); }
 .job-check-item small { color: var(--muted); margin-top: .15rem; }
+.review-referral-box {
+  display: grid;
+  gap: .75rem;
+}
+.review-template-card {
+  display: grid;
+  gap: .65rem;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: rgba(255,250,241,.72);
+  padding: .8rem;
+}
+.review-template-card p {
+  margin: .35rem 0 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
 .revenue-metric-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

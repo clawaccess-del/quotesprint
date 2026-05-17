@@ -16,7 +16,7 @@ type SavedQuote = {
   createdAt: string;
 };
 
-type JobChecklistKey = 'depositCollected' | 'appointmentScheduled' | 'prepInstructionsSent' | 'materialsConfirmed' | 'reviewRequestSent';
+type JobChecklistKey = 'depositCollected' | 'appointmentScheduled' | 'prepInstructionsSent' | 'materialsConfirmed' | 'reviewRequestSent' | 'referralAskSent';
 
 type SavedLead = {
   id: string;
@@ -898,6 +898,16 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     ].map((post) => `${post}\n\nStyle: ${platformStyle}`);
   }, [business, businessIndustry, companyLogoUrl, companyPhone, companyWebsite, companyOffer, idealCustomer, serviceArea, brandVoice, differentiator, guarantee, jobType, socialPlatform, socialGoal, socialTopic]);
 
+  const reviewReferralTemplates = useMemo(() => {
+    const lead = leadWorkflow.currentLead;
+    const firstName = (lead?.name || customer).trim().split(' ')[0] || 'there';
+    return [
+      { title: 'Review request', key: 'reviewRequestSent' as JobChecklistKey, text: `Hi ${firstName}, thank you for choosing ${business} for your ${jobType.toLowerCase()}. If we earned it, would you mind leaving a quick review? It helps local customers in ${serviceArea} know what to expect from our ${businessIndustry} team. ${companyWebsite ? `You can start here: ${companyWebsite}` : 'Reply here and I can send the best review link.'}` },
+      { title: 'Referral ask', key: 'referralAskSent' as JobChecklistKey, text: `Hi ${firstName}, one more quick note from ${business}. If you know a neighbor, friend, or property owner who needs reliable ${businessIndustry} help, we would be grateful for the referral. We will take care of them with the same ${brandVoice} service and ${guarantee}.` },
+      { title: 'Thank-you follow-up', key: 'reviewRequestSent' as JobChecklistKey, text: `Hi ${firstName}, thanks again for trusting ${business}. We appreciate the chance to help with your ${jobType.toLowerCase()}. If anything needs attention, just let us know. If everything looks good, a quick review or referral means a lot to our local team.` },
+    ];
+  }, [brandVoice, business, businessIndustry, companyWebsite, customer, guarantee, jobType, leadWorkflow.currentLead, serviceArea]);
+
   function saveLead() {
     const lead: SavedLead = {
       id: crypto.randomUUID(),
@@ -1480,6 +1490,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
             <div className="lead-checklist">{leadWorkflow.checklist.map((item) => <span key={item.label} className={item.done ? 'done' : ''}>{item.done ? '✓' : '○'} {item.label}</span>)}</div>
             <div className="hero-actions"><button type="button" className="button secondary" onClick={() => moveCurrentLead('qualified')}>Qualified</button><button type="button" className="button secondary" onClick={saveQuote}>Save quote + mark quoted</button><button type="button" className="button secondary" onClick={() => moveCurrentLead('followed-up')}>Followed up</button><button type="button" className="button" onClick={() => moveCurrentLead('won')}>Won</button><button type="button" className="button secondary" onClick={() => moveCurrentLead('lost')}>Lost</button></div>
             <div className="job-checklist"><h3>Quote-to-job checklist</h3><p className="fine-print">Use this once the customer is close to saying yes or the job is won.</p>{jobChecklistItems.map((item) => <label className="job-check-item" key={item.key}><input type="checkbox" checked={Boolean(leadWorkflow.currentLead?.jobChecklist?.[item.key])} onChange={() => toggleJobChecklist(leadWorkflow.currentLead!.id, item.key)} /><span><strong>{item.label}</strong><small>{item.helper}</small></span></label>)}</div>
+            {leadWorkflow.currentStage === 'won' ? <div className="job-checklist review-referral-box"><h3>Review + referral loop</h3><p className="fine-print">Send these after the work is complete, then mark each one when it is handled.</p>{reviewReferralTemplates.map((template) => <div className="review-template-card" key={template.title}><div><strong>{template.title}</strong><p>{template.text}</p></div><div className="row-actions"><button type="button" className="button mini secondary-button" onClick={() => copyText(template.text, template.title.toLowerCase())}>Copy</button><button type="button" className="button mini" onClick={() => toggleJobChecklist(leadWorkflow.currentLead!.id, template.key)}>{leadWorkflow.currentLead?.jobChecklist?.[template.key] ? 'Marked sent' : 'Mark sent'}</button></div></div>)}</div> : null}
             <div className="customer-timeline"><h3>Customer timeline</h3>{currentLeadTimeline.map((event) => <div className="timeline-event" key={`${event.title}-${event.date}-${event.detail}`}><span>{event.date.slice(0, 10)}</span><div><strong>{event.title}</strong><p>{event.detail}</p></div></div>)}</div>
           </> : <p>Save a lead or load a customer profile to see the guided workflow from first contact to final answer.</p>}
         </article>

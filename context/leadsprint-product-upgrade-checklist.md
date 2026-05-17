@@ -46,9 +46,10 @@ Work through these one by one until complete. Keep each item scoped, build/test,
 - Show prep notes in selected lead workflow with a copy button.
 - Show prep notes on calendar sales appointment items.
 
-## 10. Review/referral loop
-- After a lead is won, show review request and referral ask templates.
-- Track whether review request was sent if practical.
+## 10. Review/referral loop ✅
+- After a lead is won, show review request, referral ask, and thank-you follow-up templates.
+- Templates use company info, service area, industry, brand voice, trust promise, and website when available.
+- Added copy buttons and checklist tracking for review request and referral ask sent.
 
 ## Completion rule
 After each item:
