@@ -1060,3 +1060,75 @@ textarea {
 @media (max-width: 900px) {
   .lead-options-grid { grid-template-columns: 1fr; }
 }
+/* Mobile containment fixes for lead pipeline */
+.lead-management-layout,
+.lead-management-layout * {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+.lead-management-layout {
+  overflow-x: clip;
+}
+.lead-management-layout input,
+.lead-management-layout select,
+.lead-management-layout textarea,
+.lead-management-layout button {
+  min-width: 0;
+}
+.lead-management-layout .card-title-row,
+.lead-management-layout .hero-actions,
+.lead-management-layout .lead-card-actions,
+.lead-management-layout .row-actions {
+  min-width: 0;
+}
+@media (max-width: 700px) {
+  .page-shell.wide {
+    width: min(100% - 1rem, 1240px);
+  }
+  .lead-management-layout {
+    gap: .75rem;
+  }
+  .lead-management-layout .copy-card,
+  .lead-management-layout .builder-panel {
+    border-radius: 1rem;
+    padding: .85rem;
+  }
+  .lead-selector-list {
+    gap: .45rem;
+    margin-inline: -.15rem;
+    padding-inline: .15rem;
+  }
+  .lead-selector-list button {
+    min-width: min(76vw, 230px);
+  }
+  .lead-options-grid {
+    gap: .75rem;
+  }
+  .lead-management-layout .hero-actions,
+  .lead-management-layout .lead-card-actions,
+  .lead-management-layout .row-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+  .lead-management-layout .button,
+  .lead-management-layout .button.mini,
+  .lead-management-layout .lead-card-actions select {
+    width: 100%;
+  }
+  .workflow-progress {
+    min-width: 0;
+  }
+  .all-leads-stack,
+  .pipeline-column,
+  .pipeline-leads,
+  .pipeline-lead-card,
+  .edit-stack {
+    min-width: 0;
+    width: 100%;
+  }
+  .pipeline-metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+}
