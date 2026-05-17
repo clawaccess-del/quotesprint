@@ -31,10 +31,10 @@ Work through these one by one until complete. Keep each item scoped, build/test,
 - Added dashboard metrics: open quoted value, won revenue, lost quoted value, average quote value, closed win rate, follow-ups due, and won + open pipeline forecast.
 - Revenue dashboard is visible in Sales Tools; Hub money snapshot now uses the same revenue calculations.
 
-## 7. Import/export
-- Add CSV export for leads.
-- Add CSV export for quotes/history.
-- Consider import later only if export is stable.
+## 7. Import/export ✅
+- Added CSV export for leads.
+- Added CSV export for quotes/history.
+- Import remains a later option after export is stable.
 
 ## 8. Lead scoring
 - Add hot/warm/cold scoring using urgency, status, follow-up date, appointment date, notes/source, and quote amount.

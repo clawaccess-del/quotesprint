@@ -1018,6 +1018,31 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     }
   }
 
+  function csvEscape(value: unknown) {
+    const text = String(value ?? '');
+    return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+  }
+
+  function downloadCsv(filename: string, headers: string[], rows: unknown[][]) {
+    const csv = [headers, ...rows].map((row) => row.map(csvEscape).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+    setAiStatus(`Downloaded ${filename}.`);
+  }
+
+  function exportLeadsCsv() {
+    downloadCsv('leadsprint-leads.csv', ['name', 'phone', 'email', 'address', 'source', 'status', 'next_step', 'follow_up_date', 'appointment_date', 'notes', 'created_at'], savedLeads.map((lead) => [lead.name, lead.phone, lead.email, lead.address, lead.source || '', leadStatus(lead), lead.nextStep || '', lead.followUpDate || '', lead.appointmentDate || '', lead.notes, lead.createdAt]));
+  }
+
+  function exportQuotesCsv() {
+    downloadCsv('leadsprint-quotes.csv', ['customer', 'job_type', 'total', 'deposit_due', 'status', 'win_loss_reason', 'created_at'], savedQuotes.map((quote) => [quote.customer, quote.jobType, quote.total, quote.depositDue, quote.status, quote.winLossReason || '', quote.createdAt]));
+  }
+
   function saveQuoteEdit() {
     if (!editingQuote) return;
     setSavedQuotes((quotes) => quotes.map((quote) => quote.id === editingQuote.id ? editingQuote : quote));
@@ -1459,6 +1484,10 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       </section> : null}
 
       {activeTab === 'history' ? <section className="portal-panel-grid single">
+        <article className="copy-card export-card">
+          <div className="card-title-row"><div><h3>Export your data</h3><p className="fine-print">Download CSV files so leads and quote history are never locked inside LeadSprint.</p></div></div>
+          <div className="hero-actions"><button type="button" className="button secondary" onClick={exportLeadsCsv} disabled={!savedLeads.length}>Export leads CSV</button><button type="button" className="button secondary" onClick={exportQuotesCsv} disabled={!savedQuotes.length}>Export quotes CSV</button></div>
+        </article>
         <article className="copy-card">
           <h3>Saved quote and opportunity history</h3>
           {savedQuotes.length ? (
