@@ -13,10 +13,10 @@ Work through these one by one until complete. Keep each item scoped, build/test,
 - Added source totals: total leads, won leads, lost leads, quoted value, won value, win rate.
 - Highlighted best-performing source in Sales tools.
 
-## 3. Customer timeline
-- Add a per-lead timeline built from lead creation, status changes, quote saves, follow-up dates, appointment dates, win/loss events.
-- Display timeline in the lead workflow/customer profile area.
-- Keep it lightweight using existing lead/quote data first, then expand if needed.
+## 3. Customer timeline ✅
+- Added per-lead timeline built from lead creation, current stage, quote saves, follow-up dates, appointment dates, and win/loss events.
+- Displayed timeline in the lead workflow and mini timeline in customer profiles.
+- Kept it lightweight using existing lead/quote data.
 
 ## 4. Message templates by stage
 - Add templates for: new lead reply, need photos/details, estimate sent, 24-hour follow-up, final check-in, won job confirmation, lost lead reactivation.

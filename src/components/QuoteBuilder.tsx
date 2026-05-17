@@ -695,6 +695,21 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     return { rows, best: rows[0] || null };
   }, [savedLeads, savedQuotes]);
 
+  const currentLeadTimeline = useMemo(() => {
+    const lead = leadWorkflow.currentLead;
+    if (!lead) return [];
+    const normalizedName = lead.name.trim().toLowerCase();
+    const leadQuotes = savedQuotes.filter((quote) => quote.customer.trim().toLowerCase() === normalizedName);
+    const events = [
+      { date: lead.createdAt, title: 'Lead created', detail: `${lead.source || 'Unknown source'}${lead.notes ? ` · ${lead.notes}` : ''}` },
+      { date: lead.createdAt, title: `Current stage: ${leadStages.find((stage) => stage.status === leadStatus(lead))?.label || 'New'}`, detail: lead.nextStep || leadStages.find((stage) => stage.status === leadStatus(lead))?.action || 'Confirm the next step' },
+      lead.followUpDate ? { date: lead.followUpDate, title: 'Follow-up scheduled', detail: lead.nextStep || 'Follow up with this lead' } : null,
+      lead.appointmentDate ? { date: lead.appointmentDate, title: 'Sales / appointment date', detail: 'Sales call, estimate visit, or decision checkpoint' } : null,
+      ...leadQuotes.map((quote) => ({ date: quote.createdAt, title: `${quote.status === 'won' ? 'Won' : quote.status === 'lost' ? 'Lost' : 'Quote saved'}`, detail: `${quote.jobType} · ${money(quote.total)}${quote.winLossReason ? ` · ${quote.winLossReason}` : ''}` })),
+    ].filter(Boolean) as { date: string; title: string; detail: string }[];
+    return events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [leadWorkflow.currentLead, savedQuotes]);
+
   const allLeadsByStage = useMemo(() => leadStages.map((stage) => ({
     ...stage,
     leads: savedLeads.filter((lead) => leadStatus(lead) === stage.status),
@@ -1164,6 +1179,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
             <div className="next-action-box"><strong>Recommended next action</strong><p>{leadWorkflow.currentLead.nextStep || leadWorkflow.stage.action}</p>{leadWorkflow.currentLead.followUpDate ? <span>Follow up on {leadWorkflow.currentLead.followUpDate}</span> : null}{leadWorkflow.currentLead.appointmentDate ? <span>Sales/appointment date: {leadWorkflow.currentLead.appointmentDate}</span> : null}</div>
             <div className="lead-checklist">{leadWorkflow.checklist.map((item) => <span key={item.label} className={item.done ? 'done' : ''}>{item.done ? '✓' : '○'} {item.label}</span>)}</div>
             <div className="hero-actions"><button type="button" className="button secondary" onClick={() => moveCurrentLead('qualified')}>Qualified</button><button type="button" className="button secondary" onClick={saveQuote}>Save quote + mark quoted</button><button type="button" className="button secondary" onClick={() => moveCurrentLead('followed-up')}>Followed up</button><button type="button" className="button" onClick={() => moveCurrentLead('won')}>Won</button><button type="button" className="button secondary" onClick={() => moveCurrentLead('lost')}>Lost</button></div>
+            <div className="customer-timeline"><h3>Customer timeline</h3>{currentLeadTimeline.map((event) => <div className="timeline-event" key={`${event.title}-${event.date}-${event.detail}`}><span>{event.date.slice(0, 10)}</span><div><strong>{event.title}</strong><p>{event.detail}</p></div></div>)}</div>
           </> : <p>Save a lead or load a customer profile to see the guided workflow from first contact to final answer.</p>}
         </article>
         <article className="copy-card pipeline-card">
@@ -1268,7 +1284,13 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
               <p>{[lead.phone, lead.email, lead.address].filter(Boolean).join(' · ') || 'No contact details yet'}</p>
               <p className="fine-print">Source: {lead.source || 'Unknown'} · {leadQuotes.length} saved quote{leadQuotes.length === 1 ? '' : 's'} · {money(totalQuoted)} total quoted{lastQuote ? ` · Last: ${lastQuote.jobType}` : ''}</p>
               {lead.notes ? <p className="fine-print">{lead.notes}</p> : null}
-            </article>)}
+              <div className="mini-timeline">{[
+                { label: 'Created', date: lead.createdAt },
+                lead.followUpDate ? { label: 'Follow-up', date: lead.followUpDate } : null,
+                lead.appointmentDate ? { label: 'Appointment', date: lead.appointmentDate } : null,
+                lastQuote ? { label: lastQuote.status === 'won' ? 'Won' : lastQuote.status === 'lost' ? 'Lost' : 'Quoted', date: lastQuote.createdAt } : null,
+              ].filter(Boolean).map((item) => <span key={`${lead.id}-${item!.label}`}>{item!.label}: {item!.date.slice(0, 10)}</span>)}</div>
+            </article>) }
           </div> : <p>Save leads in the pipeline to build reusable customer profiles.</p>}
         </article>
 
