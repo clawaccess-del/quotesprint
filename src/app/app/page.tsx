@@ -39,6 +39,13 @@ export default async function AppPage() {
         <span>{aiEnabled ? 'AI credits unlocked with a 50-credit monthly cap.' : access.plan === 'live' ? 'Monthly non-AI system unlocked. Upgrade anytime for AI credits.' : 'One-time product unlocked for this browser.'}</span>
       </div>
       <div className="download-panel">
+        <strong>Support portal included</strong>
+        <span>Submit tickets, request features or integrations, see status updates, and read account notifications from LeadSprint.</span>
+        <div className="hero-actions">
+          <Link href="/support" className="button secondary">Open support portal</Link>
+        </div>
+      </div>
+      <div className="download-panel">
         <strong>Downloads included</strong>
         <span>Save the relevant LeadSprint kit for offline use, onboarding, or team reference.</span>
         <div className="hero-actions">

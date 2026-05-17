@@ -15,6 +15,18 @@ export default function LoginPage({ searchParams }: { searchParams?: Promise<{ s
           <button className="button full" type="submit">Send login link</button>
         </form>
         <p className="fine-print">No password needed. Google login works when the Google account email matches the purchase email. Email links expire after 15 minutes.</p>
+        <div className="login-divider"><span>Client portal username</span></div>
+        <form action="/api/client-login" method="post">
+          <label>
+            Username
+            <input name="username" placeholder="your-company" required />
+          </label>
+          <label>
+            Password
+            <input type="password" name="password" required />
+          </label>
+          <button className="button full secondary" type="submit">Log in to client portal</button>
+        </form>
       </div>
     </section>
   );
