@@ -74,7 +74,7 @@ export default function FoundingTeamsPage() {
             <h2>Want one of the 10 founding partner spots?</h2>
             <p>Send a quick application with your company, industry, lead volume, biggest follow-up problem, and what integrations or features would make LeadSprint more valuable for your team.</p>
           </div>
-          <form className="trial-form" action="mailto:hello@leadsprint.app" method="post" encType="text/plain">
+          <form className="trial-form" action="mailto:Tysanseo@gmail.com" method="post" encType="text/plain">
             <label>Company name<input name="company" placeholder="Acme Home Services" required /></label>
             <label>Your name<input name="name" placeholder="Your name" required /></label>
             <div className="two-col">
@@ -89,7 +89,7 @@ export default function FoundingTeamsPage() {
             <label>What is the biggest lead follow-up or quoting problem right now?<textarea name="biggest_problem" rows={4} placeholder="Tell us what gets missed, delayed, or hard to track." required /></label>
             <label>What features or integrations would you want us to build?<textarea name="feature_requests" rows={4} placeholder="Examples: calendar sync, CRM export, SMS/email workflows, reporting, lead source tracking, industry-specific steps." /></label>
             <button className="button full" type="submit">Apply for a founding partner spot</button>
-            <p className="fine-print">If your email app does not open, send the same details to hello@leadsprint.app.</p>
+            <p className="fine-print">If your email app does not open, send the same details to Tysanseo@gmail.com.</p>
           </form>
         </div>
       </section>
