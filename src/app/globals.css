@@ -575,6 +575,21 @@ textarea {
 .calendar-item span,
 .calendar-item small { color: var(--muted); display: block; }
 .calendar-item p { margin: .2rem 0; }
+.calendar-item.urgent {
+  border-color: rgba(18,72,50,.32);
+  background: rgba(215,255,113,.28);
+}
+.calendar-item.overdue {
+  border-color: rgba(169,69,43,.35);
+  background: rgba(255,232,219,.75);
+}
+.compact-calendar-list .calendar-item {
+  grid-template-columns: 120px 1fr auto;
+}
+.overdue-total {
+  background: #ffe0d2;
+  color: #8a321b;
+}
 .month-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));

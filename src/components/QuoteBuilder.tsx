@@ -642,10 +642,13 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     return items.sort((a, b) => a.date.localeCompare(b.date));
   }, [savedLeads]);
 
-  const upcomingCalendarItems = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10);
-    return calendarItems.filter((item) => item.date >= today).slice(0, 12);
-  }, [calendarItems]);
+  const todayKey = new Date().toISOString().slice(0, 10);
+
+  const todaysFollowUps = useMemo(() => calendarItems.filter((item) => item.type === 'Follow-up' && item.date === todayKey), [calendarItems, todayKey]);
+
+  const overdueFollowUps = useMemo(() => calendarItems.filter((item) => item.type === 'Follow-up' && item.date < todayKey && !['won', 'lost'].includes(item.status)), [calendarItems, todayKey]);
+
+  const upcomingCalendarItems = useMemo(() => calendarItems.filter((item) => item.date >= todayKey).slice(0, 12), [calendarItems, todayKey]);
 
   const calendarDays = useMemo(() => {
     const today = new Date();
@@ -1000,7 +1003,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
         <button type="button" className={activeTab === 'tool' ? 'active' : ''} onClick={() => setActiveTab('tool')}>Quote tool</button>
         <button type="button" className={activeTab === 'social' ? 'active' : ''} onClick={() => setActiveTab('social')}>Social posts</button>
         <button type="button" className={activeTab === 'leads' ? 'active' : ''} onClick={() => setActiveTab('leads')}>Lead pipeline</button>
-        <button type="button" className={activeTab === 'calendar' ? 'active' : ''} onClick={() => setActiveTab('calendar')}>Calendar</button>
+        <button type="button" className={activeTab === 'calendar' ? 'active' : ''} onClick={() => setActiveTab('calendar')}>Calendar{todaysFollowUps.length + overdueFollowUps.length ? ` (${todaysFollowUps.length + overdueFollowUps.length})` : ''}</button>
         <button type="button" className={activeTab === 'sales' ? 'active' : ''} onClick={() => setActiveTab('sales')}>Sales tools</button>
         <button type="button" className={activeTab === 'history' ? 'active' : ''} onClick={() => setActiveTab('history')}>Saved history</button>
       </div>
@@ -1126,7 +1129,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
         </article>
         <article className="copy-card pipeline-card">
           <div className="card-title-row"><div><h3>Lead pipeline</h3><p className="fine-print">Move each lead from inquiry to quote, follow-up, won, or lost.</p></div><span className="pipeline-total">{pipelineStats.active} active</span></div>
-          <div className="pipeline-metrics"><span>{pipelineStats.total} total leads</span><span>{pipelineStats.won} won</span><span>{pipelineStats.lost} lost</span></div>
+          <div className="pipeline-metrics"><span>{pipelineStats.total} total leads</span><span>{pipelineStats.won} won</span><span>{pipelineStats.lost} lost</span><span>{todaysFollowUps.length} due today</span><span>{overdueFollowUps.length} overdue</span></div>
           {savedLeads.length ? (
             <div className="pipeline-board">
               {leadStages.map((stage) => {
@@ -1166,6 +1169,26 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       </section> : null}
 
       {activeTab === 'calendar' ? <section className="portal-panel-grid single">
+        <article className="copy-card calendar-card reminder-card">
+          <div className="card-title-row"><div><h3>Today’s follow-ups</h3><p className="fine-print">Lead contacts that should happen today.</p></div><span className="pipeline-total">{todaysFollowUps.length} today</span></div>
+          {todaysFollowUps.length ? <div className="calendar-list compact-calendar-list">
+            {todaysFollowUps.map((item) => <article className="calendar-item urgent" key={`${item.lead.id}-${item.type}-${item.date}-today`}>
+              <div><strong>{item.date}</strong><span>{item.type}</span></div>
+              <div><b>{item.lead.name}</b><p>{item.detail}</p><small>{[item.lead.phone, item.lead.email].filter(Boolean).join(' · ') || 'No contact details yet'}</small></div>
+              <button type="button" className="button mini" onClick={() => loadCustomerProfile(item.lead)}>Work lead</button>
+            </article>)}
+          </div> : <p>No follow-ups due today.</p>}
+        </article>
+        <article className="copy-card calendar-card reminder-card">
+          <div className="card-title-row"><div><h3>Overdue follow-ups</h3><p className="fine-print">Open leads with follow-up dates before today.</p></div><span className="pipeline-total overdue-total">{overdueFollowUps.length} overdue</span></div>
+          {overdueFollowUps.length ? <div className="calendar-list compact-calendar-list">
+            {overdueFollowUps.map((item) => <article className="calendar-item overdue" key={`${item.lead.id}-${item.type}-${item.date}-overdue`}>
+              <div><strong>{item.date}</strong><span>{item.type}</span></div>
+              <div><b>{item.lead.name}</b><p>{item.detail}</p><small>{[item.lead.phone, item.lead.email].filter(Boolean).join(' · ') || 'No contact details yet'}</small></div>
+              <button type="button" className="button mini" onClick={() => loadCustomerProfile(item.lead)}>Catch up</button>
+            </article>)}
+          </div> : <p>No overdue follow-ups. Nice.</p>}
+        </article>
         <article className="copy-card calendar-card">
           <div className="card-title-row"><div><h3>My Calendar</h3><p className="fine-print">See upcoming lead follow-ups, sales calls, estimate visits, and decision dates.</p></div><span className="pipeline-total">{upcomingCalendarItems.length} upcoming</span></div>
           {upcomingCalendarItems.length ? <div className="calendar-list">
