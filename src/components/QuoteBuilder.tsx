@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 type QuoteStatus = 'open' | 'won' | 'lost';
 type LeadStatus = 'new' | 'qualified' | 'quoted' | 'followed-up' | 'won' | 'lost';
-type PortalTab = 'tool' | 'social' | 'leads' | 'calendar' | 'history' | 'sales';
+type PortalTab = 'hub' | 'tool' | 'social' | 'leads' | 'calendar' | 'history' | 'sales';
 type SavedQuote = {
   id: string;
   customer: string;
@@ -450,7 +450,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
   const [aiStatus, setAiStatus] = useState('');
   const [generatingSection, setGeneratingSection] = useState<string | null>(null);
   const [accountLoaded, setAccountLoaded] = useState(false);
-  const [activeTab, setActiveTab] = useState<PortalTab>('tool');
+  const [activeTab, setActiveTab] = useState<PortalTab>('hub');
   const [socialPlatform, setSocialPlatform] = useState('Facebook');
   const [socialGoal, setSocialGoal] = useState('Book more estimates');
   const [socialTopic, setSocialTopic] = useState('seasonal service reminder');
@@ -463,7 +463,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
 
   useEffect(() => {
     const savedTab = window.localStorage.getItem('leadsprint-active-tab') as PortalTab | null;
-    if (savedTab && ['tool', 'social', 'leads', 'calendar', 'history', 'sales'].includes(savedTab)) setActiveTab(savedTab);
+    if (savedTab && ['hub', 'tool', 'social', 'leads', 'calendar', 'history', 'sales'].includes(savedTab)) setActiveTab(savedTab);
   }, []);
 
   useEffect(() => {
@@ -670,6 +670,13 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       return { date, day: index + 1, items: calendarItems.filter((item) => item.date === date) };
     });
   }, [calendarItems]);
+
+  const hubSummary = useMemo(() => {
+    const openValue = savedQuotes.filter((quote) => quote.status === 'open').reduce((sum, quote) => sum + quote.total, 0);
+    const wonValue = savedQuotes.filter((quote) => quote.status === 'won').reduce((sum, quote) => sum + quote.total, 0);
+    const newestLead = savedLeads[0] || null;
+    return { openValue, wonValue, newestLead };
+  }, [savedLeads, savedQuotes]);
 
   const leadSourceRoi = useMemo(() => {
     const bySource = new Map<string, { source: string; total: number; won: number; lost: number; quotedValue: number; wonValue: number }>();
@@ -1079,6 +1086,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     <>
       {aiEnabled ? <aside className="ai-credit-widget"><span>AI credits</span><strong>{aiUsage ? aiUsage.remaining : '—'} / {aiUsage ? aiUsage.total : 50}</strong><small>{aiUsage ? `${aiUsage.used} used this month` : 'Loading usage'}</small></aside> : null}
       <div className="portal-tabs" role="tablist" aria-label="Customer portal sections">
+        <button type="button" className={activeTab === 'hub' ? 'active' : ''} onClick={() => setActiveTab('hub')}>Hub</button>
         <button type="button" className={activeTab === 'tool' ? 'active' : ''} onClick={() => setActiveTab('tool')}>Quote tool</button>
         <button type="button" className={activeTab === 'social' ? 'active' : ''} onClick={() => setActiveTab('social')}>Social posts</button>
         <button type="button" className={activeTab === 'leads' ? 'active' : ''} onClick={() => setActiveTab('leads')}>Lead pipeline</button>
@@ -1086,6 +1094,18 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
         <button type="button" className={activeTab === 'sales' ? 'active' : ''} onClick={() => setActiveTab('sales')}>Sales tools</button>
         <button type="button" className={activeTab === 'history' ? 'active' : ''} onClick={() => setActiveTab('history')}>Saved history</button>
       </div>
+
+      {activeTab === 'hub' ? <section className="portal-panel-grid single hub-grid">
+        <article className="copy-card hub-hero-card">
+          <div><span className="eyebrow">LeadSprint Hub</span><h2>Today’s sales command center</h2><p>See what needs attention, where the pipeline stands, and which leads to work next.</p></div>
+          <div className="hub-actions"><button type="button" className="button" onClick={() => setActiveTab('leads')}>Work leads</button><button type="button" className="button secondary" onClick={() => setActiveTab('calendar')}>Open calendar</button></div>
+        </article>
+        <article className="copy-card"><h3>Pipeline snapshot</h3><div className="hub-metrics"><span><strong>{pipelineStats.total}</strong>Total leads</span><span><strong>{pipelineStats.active}</strong>Active</span><span><strong>{pipelineStats.won}</strong>Won</span><span><strong>{pipelineStats.lost}</strong>Lost</span></div></article>
+        <article className="copy-card"><h3>Money snapshot</h3><div className="hub-metrics"><span><strong>{money(hubSummary.openValue)}</strong>Open quoted</span><span><strong>{money(hubSummary.wonValue)}</strong>Won revenue</span><span><strong>{stats.winRate}%</strong>Quote win rate</span><span><strong>{money(stats.totalQuoted)}</strong>Total quoted</span></div></article>
+        <article className="copy-card"><div className="card-title-row"><h3>Needs attention</h3><button type="button" className="button mini secondary-button" onClick={() => setActiveTab('calendar')}>View all</button></div><div className="pipeline-metrics"><span>{todaysFollowUps.length} due today</span><span>{overdueFollowUps.length} overdue</span><span>{upcomingCalendarItems.length} upcoming</span></div>{[...overdueFollowUps, ...todaysFollowUps].slice(0, 4).map((item) => <div className="hub-list-item" key={`${item.lead.id}-${item.date}-${item.type}`}><strong>{item.lead.name}</strong><span>{item.type} · {item.date} · {item.detail}</span><button type="button" className="button mini secondary-button" onClick={() => loadCustomerProfile(item.lead)}>Open</button></div>)}</article>
+        <article className="copy-card"><div className="card-title-row"><h3>Best lead source</h3><button type="button" className="button mini secondary-button" onClick={() => setActiveTab('sales')}>Sales tools</button></div>{leadSourceRoi.best ? <div className="hub-highlight"><strong>{leadSourceRoi.best.source}</strong><span>{leadSourceRoi.best.total} leads · {leadSourceRoi.best.winRate}% win rate · {money(leadSourceRoi.best.wonValue)} won value</span></div> : <p>Add lead sources to see what is working.</p>}</article>
+        <article className="copy-card"><h3>Current lead</h3>{leadWorkflow.currentLead ? <div className="hub-highlight"><strong>{leadWorkflow.currentLead.name}</strong><span>{leadWorkflow.stage.label} · {leadWorkflow.currentLead.nextStep || leadWorkflow.stage.action}</span><button type="button" className="button mini" onClick={() => setActiveTab('leads')}>Continue</button></div> : <p>No current lead yet. Add one from Lead pipeline.</p>}</article>
+      </section> : null}
 
       {activeTab === 'tool' ? <section className="builder-grid">
       <form className="builder-panel">
