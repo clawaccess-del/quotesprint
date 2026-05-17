@@ -1084,6 +1084,31 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     if (lead) startQuoteFromLead(lead);
   }
 
+  function saveSelectedQuoteLeadDetails() {
+    if (!selectedQuoteLeadId) return;
+    const existingLead = savedLeads.find((lead) => lead.id === selectedQuoteLeadId);
+    if (!existingLead) return;
+    const updatedLead: SavedLead = {
+      ...existingLead,
+      name: customer,
+      phone: leadPhone,
+      email: leadEmail,
+      address: leadAddress,
+      notes: leadNotes,
+      source: leadSource,
+      nextStep: leadNextStep,
+      followUpDate: leadFollowUpDate,
+      appointmentDate: leadAppointmentDate,
+    };
+    setSavedLeads((leads) => leads.map((lead) => lead.id === updatedLead.id ? updatedLead : lead));
+    fetch('/api/leads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lead: updatedLead }),
+    }).catch(() => null);
+    setAiStatus(`Saved ${updatedLead.name}'s lead details from the quote tool.`);
+  }
+
   function toggleJobChecklist(id: string, key: JobChecklistKey) {
     let updatedLead: SavedLead | null = null;
     setSavedLeads((leads) => leads.map((lead) => {
@@ -1444,6 +1469,17 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
         <div className="quote-lead-picker">
           <label>Start from saved lead<select value={selectedQuoteLeadId} onChange={(e) => selectQuoteLead(e.target.value)}><option value="">Choose a saved lead...</option>{savedLeads.map((lead) => <option value={lead.id} key={lead.id}>{lead.name} {lead.address ? `· ${lead.address}` : ''}</option>)}</select></label>
           {selectedQuoteLead ? <div className="selected-quote-lead"><strong>{selectedQuoteLead.name}</strong><span>{[selectedQuoteLead.phone, selectedQuoteLead.email, selectedQuoteLead.address].filter(Boolean).join(' · ') || 'No contact details saved yet'}</span>{selectedQuoteLead.notes ? <small>Lead notes used in quote copy: {selectedQuoteLead.notes}</small> : null}{selectedQuoteLead.nextStep ? <small>Next step: {selectedQuoteLead.nextStep}</small> : null}</div> : <p className="fine-print">Pick a lead to pull in their saved notes, contact info, address, source, next step, and appointment context.</p>}
+          {selectedQuoteLead ? <div className="quote-lead-edit-grid">
+            <label>Phone<input value={leadPhone} onChange={(e) => setLeadPhone(e.target.value)} placeholder="Customer phone" /></label>
+            <label>Email<input type="email" value={leadEmail} onChange={(e) => setLeadEmail(e.target.value)} placeholder="Customer email" /></label>
+            <label>Address<input value={leadAddress} onChange={(e) => setLeadAddress(e.target.value)} placeholder="Service address" /></label>
+            <label>Source<input value={leadSource} onChange={(e) => setLeadSource(e.target.value)} placeholder="Lead source" /></label>
+            <label>Follow-up date<input type="date" value={leadFollowUpDate} onChange={(e) => setLeadFollowUpDate(e.target.value)} /></label>
+            <label>Appointment date<input type="date" value={leadAppointmentDate} onChange={(e) => setLeadAppointmentDate(e.target.value)} /></label>
+            <label className="wide-field">Next step<input value={leadNextStep} onChange={(e) => setLeadNextStep(e.target.value)} placeholder="What should happen next?" /></label>
+            <label className="wide-field">Lead notes<textarea value={leadNotes} onChange={(e) => setLeadNotes(e.target.value)} rows={3} placeholder="Customer details, scope notes, concerns, timing, access, photos, or decision context" /></label>
+            <button type="button" className="button secondary full wide-field" onClick={saveSelectedQuoteLeadDetails}>Save lead details</button>
+          </div> : null}
         </div>
         <label>Lead / customer name<input value={customer} onChange={(e) => setCustomer(e.target.value)} /></label>
         <label>Job type<select value={jobType} onChange={(e) => setJobType(e.target.value)}>{jobTypes.map((type) => <option key={type}>{type}</option>)}</select></label>

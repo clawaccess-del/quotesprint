@@ -1782,3 +1782,14 @@ textarea {
   color: var(--muted);
   line-height: 1.45;
 }
+.quote-lead-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .65rem;
+}
+.quote-lead-edit-grid .wide-field {
+  grid-column: 1 / -1;
+}
+@media (max-width: 700px) {
+  .quote-lead-edit-grid { grid-template-columns: 1fr; }
+}
