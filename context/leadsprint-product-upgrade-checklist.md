@@ -23,9 +23,9 @@ Work through these one by one until complete. Keep each item scoped, build/test,
 - Templates use company profile, customer name, job type, service area, quote values, and lead data.
 - Added copy buttons.
 
-## 5. Quote-to-job checklist
-- Add checklist for won/near-won work: deposit collected, appointment scheduled, prep instructions sent, materials confirmed, review request sent.
-- Tie checklist to lead/customer where possible.
+## 5. Quote-to-job checklist ✅
+- Added checklist for won/near-won work: deposit collected, appointment scheduled, prep instructions sent, materials/scope confirmed, review request sent.
+- Checklist is tied to the selected lead/customer and persists with the lead record.
 
 ## 6. Simple revenue dashboard
 - Add dashboard metrics: open quoted value, won revenue, lost quoted value, average quote value, win rate, follow-ups due.

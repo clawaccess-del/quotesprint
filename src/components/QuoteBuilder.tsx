@@ -16,6 +16,8 @@ type SavedQuote = {
   createdAt: string;
 };
 
+type JobChecklistKey = 'depositCollected' | 'appointmentScheduled' | 'prepInstructionsSent' | 'materialsConfirmed' | 'reviewRequestSent';
+
 type SavedLead = {
   id: string;
   name: string;
@@ -27,6 +29,7 @@ type SavedLead = {
   nextStep?: string;
   followUpDate?: string;
   appointmentDate?: string;
+  jobChecklist?: Partial<Record<JobChecklistKey, boolean>>;
   status?: LeadStatus;
   createdAt: string;
 };
@@ -379,6 +382,14 @@ const leadStages: { status: LeadStatus; label: string; helper: string; action: s
 ];
 
 const leadStageOrder = leadStages.map((stage) => stage.status);
+
+const jobChecklistItems: { key: JobChecklistKey; label: string; helper: string }[] = [
+  { key: 'depositCollected', label: 'Deposit collected', helper: 'Booking/payment step is handled' },
+  { key: 'appointmentScheduled', label: 'Appointment scheduled', helper: 'Date or sales visit is on the calendar' },
+  { key: 'prepInstructionsSent', label: 'Prep instructions sent', helper: 'Customer knows what to expect' },
+  { key: 'materialsConfirmed', label: 'Materials/scope confirmed', helper: 'Scope, parts, or selections are clear' },
+  { key: 'reviewRequestSent', label: 'Review request sent', helper: 'Post-job review loop started' },
+];
 
 const winReasons = ['Booked quickly', 'Strong fit', 'Trusted the proof', 'Timing worked', 'Price accepted', 'Follow-up converted'];
 const lossReasons = ['Price', 'Timing', 'No response', 'Competitor', 'Not qualified', 'Scope changed'];
@@ -815,6 +826,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       nextStep: leadNextStep,
       followUpDate: leadFollowUpDate,
       appointmentDate: leadAppointmentDate,
+      jobChecklist: { appointmentScheduled: Boolean(leadAppointmentDate) },
       status: 'new',
       createdAt: new Date().toISOString(),
     };
@@ -849,6 +861,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       nextStep: 'Follow up on estimate and ask for a yes/no decision',
       followUpDate: existingLead?.followUpDate || leadFollowUpDate,
       appointmentDate: existingLead?.appointmentDate || leadAppointmentDate,
+      jobChecklist: { ...(existingLead?.jobChecklist || {}), appointmentScheduled: Boolean(existingLead?.appointmentDate || leadAppointmentDate) },
       status: 'quoted',
       createdAt: existingLead?.createdAt || new Date().toISOString(),
     };
@@ -927,6 +940,23 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     setLeadAppointmentDate(lead.appointmentDate || '');
     setActiveTab('leads');
     setAiStatus(`Loaded ${lead.name}'s contact profile.`);
+  }
+
+  function toggleJobChecklist(id: string, key: JobChecklistKey) {
+    let updatedLead: SavedLead | null = null;
+    setSavedLeads((leads) => leads.map((lead) => {
+      if (lead.id !== id) return lead;
+      updatedLead = { ...lead, jobChecklist: { ...(lead.jobChecklist || {}), [key]: !lead.jobChecklist?.[key] } };
+      return updatedLead;
+    }));
+    window.setTimeout(() => {
+      if (!updatedLead) return;
+      fetch('/api/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lead: updatedLead }),
+      }).catch(() => null);
+    }, 0);
   }
 
   function saveLeadEdit() {
@@ -1241,6 +1271,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
             <div className="next-action-box"><strong>Recommended next action</strong><p>{leadWorkflow.currentLead.nextStep || leadWorkflow.stage.action}</p>{leadWorkflow.currentLead.followUpDate ? <span>Follow up on {leadWorkflow.currentLead.followUpDate}</span> : null}{leadWorkflow.currentLead.appointmentDate ? <span>Sales/appointment date: {leadWorkflow.currentLead.appointmentDate}</span> : null}</div>
             <div className="lead-checklist">{leadWorkflow.checklist.map((item) => <span key={item.label} className={item.done ? 'done' : ''}>{item.done ? '✓' : '○'} {item.label}</span>)}</div>
             <div className="hero-actions"><button type="button" className="button secondary" onClick={() => moveCurrentLead('qualified')}>Qualified</button><button type="button" className="button secondary" onClick={saveQuote}>Save quote + mark quoted</button><button type="button" className="button secondary" onClick={() => moveCurrentLead('followed-up')}>Followed up</button><button type="button" className="button" onClick={() => moveCurrentLead('won')}>Won</button><button type="button" className="button secondary" onClick={() => moveCurrentLead('lost')}>Lost</button></div>
+            <div className="job-checklist"><h3>Quote-to-job checklist</h3><p className="fine-print">Use this once the customer is close to saying yes or the job is won.</p>{jobChecklistItems.map((item) => <label className="job-check-item" key={item.key}><input type="checkbox" checked={Boolean(leadWorkflow.currentLead?.jobChecklist?.[item.key])} onChange={() => toggleJobChecklist(leadWorkflow.currentLead!.id, item.key)} /><span><strong>{item.label}</strong><small>{item.helper}</small></span></label>)}</div>
             <div className="customer-timeline"><h3>Customer timeline</h3>{currentLeadTimeline.map((event) => <div className="timeline-event" key={`${event.title}-${event.date}-${event.detail}`}><span>{event.date.slice(0, 10)}</span><div><strong>{event.title}</strong><p>{event.detail}</p></div></div>)}</div>
           </> : <p>Save a lead or load a customer profile to see the guided workflow from first contact to final answer.</p>}
         </article>
