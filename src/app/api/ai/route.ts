@@ -20,7 +20,7 @@ const creditCost: Record<string, number> = {
 export async function POST(request: NextRequest) {
   const access = verifyAccessToken(request.cookies.get(ACCESS_COOKIE)?.value);
   if (!access) return NextResponse.json({ ok: false, message: 'Paid access is required.' }, { status: 401 });
-  if (access.plan !== 'live_ai') return NextResponse.json({ ok: false, message: 'QuoteSprint Live + AI is required for AI credits.' }, { status: 403 });
+  if (access.plan !== 'live_ai') return NextResponse.json({ ok: false, message: 'LeadSprint Live + AI is required for AI credits.' }, { status: 403 });
 
   const openAiKey = process.env.OPENAI_API_KEY;
   if (!openAiKey) return NextResponse.json({ ok: false, message: 'AI generation is not active yet. Add OPENAI_API_KEY to enable this feature.' }, { status: 503 });

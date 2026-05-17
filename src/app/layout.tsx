@@ -3,16 +3,18 @@ import './globals.css';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { brand } from '@/lib/content';
+import { Analytics } from '@vercel/analytics/next';
+import Script from 'next/script';
 
 export const metadata: Metadata = {
-  title: `${brand.name} | Speed-to-lead quote kit for home-service businesses`,
+  title: `${brand.name} | Lead management for home-service businesses`,
   description: brand.description,
   metadataBase: new URL('https://quotesprint.vercel.app'),
   manifest: '/manifest.webmanifest',
-  applicationName: 'QuoteSprint',
+  applicationName: 'LeadSprint',
   appleWebApp: {
     capable: true,
-    title: 'QuoteSprint',
+    title: 'LeadSprint',
     statusBarStyle: 'black-translucent',
   },
   icons: {
@@ -34,6 +36,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <Header />
         <main>{children}</main>
         <Footer />
+        <Script defer data-domain="quotesprint.vercel.app" src="https://plausible.io/js/script.js" strategy="afterInteractive" />
+        <Analytics />
       </body>
     </html>
   );

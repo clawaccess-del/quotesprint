@@ -1,10 +1,10 @@
-# QuoteSprint
+# LeadSprint
 
-QuoteSprint is a self-serve digital product for home-service businesses: a fast quote, follow-up, and speed-to-lead kit that turns messy job details into a professional estimate, SMS follow-up, email follow-up, call script, and ROI note.
+LeadSprint is a self-serve digital product for home-service businesses: a fast quote, follow-up, and speed-to-lead kit that turns messy job details into a professional estimate, SMS follow-up, email follow-up, call script, and ROI note.
 
 ## Product thesis
 
-Research points to a valuable, buildable niche: digital tools and templates have high margins, and home-service leads decay quickly when businesses respond slowly. QuoteSprint packages a workflow utility that is specific enough to sell clearly and simple enough to ship without external dependencies.
+Research points to a valuable, buildable niche: digital tools and templates have high margins, and home-service leads decay quickly when businesses respond slowly. LeadSprint packages a workflow utility that is specific enough to sell clearly and simple enough to ship without external dependencies.
 
 ## Stack
 

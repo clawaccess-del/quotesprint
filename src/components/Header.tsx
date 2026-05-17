@@ -5,7 +5,7 @@ import { brand } from '@/lib/content';
 export function Header() {
   return (
     <header className="site-header">
-      <Link href="/" className="logo" aria-label="QuoteSprint home">
+      <Link href="/" className="logo" aria-label="LeadSprint home">
         <Image className="logo-image" src="/brand/quotesprint-circle-logo.png" alt="" width={44} height={44} priority />
         <span>{brand.name}</span>
       </Link>

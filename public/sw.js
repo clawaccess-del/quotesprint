@@ -12,5 +12,5 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', () => {
-  // Network-first passthrough. QuoteSprint stores account data server-side and browser-local as a fallback.
+  // Network-first passthrough. LeadSprint stores account data server-side and browser-local as a fallback.
 });

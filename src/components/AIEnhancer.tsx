@@ -35,7 +35,7 @@ export function AIEnhancer({ enabled }: { enabled: boolean }) {
       <section className="ai-panel locked">
         <span className="eyebrow">AI add-on</span>
         <h2>Need deeper customization?</h2>
-        <p>QuoteSprint Live works without AI. Upgrade to Live + AI when you want brand-voice rewrites, richer objection handling, and expanded follow-up sequences with 100 monthly AI credits.</p>
+        <p>LeadSprint Live works without AI. Upgrade to Live + AI when you want brand-voice rewrites, richer objection handling, and expanded follow-up sequences with 100 monthly AI credits.</p>
         <a className="button" href="/checkout?plan=live_ai">Upgrade to Live + AI</a>
       </section>
     );

@@ -1,7 +1,7 @@
 {
-  "name": "QuoteSprint",
-  "short_name": "QuoteSprint",
-  "description": "Speed-to-lead quote, follow-up, and lead pipeline app for home-service businesses.",
+  "name": "LeadSprint",
+  "short_name": "LeadSprint",
+  "description": "Lead intake, quoting, follow-up, and pipeline management for home-service businesses.",
   "start_url": "/app?source=pwa",
   "scope": "/",
   "display": "standalone",

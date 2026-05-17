@@ -4,8 +4,8 @@ export function Footer() {
   return (
     <footer className="footer">
       <div>
-        <strong>QuoteSprint</strong>
-        <p>Speed-to-lead quote workflows for home-service businesses.</p>
+        <strong>LeadSprint</strong>
+        <p>Lead management workflows for home-service businesses.</p>
       </div>
       <div className="footer-links">
         <Link href="/product">Product</Link>

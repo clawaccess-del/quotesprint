@@ -9,7 +9,7 @@ function redirectToLogin(siteUrl: string, sent = true) {
 
 async function sendLoginEmail(email: string, loginUrl: string) {
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.AUTH_EMAIL_FROM || 'QuoteSprint <login@quotesprint.app>';
+  const from = process.env.AUTH_EMAIL_FROM || 'LeadSprint <login@quotesprint.app>';
   if (!apiKey) throw new Error('Missing RESEND_API_KEY');
 
   const response = await fetch('https://api.resend.com/emails', {
@@ -21,9 +21,9 @@ async function sendLoginEmail(email: string, loginUrl: string) {
     body: JSON.stringify({
       from,
       to: email,
-      subject: 'Your QuoteSprint login link',
-      html: `<p>Use this secure link to log in to QuoteSprint:</p><p><a href="${loginUrl}">Log in to QuoteSprint</a></p><p>This link expires in 15 minutes.</p>`,
-      text: `Use this secure link to log in to QuoteSprint: ${loginUrl}\n\nThis link expires in 15 minutes.`,
+      subject: 'Your LeadSprint login link',
+      html: `<p>Use this secure link to log in to LeadSprint:</p><p><a href="${loginUrl}">Log in to LeadSprint</a></p><p>This link expires in 15 minutes.</p>`,
+      text: `Use this secure link to log in to LeadSprint: ${loginUrl}\n\nThis link expires in 15 minutes.`,
     }),
   });
 

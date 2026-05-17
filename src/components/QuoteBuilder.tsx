@@ -457,10 +457,10 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
   }, []);
 
   useEffect(() => {
-    const localQuotes = safeJsonArray<SavedQuote>(window.localStorage.getItem('quotesprint-quotes'));
-    const localLeads = safeJsonArray<SavedLead>(window.localStorage.getItem('quotesprint-leads'));
-    const localPresets = safeJsonArray<ServicePreset>(window.localStorage.getItem('quotesprint-service-presets'));
-    const profileRaw = window.localStorage.getItem('quotesprint-company-profile');
+    const localQuotes = safeJsonArray<SavedQuote>(window.localStorage.getItem('leadsprint-quotes'));
+    const localLeads = safeJsonArray<SavedLead>(window.localStorage.getItem('leadsprint-leads'));
+    const localPresets = safeJsonArray<ServicePreset>(window.localStorage.getItem('leadsprint-service-presets'));
+    const profileRaw = window.localStorage.getItem('leadsprint-company-profile');
     if (localQuotes.length) setSavedQuotes(localQuotes);
     if (localLeads.length) setSavedLeads(localLeads);
     if (localPresets.length) setServicePresets(mergeById(starterServicePresets, localPresets, 40));
@@ -516,20 +516,20 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
   }, []);
 
   useEffect(() => {
-    window.localStorage.setItem('quotesprint-quotes', JSON.stringify(savedQuotes));
+    window.localStorage.setItem('leadsprint-quotes', JSON.stringify(savedQuotes));
   }, [savedQuotes]);
 
   useEffect(() => {
-    window.localStorage.setItem('quotesprint-leads', JSON.stringify(savedLeads));
+    window.localStorage.setItem('leadsprint-leads', JSON.stringify(savedLeads));
   }, [savedLeads]);
 
   useEffect(() => {
-    window.localStorage.setItem('quotesprint-service-presets', JSON.stringify(servicePresets));
+    window.localStorage.setItem('leadsprint-service-presets', JSON.stringify(servicePresets));
   }, [servicePresets]);
 
   useEffect(() => {
     const profile = { business, serviceArea, brandVoice, differentiator, guarantee };
-    window.localStorage.setItem('quotesprint-company-profile', JSON.stringify(profile));
+    window.localStorage.setItem('leadsprint-company-profile', JSON.stringify(profile));
     if (!accountLoaded) return;
     const timeout = window.setTimeout(() => {
       fetch('/api/account', {
@@ -980,7 +980,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
           <div><strong>{money(stats.totalQuoted)}</strong><span>quoted pipeline</span></div>
           <div><strong>{stats.winRate}%</strong><span>tracked win rate</span></div>
         </div>
-        <div className="ai-inline-panel"><span className="eyebrow">Live preview</span><p>Change the quote options on the left to update these scripts before saving. Saving only adds the current quote to history.</p>{aiStatus ? <p className="fine-print">{aiStatus}</p> : null}{aiEnabled ? <p className="fine-print">Use AI when a section needs an extra custom pass for the customer, job, and brand voice.</p> : null}</div>
+        <div className="ai-inline-panel"><span className="eyebrow">Live preview</span><p>Change the lead and quote details on the left to update the next-step messages before saving. Saving adds the quote and keeps the opportunity tied to the customer record.</p>{aiStatus ? <p className="fine-print">{aiStatus}</p> : null}{aiEnabled ? <p className="fine-print">Use AI when a section needs an extra custom pass for the customer, job, and brand voice.</p> : null}</div>
         <Output title="SMS follow-up" text={customizedCopy['SMS follow-up'] || result.sms} customized={Boolean(customizedCopy['SMS follow-up'])} aiEnabled={aiEnabled} generating={generatingSection === 'SMS follow-up'} disabled={Boolean(generatingSection)} onEnhance={() => enhanceCopy('SMS follow-up', customizedCopy['SMS follow-up'] || result.sms, 'rewrite')} />
         <Output title="Email follow-up" text={customizedCopy['Email follow-up'] || result.email} customized={Boolean(customizedCopy['Email follow-up'])} aiEnabled={aiEnabled} generating={generatingSection === 'Email follow-up'} disabled={Boolean(generatingSection)} onEnhance={() => enhanceCopy('Email follow-up', customizedCopy['Email follow-up'] || result.email, 'email')} />
         <Output title="Call script" text={customizedCopy['Call script'] || result.call} customized={Boolean(customizedCopy['Call script'])} aiEnabled={aiEnabled} generating={generatingSection === 'Call script'} disabled={Boolean(generatingSection)} onEnhance={() => enhanceCopy('Call script', customizedCopy['Call script'] || result.call, 'rewrite')} />
@@ -1088,7 +1088,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
         </article>
 
         <article className="copy-card">
-          <h3>Monthly script drops</h3>
+          <h3>Monthly workflow drops</h3>
           <div className="social-post-list">
             {monthlyScripts.map((script) => <article className="social-post-card" key={script.title}><strong>{script.title}</strong><pre>{script.text}</pre></article>)}
           </div>
@@ -1110,14 +1110,14 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
 
         <article className="copy-card">
           <h3>Win/loss tracking</h3>
-          <p className="fine-print">Mark quotes won or lost in Saved history, then set the reason. QuoteSprint will summarize what is actually happening.</p>
+          <p className="fine-print">Mark quotes won or lost in Saved history, then set the reason. LeadSprint will summarize what is actually happening.</p>
           {winLossBreakdown.tracked ? <div className="pipeline-metrics">{winLossBreakdown.reasons.map(([reason, count]) => <span key={reason}>{reason}: {count}</span>)}</div> : <p>No won/lost reasons tracked yet.</p>}
         </article>
       </section> : null}
 
       {activeTab === 'history' ? <section className="portal-panel-grid single">
         <article className="copy-card">
-          <h3>Saved quote history</h3>
+          <h3>Saved quote and opportunity history</h3>
           {savedQuotes.length ? (
             <div className="quote-list">
               {savedQuotes.map((quote) => (

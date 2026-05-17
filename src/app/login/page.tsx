@@ -3,7 +3,7 @@ export default function LoginPage({ searchParams }: { searchParams?: Promise<{ s
     <section className="page-shell checkout-shell">
       <span className="eyebrow">Customer login</span>
       <h1>Log in with your purchase email.</h1>
-      <p className="lead">Enter the email used at checkout and QuoteSprint will send a secure login link if there is an active purchase or subscription on file.</p>
+      <p className="lead">Enter the email used at checkout and LeadSprint will send a secure login link if there is an active purchase or subscription on file.</p>
       <div className="checkout-card login-form">
         <a className="button full google-button" href="/api/auth/google/start">Continue with Google</a>
         <div className="login-divider"><span>or</span></div>
