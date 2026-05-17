@@ -7,14 +7,23 @@ export async function POST(request: Request) {
   if (!session) return NextResponse.redirect(new URL('/admin?error=auth', request.url), 303);
 
   const formData = await request.formData();
-  await createClientUpdate({
-    customerEmail: String(formData.get('customerEmail') || 'all'),
+  const recipientMode = String(formData.get('recipientMode') || 'all');
+  const selectedEmails = formData.getAll('customerEmails').map((value) => String(value).trim().toLowerCase()).filter(Boolean);
+  const recipients = recipientMode === 'selected' ? selectedEmails : ['all'];
+
+  const update = {
     title: String(formData.get('title') || ''),
     message: String(formData.get('message') || ''),
     imageUrl: String(formData.get('imageUrl') || ''),
     linkUrl: String(formData.get('linkUrl') || ''),
     videoUrl: String(formData.get('videoUrl') || ''),
-  });
+  };
 
-  return NextResponse.redirect(new URL('/admin?update=sent', request.url), 303);
+  if (!update.title || !update.message || !recipients.length) {
+    return NextResponse.redirect(new URL('/admin?tab=updates&error=missing', request.url), 303);
+  }
+
+  await Promise.all(recipients.map((customerEmail) => createClientUpdate({ customerEmail, ...update })));
+
+  return NextResponse.redirect(new URL('/admin?tab=updates&update=sent', request.url), 303);
 }
