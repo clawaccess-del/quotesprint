@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { ACCESS_COOKIE, accessMaxAgeSeconds, createAccessToken, verifySignedToken } from '@/lib/access';
 import { ADMIN_COOKIE, createAdminTokenForEmail, isAdminGoogleEmail } from '@/lib/admin';
-import { findStripeEntitlementByEmail } from '@/lib/entitlements';
+import { findStripeEntitlementByEmail, type Entitlement } from '@/lib/entitlements';
+import { findClientAccountByEmail } from '@/lib/supabase';
 
 type GoogleState = { expiresAt: number; nonce: string; purpose?: 'admin' | 'customer' };
 type GoogleTokenResponse = { id_token?: string; error?: string };
@@ -25,6 +26,7 @@ export async function GET(request: NextRequest) {
   const parsedState = verifySignedToken<GoogleState>(state);
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  const googleRedirectUri = process.env.GOOGLE_OAUTH_REDIRECT_URI || `${siteUrl}/api/auth/google/callback`;
   const stripeSecret = process.env.STRIPE_SECRET_KEY;
   const isAdminLogin = parsedState?.purpose === 'admin';
   const errorTarget = isAdminLogin ? 'admin' : 'login';
@@ -41,7 +43,7 @@ export async function GET(request: NextRequest) {
         code,
         client_id: clientId,
         client_secret: clientSecret,
-        redirect_uri: `${siteUrl}/api/auth/google/callback`,
+        redirect_uri: googleRedirectUri,
         grant_type: 'authorization_code',
       }),
     });
@@ -67,8 +69,19 @@ export async function GET(request: NextRequest) {
       return response;
     }
 
-    const stripe = new Stripe(stripeSecret!);
-    const entitlement = await findStripeEntitlementByEmail(stripe, email);
+    let entitlement: Entitlement | null = await findClientAccountByEmail(email)
+      .then((client) => client ? ({
+        plan: client.plan,
+        mode: 'subscription' as const,
+        sessionId: `client:${client.accountId}`,
+        customerEmail: client.email,
+      }) : null)
+      .catch(() => null);
+
+    if (!entitlement) {
+      const stripe = new Stripe(stripeSecret!);
+      entitlement = await findStripeEntitlementByEmail(stripe, email);
+    }
 
     if (!entitlement) return NextResponse.redirect(`${siteUrl}/login?error=no-purchase`);
 
