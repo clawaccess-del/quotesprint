@@ -595,7 +595,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     const nextStep = lead?.nextStep || leadNextStep;
     const address = lead?.address || leadAddress;
     const source = lead?.source || leadSource;
-    const industry = lead?.industry || leadIndustry || businessIndustry;
+    const industry = selectedLead ? (leadIndustry || selectedLead.industry || businessIndustry) : (lead?.industry || leadIndustry || businessIndustry);
     const appointmentDate = lead?.appointmentDate || leadAppointmentDate;
     const detailParts = [
       industry ? `lead industry: ${industry}` : '',
@@ -608,6 +608,8 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     const summary = detailParts.length ? detailParts.join(' · ') : `the ${jobType.toLowerCase()} request`;
     return { lead, notes, nextStep, address, source, industry, appointmentDate, summary };
   }, [businessIndustry, customer, jobType, leadAddress, leadAppointmentDate, leadIndustry, leadNextStep, leadNotes, leadSource, savedLeads, selectedQuoteLeadId]);
+
+  const activeIndustry = customerContext.industry || businessIndustry;
 
   useEffect(() => {
     const profile = { business, businessIndustry, companyLogoUrl, companyPhone, companyWebsite, companyOffer, idealCustomer, serviceArea, brandVoice, differentiator, guarantee };
@@ -642,7 +644,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     const detail = industryDetails[jobType];
     const inputFocus = detail.quoteInputs.slice(0, 5).join(', ');
     const customerConcerns = detail.customerConcerns.slice(0, 4).join(', ');
-    const companyContext = `${business} is a ${businessIndustry} business serving ${serviceArea} with a ${brandVoice} voice. Ideal customers: ${idealCustomer}. Customers choose us because ${differentiator}. Offer/focus: ${companyOffer || 'clear next steps and dependable service'}. Contact: ${companyPhone || 'use the normal booking channel'}${companyWebsite ? `, ${companyWebsite}` : ''}. Our trust promise is: ${guarantee}.`;
+    const companyContext = `${business} is a ${activeIndustry} business serving ${serviceArea} with a ${brandVoice} voice. Ideal customers: ${idealCustomer}. Customers choose us because ${differentiator}. Offer/focus: ${companyOffer || 'clear next steps and dependable service'}. Contact: ${companyPhone || 'use the normal booking channel'}${companyWebsite ? `, ${companyWebsite}` : ''}. Our trust promise is: ${guarantee}.`;
     const tonePhrase = `${tones[tone]}, with a brand voice that feels ${brandVoice}`;
     const bookingReason = urgency === 'emergency'
       ? `${playbook.urgencyReason}, so reserving the appointment now protects the fastest available response`
@@ -654,22 +656,22 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       total,
       depositDue,
       playbook,
-      sms: `Hi ${firstName}, this is ${business}. I reviewed the ${serviceRequest} details, including ${customerSpecifics} and put together a working estimate of ${money(total)}. The main things we’ll confirm are ${inputFocus}. For ${serviceArea} ${businessIndustry} work, customers like ${idealCustomer} choose us for ${differentiator}. ${companyOffer ? `Our current focus is ${companyOffer}. ` : ``}${guarantee}. We can reserve ${timePhrase} with ${money(depositDue)} down. Want me to hold it?`,
-      email: `Subject: ${jobType} estimate from ${business}\n\nHi ${firstName},\n\nThanks for reaching out to ${business}, your ${businessIndustry} team in ${serviceArea}. Your working estimate is ${money(total)} for this ${serviceRequest}. I also noted ${customerSpecifics}. That includes the expected labor, materials, and scheduling priority based on what you shared.\n\nFor this kind of request, customers usually care most about ${customerConcerns}. To keep the quote accurate, we’ll confirm ${inputFocus}.\n\nWhat matters for this type of work: ${playbook.risk}\n\nWhy customers choose our ${businessIndustry} team: ${differentiator}. Best fit: ${idealCustomer}. ${companyOffer ? `Offer/focus: ${companyOffer}. ` : ``}Our approach is ${detail.trustProof}.\n\nTo reserve the next available opening, the deposit is ${money(depositDue)} (${deposit}%). ${playbook.prepNote}\n\nIf anything changes after we see the job in person, ${guarantee}.\n\nBest,\n${business}`,
+      sms: `Hi ${firstName}, this is ${business}. I reviewed the ${serviceRequest} details, including ${customerSpecifics} and put together a working estimate of ${money(total)}. The main things we’ll confirm are ${inputFocus}. For ${serviceArea} ${activeIndustry} work, customers like ${idealCustomer} choose us for ${differentiator}. ${companyOffer ? `Our current focus is ${companyOffer}. ` : ``}${guarantee}. We can reserve ${timePhrase} with ${money(depositDue)} down. Want me to hold it?`,
+      email: `Subject: ${jobType} estimate from ${business}\n\nHi ${firstName},\n\nThanks for reaching out to ${business}, your ${activeIndustry} team in ${serviceArea}. Your working estimate is ${money(total)} for this ${serviceRequest}. I also noted ${customerSpecifics}. That includes the expected labor, materials, and scheduling priority based on what you shared.\n\nFor this kind of request, customers usually care most about ${customerConcerns}. To keep the quote accurate, we’ll confirm ${inputFocus}.\n\nWhat matters for this type of work: ${playbook.risk}\n\nWhy customers choose our ${activeIndustry} team: ${differentiator}. Best fit: ${idealCustomer}. ${companyOffer ? `Offer/focus: ${companyOffer}. ` : ``}Our approach is ${detail.trustProof}.\n\nTo reserve the next available opening, the deposit is ${money(depositDue)} (${deposit}%). ${playbook.prepNote}\n\nIf anything changes after we see the job in person, ${guarantee}.\n\nBest,\n${business}`,
       call: `Open with: “Hi ${firstName}, this is ${business}. I saw your ${serviceRequest} request and noted ${customerSpecifics} and wanted to help you get a clear answer quickly.”\n\nCompany context to use naturally: ${companyContext}\n\nMatch the brand voice: ${tonePhrase}.\n\nListen for customer concerns around ${customerConcerns}.\n\nQualify for this job: ask about ${playbook.qualify}.\n\nBuild confidence: “For this kind of work, we focus on ${detail.trustProof}. The main reason to handle it now is that ${riskSentence}”\n\nClose: “The working estimate is ${money(total)}. I can reserve the next opening with ${money(depositDue)} down because ${bookingReason}. Should I hold that spot for you?”`,
       sequence: [
         `Day 0: Hi ${firstName}, this is ${business}. Your ${serviceRequest} estimate is ${money(total)} based on ${customerSpecifics}. Because ${playbook.urgencyReason}, I can reserve the next opening with ${money(depositDue)} down. Want me to hold it?`,
         `Day 1: Quick follow-up, ${firstName}. For this ${serviceRequest}, based on ${customerSpecifics}, the main thing to avoid is that ${riskSentence} ${business} keeps this ${brandVoice} and clear, and ${guarantee}. If you want the current opening, I can reserve it with the ${deposit}% deposit.`,
-        `Day 3: Hi ${firstName}, checking before we release this ${serviceRequest} estimate window. I have ${customerSpecifics} in the notes. We’ll use ${inputFocus} to keep the quote accurate. Customers needing ${businessIndustry} help in ${serviceArea} choose us for ${differentiator}, especially ${idealCustomer}. ${playbook.prepNote} Do you want us to keep the ${money(total)} quote active?`,
+        `Day 3: Hi ${firstName}, checking before we release this ${serviceRequest} estimate window. I have ${customerSpecifics} in the notes. We’ll use ${inputFocus} to keep the quote accurate. Customers needing ${activeIndustry} help in ${serviceArea} choose us for ${differentiator}, especially ${idealCustomer}. ${playbook.prepNote} Do you want us to keep the ${money(total)} quote active?`,
         `Day 7: Last touch from ${business}. ${detail.followUpTiming} If this is still on your list, reply “ready” and we will help you ${playbook.closeBenefit}.`
       ],
-      objectionReply: `If ${firstName} hesitates on price: “I understand. ${playbook.objection} ${detail.decisionAngle} With ${business} as your ${businessIndustry} team, the goal is ${differentiator}. ${companyOffer ? `We can also talk through ${companyOffer}. ` : ``}${guarantee}. The estimate is ${money(total)}, and the ${money(depositDue)} deposit simply reserves the appointment so we can keep the schedule clear for you.”`,
+      objectionReply: `If ${firstName} hesitates on price: “I understand. ${playbook.objection} ${detail.decisionAngle} With ${business} as your ${activeIndustry} team, the goal is ${differentiator}. ${companyOffer ? `We can also talk through ${companyOffer}. ` : ``}${guarantee}. The estimate is ${money(total)}, and the ${money(depositDue)} deposit simply reserves the appointment so we can keep the schedule clear for you.”`,
       quoteInputs: detail.quoteInputs,
       customerConcerns: detail.customerConcerns,
       trustProof: detail.trustProof,
       followUpTiming: detail.followUpTiming,
     };
-  }, [business, businessIndustry, companyLogoUrl, companyPhone, companyWebsite, companyOffer, idealCustomer, serviceArea, brandVoice, differentiator, guarantee, customerContext, customer, jobType, laborHours, laborRate, materials, urgency, deposit, tone]);
+  }, [activeIndustry, business, businessIndustry, companyLogoUrl, companyPhone, companyWebsite, companyOffer, idealCustomer, serviceArea, brandVoice, differentiator, guarantee, customerContext, customer, jobType, laborHours, laborRate, materials, urgency, deposit, tone]);
 
   const stats = useMemo(() => {
     const totalQuoted = savedQuotes.reduce((sum, quote) => sum + quote.total, 0);
@@ -858,12 +860,12 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
   const monthlyScripts = useMemo(() => {
     const firstName = customer.trim().split(' ')[0] || 'there';
     return [
-      { title: 'Slow lead reactivation', text: `Hi ${firstName}, this is ${business}, your ${businessIndustry} team. Just checking whether the ${jobType.toLowerCase()} is still on your list. We still have a few ${serviceArea} openings, and our approach is ${brandVoice}: ${differentiator}. If timing or budget changed, I can help you choose the simplest next step.` },
+      { title: 'Slow lead reactivation', text: `Hi ${firstName}, this is ${business}, your ${activeIndustry} team. Just checking whether the ${jobType.toLowerCase()} is still on your list. We still have a few ${serviceArea} openings, and our approach is ${brandVoice}: ${differentiator}. If timing or budget changed, I can help you choose the simplest next step.` },
       { title: 'Seasonal check-in', text: `${business} is helping ${serviceArea} homeowners get ahead of seasonal service issues with ${differentiator}. If you want us to look at ${jobType.toLowerCase()} before the schedule fills, reply with a good day and I will send the next available options. ${guarantee}.` },
       { title: 'Payment plan language', text: `If it helps, we can separate the must-do work from optional upgrades and talk through deposit or phasing options. ${business} keeps this ${brandVoice}, and the goal is to solve the urgent part first without making the decision feel rushed. ${guarantee}.` },
       { title: 'Review request', text: `Thanks again for choosing ${business}. If the experience reflected what we aim for, ${differentiator}, would you mind leaving us a quick review? It helps other ${serviceArea} homeowners know who they can trust.` },
     ];
-  }, [brandVoice, business, businessIndustry, customer, differentiator, guarantee, jobType, serviceArea]);
+  }, [activeIndustry, brandVoice, business, businessIndustry, customer, differentiator, guarantee, jobType, serviceArea]);
 
   const reviewPrompts = useMemo(() => ({
     sms: `Hi ${customer.trim().split(' ')[0] || 'there'}, thanks again for choosing ${business}. If everything felt ${brandVoice} and reflected ${differentiator}, would you leave us a quick review? It helps local homeowners feel confident reaching out to us.`,
@@ -875,16 +877,16 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     const lead = leadWorkflow.currentLead;
     const phoneOrEmail = lead ? [lead.phone, lead.email].filter(Boolean).join(' / ') : '';
     return [
-      { stage: 'New lead reply', text: `Hi ${firstName}, this is ${business}. Thanks for reaching out about ${jobType.toLowerCase()}. I saw the notes: ${customerContext.summary}. We help ${serviceArea} customers with ${businessIndustry} work by focusing on ${differentiator}${companyOffer ? `, including ${companyOffer}` : ``}, and I can help. Can you send the service address, a quick description of what is going on, and a couple photos if possible? Once I have that, I’ll give you the clearest next step.` },
+      { stage: 'New lead reply', text: `Hi ${firstName}, this is ${business}. Thanks for reaching out about ${jobType.toLowerCase()}. I saw the notes: ${customerContext.summary}. We help ${serviceArea} customers with ${activeIndustry} work by focusing on ${differentiator}${companyOffer ? `, including ${companyOffer}` : ``}, and I can help. Can you send the service address, a quick description of what is going on, and a couple photos if possible? Once I have that, I’ll give you the clearest next step.` },
       { stage: 'Need photos/details', text: `Hi ${firstName}, to keep this accurate, can you send photos and any details about access, timing, and what you have already tried? I have this so far: ${customerContext.summary}. For ${jobType.toLowerCase()}, the details that matter most are ${result.quoteInputs.slice(0, 4).join(', ')}. ${business} keeps the process ${brandVoice}, and ${guarantee}.` },
-      { stage: 'Estimate sent', text: `Hi ${firstName}, I sent over the ${jobType.toLowerCase()} estimate based on ${customerContext.summary}. The working total is ${money(result.total)}, and ${money(result.depositDue)} reserves the appointment. Customers choose ${business} for ${businessIndustry} work because ${differentiator}. Best fit: ${idealCustomer}. Do you want me to hold the next available opening?` },
-      { stage: '24-hour follow-up', text: `Hi ${firstName}, quick follow-up from ${business}, your ${businessIndustry} team. Did you want to move forward with the ${jobType.toLowerCase()} estimate, or is there anything you want me to clarify before you decide? We’ll keep it ${brandVoice}, and ${guarantee}.${companyPhone ? ` You can also reach us at ${companyPhone}.` : ``}` },
-      { stage: 'Final check-in', text: `Hi ${firstName}, last check-in on this ${jobType.toLowerCase()} estimate for ${customerContext.summary} before I close the loop. If timing or budget changed, no problem. If you still want ${business} to help with this ${businessIndustry} work and ${differentiator}, reply “ready” and I’ll help with the next step.` },
-      { stage: 'Won job confirmation', text: `Great, ${firstName}. You’re confirmed with ${business}. As your ${businessIndustry} team, we have ${lead?.appointmentDate ? `the appointment set for ${lead.appointmentDate}` : 'the next step ready'}, and the deposit/booking amount is ${money(result.depositDue)} if required. We’ll keep the process ${brandVoice} and let you know if anything changes.` },
-      { stage: 'Lost lead reactivation', text: `Hi ${firstName}, this is ${business}, your ${businessIndustry} team. Just checking whether the ${jobType.toLowerCase()} is still on your list. If the timing, scope, or budget changed, I can help you choose the simplest next step while keeping it ${brandVoice}.` },
+      { stage: 'Estimate sent', text: `Hi ${firstName}, I sent over the ${jobType.toLowerCase()} estimate based on ${customerContext.summary}. The working total is ${money(result.total)}, and ${money(result.depositDue)} reserves the appointment. Customers choose ${business} for ${activeIndustry} work because ${differentiator}. Best fit: ${idealCustomer}. Do you want me to hold the next available opening?` },
+      { stage: '24-hour follow-up', text: `Hi ${firstName}, quick follow-up from ${business}, your ${activeIndustry} team. Did you want to move forward with the ${jobType.toLowerCase()} estimate, or is there anything you want me to clarify before you decide? We’ll keep it ${brandVoice}, and ${guarantee}.${companyPhone ? ` You can also reach us at ${companyPhone}.` : ``}` },
+      { stage: 'Final check-in', text: `Hi ${firstName}, last check-in on this ${jobType.toLowerCase()} estimate for ${customerContext.summary} before I close the loop. If timing or budget changed, no problem. If you still want ${business} to help with this ${activeIndustry} work and ${differentiator}, reply “ready” and I’ll help with the next step.` },
+      { stage: 'Won job confirmation', text: `Great, ${firstName}. You’re confirmed with ${business}. As your ${activeIndustry} team, we have ${lead?.appointmentDate ? `the appointment set for ${lead.appointmentDate}` : 'the next step ready'}, and the deposit/booking amount is ${money(result.depositDue)} if required. We’ll keep the process ${brandVoice} and let you know if anything changes.` },
+      { stage: 'Lost lead reactivation', text: `Hi ${firstName}, this is ${business}, your ${activeIndustry} team. Just checking whether the ${jobType.toLowerCase()} is still on your list. If the timing, scope, or budget changed, I can help you choose the simplest next step while keeping it ${brandVoice}.` },
       { stage: 'Contact note', text: `Lead: ${customer}\nContact: ${phoneOrEmail || 'No contact saved'}\nSource: ${lead?.source || leadSource || 'Unknown'}\nNext step: ${lead?.nextStep || leadNextStep}\nFollow-up: ${lead?.followUpDate || leadFollowUpDate || 'Not set'}` },
     ];
-  }, [business, businessIndustry, brandVoice, customerContext, customer, differentiator, guarantee, jobType, leadFollowUpDate, leadNextStep, leadSource, leadWorkflow.currentLead, result, serviceArea]);
+  }, [activeIndustry, business, businessIndustry, brandVoice, customerContext, customer, differentiator, guarantee, jobType, leadFollowUpDate, leadNextStep, leadSource, leadWorkflow.currentLead, result, serviceArea]);
 
   const winLossBreakdown = useMemo(() => {
     const tracked = savedQuotes.filter((quote) => quote.status !== 'open');
@@ -932,11 +934,11 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     const lead = leadWorkflow.currentLead;
     const firstName = (lead?.name || customer).trim().split(' ')[0] || 'there';
     return [
-      { title: 'Review request', key: 'reviewRequestSent' as JobChecklistKey, text: `Hi ${firstName}, thank you for choosing ${business} for your ${jobType.toLowerCase()} (${customerContext.summary}). If we earned it, would you mind leaving a quick review? It helps local customers in ${serviceArea} know what to expect from our ${businessIndustry} team. ${companyWebsite ? `You can start here: ${companyWebsite}` : 'Reply here and I can send the best review link.'}` },
-      { title: 'Referral ask', key: 'referralAskSent' as JobChecklistKey, text: `Hi ${firstName}, one more quick note from ${business}. If you know a neighbor, friend, or property owner who needs reliable ${businessIndustry} help, we would be grateful for the referral. We will take care of them with the same ${brandVoice} service and ${guarantee}.` },
+      { title: 'Review request', key: 'reviewRequestSent' as JobChecklistKey, text: `Hi ${firstName}, thank you for choosing ${business} for your ${jobType.toLowerCase()} (${customerContext.summary}). If we earned it, would you mind leaving a quick review? It helps local customers in ${serviceArea} know what to expect from our ${activeIndustry} team. ${companyWebsite ? `You can start here: ${companyWebsite}` : 'Reply here and I can send the best review link.'}` },
+      { title: 'Referral ask', key: 'referralAskSent' as JobChecklistKey, text: `Hi ${firstName}, one more quick note from ${business}. If you know a neighbor, friend, or property owner who needs reliable ${activeIndustry} help, we would be grateful for the referral. We will take care of them with the same ${brandVoice} service and ${guarantee}.` },
       { title: 'Thank-you follow-up', key: 'reviewRequestSent' as JobChecklistKey, text: `Hi ${firstName}, thanks again for trusting ${business}. We appreciate the chance to help with your ${jobType.toLowerCase()} (${customerContext.summary}). If anything needs attention, just let us know. If everything looks good, a quick review or referral means a lot to our local team.` },
     ];
-  }, [brandVoice, business, businessIndustry, companyWebsite, customerContext, customer, guarantee, jobType, leadWorkflow.currentLead, serviceArea]);
+  }, [activeIndustry, brandVoice, business, businessIndustry, companyWebsite, customerContext, customer, guarantee, jobType, leadWorkflow.currentLead, serviceArea]);
 
   function saveLead() {
     const lead: SavedLead = {
@@ -982,7 +984,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       email: existingLead?.email || leadEmail,
       address: existingLead?.address || leadAddress,
       notes: existingLead?.notes || `${jobType} quote: ${money(result.total)}`,
-      industry: existingLead?.industry || leadIndustry || businessIndustry,
+      industry: selectedQuoteLeadId ? (leadIndustry || existingLead?.industry || businessIndustry) : (existingLead?.industry || leadIndustry || businessIndustry),
       source: existingLead?.source || leadSource,
       nextStep: 'Follow up on estimate and ask for a yes/no decision',
       followUpDate: existingLead?.followUpDate || leadFollowUpDate,
@@ -1062,7 +1064,6 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     setLeadAddress(lead.address);
     setLeadNotes(lead.notes);
     setLeadIndustry(lead.industry || businessIndustry);
-    setBusinessIndustry(lead.industry || businessIndustry);
     setLeadSource(lead.source || 'Website form');
     setLeadNextStep(lead.nextStep || leadStages.find((stage) => stage.status === leadStatus(lead))?.action || 'Confirm the next step');
     setLeadFollowUpDate(lead.followUpDate || '');
@@ -1080,7 +1081,6 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     setLeadAddress(lead.address);
     setLeadNotes(lead.notes);
     setLeadIndustry(lead.industry || businessIndustry);
-    setBusinessIndustry(lead.industry || businessIndustry);
     setLeadSource(lead.source || 'Website form');
     setLeadNextStep(lead.nextStep || leadStages.find((stage) => stage.status === leadStatus(lead))?.action || 'Follow up on estimate and ask for a yes/no decision');
     setLeadFollowUpDate(lead.followUpDate || '');
@@ -1271,7 +1271,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     const currentLead = leadWorkflow.currentLead;
     return [
       `Business: ${business}`,
-      `Business industry: ${businessIndustry}`,
+      `Business industry: ${activeIndustry}`,
       `Service/job type: ${jobType}`,
       `Logo URL: ${companyLogoUrl || 'not set'}`,
       `Phone: ${companyPhone || 'not set'}`,
@@ -1322,7 +1322,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       body: JSON.stringify({
         action,
         company,
-        industry: `${businessIndustry} / ${jobType}`,
+        industry: `${activeIndustry} / ${jobType}`,
         source: text,
         instruction: `Add a deeper customization layer for ${customer}. Use the company profile and customer/lead information as mandatory source material, especially the ideal customer, offer/specialty, brand voice, differentiator, service area, phone/website when useful, and trust promise. Keep it customer-facing, specific to the job type, and ready to send. Speak directly to the customer's requested service/situation from the notes when available. Reflect the industry's real buyer concerns, quote inputs, timing, prep, and objection dynamics.`,
       }),
@@ -1350,7 +1350,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       body: JSON.stringify({
         action: 'social',
         company,
-        industry: `${businessIndustry} / ${jobType}`,
+        industry: `${activeIndustry} / ${jobType}`,
         source: text,
         instruction: `Rewrite this into a more custom ${socialPlatform} post. It must strongly reflect the selected goal (${socialGoal}) and topic (${socialTopic}). Make it specific to this company, including service area, ideal customer, offer/specialty, differentiator, trust promise, and brand voice. Return only the finished post.`,
       }),
@@ -1387,7 +1387,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       body: JSON.stringify({
         action: 'follow-up-coach',
         company,
-        industry: `${businessIndustry} / ${jobType}`,
+        industry: `${activeIndustry} / ${jobType}`,
         source: customerReply,
         instruction: `The customer replied to a quote. Write the best concise SMS reply for ${customer}. Use the saved lead notes/requested service and customer reply as the main context. It should address the concern, protect trust, avoid sounding desperate, and move toward a clear next step. Quote total: ${money(result.total)}. Deposit: ${money(result.depositDue)}. Industry concerns: ${detail.customerConcerns.join(', ')}. Return only the message to send.`,
       }),
@@ -1486,7 +1486,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
             <label>Phone<input value={leadPhone} onChange={(e) => setLeadPhone(e.target.value)} placeholder="Customer phone" /></label>
             <label>Email<input type="email" value={leadEmail} onChange={(e) => setLeadEmail(e.target.value)} placeholder="Customer email" /></label>
             <label>Address<input value={leadAddress} onChange={(e) => setLeadAddress(e.target.value)} placeholder="Service address" /></label>
-            <label>Industry<select value={leadIndustry} onChange={(e) => { setLeadIndustry(e.target.value); setBusinessIndustry(e.target.value); }}>{businessIndustries.map((industry) => <option key={industry}>{industry}</option>)}</select></label>
+            <label>Industry<select value={leadIndustry} onChange={(e) => setLeadIndustry(e.target.value)}>{businessIndustries.map((industry) => <option key={industry}>{industry}</option>)}</select></label>
             <label>Source<input value={leadSource} onChange={(e) => setLeadSource(e.target.value)} placeholder="Lead source" /></label>
             <label>Follow-up date<input type="date" value={leadFollowUpDate} onChange={(e) => setLeadFollowUpDate(e.target.value)} /></label>
             <label>Appointment date<input type="date" value={leadAppointmentDate} onChange={(e) => setLeadAppointmentDate(e.target.value)} /></label>
@@ -1589,7 +1589,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
           </div>
           <label>Lead address<input value={leadAddress} onChange={(e) => setLeadAddress(e.target.value)} placeholder="Street, city, ZIP" /></label>
           <div className="two-col">
-            <label>Industry<select value={leadIndustry} onChange={(e) => { setLeadIndustry(e.target.value); setBusinessIndustry(e.target.value); }}>{businessIndustries.map((industry) => <option key={industry}>{industry}</option>)}</select></label>
+            <label>Industry<select value={leadIndustry} onChange={(e) => setLeadIndustry(e.target.value)}>{businessIndustries.map((industry) => <option key={industry}>{industry}</option>)}</select></label>
             <label>Lead source<input value={leadSource} onChange={(e) => setLeadSource(e.target.value)} placeholder="Google, referral, Facebook, phone call" /></label>
           </div>
           <div className="two-col">
@@ -1637,7 +1637,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
                               <label>Email<input type="email" value={editingLead.email} onChange={(e) => setEditingLead({ ...editingLead, email: e.target.value })} /></label>
                             </div>
                             <label>Address<input value={editingLead.address} onChange={(e) => setEditingLead({ ...editingLead, address: e.target.value })} /></label>
-                            <div className="two-col"><label>Industry<select value={editingLead.industry || businessIndustry} onChange={(e) => setEditingLead({ ...editingLead, industry: e.target.value })}>{businessIndustries.map((industry) => <option key={industry}>{industry}</option>)}</select></label><label>Source<input value={editingLead.source || ''} onChange={(e) => setEditingLead({ ...editingLead, source: e.target.value })} /></label></div>
+                            <div className="two-col"><label>Industry<select value={editingLead.industry || 'HVAC'} onChange={(e) => setEditingLead({ ...editingLead, industry: e.target.value })}>{businessIndustries.map((industry) => <option key={industry}>{industry}</option>)}</select></label><label>Source<input value={editingLead.source || ''} onChange={(e) => setEditingLead({ ...editingLead, source: e.target.value })} /></label></div>
                             <label>Follow-up date<input type="date" value={editingLead.followUpDate || ''} onChange={(e) => setEditingLead({ ...editingLead, followUpDate: e.target.value })} /></label>
                             <label>Sales / appointment date<input type="date" value={editingLead.appointmentDate || ''} onChange={(e) => setEditingLead({ ...editingLead, appointmentDate: e.target.value })} /></label>
                             <label>Next step<input value={editingLead.nextStep || ''} onChange={(e) => setEditingLead({ ...editingLead, nextStep: e.target.value })} /></label>
