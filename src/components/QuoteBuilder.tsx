@@ -661,6 +661,30 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     });
   }, [calendarItems]);
 
+  const leadSourceRoi = useMemo(() => {
+    const bySource = new Map<string, { source: string; total: number; won: number; lost: number; quotedValue: number; wonValue: number }>();
+    savedLeads.forEach((lead) => {
+      const source = (lead.source || 'Unknown').trim() || 'Unknown';
+      if (!bySource.has(source)) bySource.set(source, { source, total: 0, won: 0, lost: 0, quotedValue: 0, wonValue: 0 });
+      const row = bySource.get(source)!;
+      const status = leadStatus(lead);
+      const leadQuotes = savedQuotes.filter((quote) => quote.customer.trim().toLowerCase() === lead.name.trim().toLowerCase());
+      const quotedValue = leadQuotes.reduce((sum, quote) => sum + quote.total, 0);
+      const wonValue = leadQuotes.filter((quote) => quote.status === 'won' || status === 'won').reduce((sum, quote) => sum + quote.total, 0);
+      row.total += 1;
+      row.quotedValue += quotedValue;
+      row.wonValue += wonValue;
+      if (status === 'won') row.won += 1;
+      if (status === 'lost') row.lost += 1;
+    });
+    const rows = Array.from(bySource.values()).map((row) => ({
+      ...row,
+      winRate: row.total ? Math.round((row.won / row.total) * 100) : 0,
+      avgQuoted: row.total ? Math.round(row.quotedValue / row.total) : 0,
+    })).sort((a, b) => b.wonValue - a.wonValue || b.quotedValue - a.quotedValue || b.total - a.total);
+    return { rows, best: rows[0] || null };
+  }, [savedLeads, savedQuotes]);
+
   const customerProfiles = useMemo(() => savedLeads.map((lead) => {
     const leadQuotes = savedQuotes.filter((quote) => quote.customer.trim().toLowerCase() === lead.name.trim().toLowerCase());
     const totalQuoted = leadQuotes.reduce((sum, quote) => sum + quote.total, 0);
@@ -1211,13 +1235,23 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       </section> : null}
 
       {activeTab === 'sales' ? <section className="portal-panel-grid single">
+        <article className="copy-card source-roi-card">
+          <div className="card-title-row"><div><h3>Lead source ROI</h3><p className="fine-print">See which lead sources produce the most quoted value, won jobs, and revenue.</p></div>{leadSourceRoi.best ? <span className="pipeline-total">Best: {leadSourceRoi.best.source}</span> : null}</div>
+          {leadSourceRoi.rows.length ? <div className="source-roi-table">
+            <div className="source-roi-head"><span>Source</span><span>Leads</span><span>Won</span><span>Win rate</span><span>Quoted</span><span>Won value</span></div>
+            {leadSourceRoi.rows.map((row) => <div className="source-roi-row" key={row.source}>
+              <strong>{row.source}</strong><span>{row.total}</span><span>{row.won}</span><span>{row.winRate}%</span><span>{money(row.quotedValue)}</span><span>{money(row.wonValue)}</span>
+            </div>)}
+          </div> : <p>Add lead sources on the Lead pipeline tab to see which channels are producing value.</p>}
+        </article>
+
         <article className="copy-card">
           <div className="card-title-row"><div><h3>Customer profiles</h3><p className="fine-print">Saved contact details, quote history, and quick-load customer records.</p></div></div>
           {customerProfiles.length ? <div className="profile-grid">
             {customerProfiles.slice(0, 12).map(({ lead, leadQuotes, totalQuoted, lastQuote }) => <article className="social-post-card" key={lead.id}>
               <div className="card-title-row"><strong>{lead.name}</strong><button type="button" className="button mini secondary-button" onClick={() => loadCustomerProfile(lead)}>Load profile</button></div>
               <p>{[lead.phone, lead.email, lead.address].filter(Boolean).join(' · ') || 'No contact details yet'}</p>
-              <p className="fine-print">{leadQuotes.length} saved quote{leadQuotes.length === 1 ? '' : 's'} · {money(totalQuoted)} total quoted{lastQuote ? ` · Last: ${lastQuote.jobType}` : ''}</p>
+              <p className="fine-print">Source: {lead.source || 'Unknown'} · {leadQuotes.length} saved quote{leadQuotes.length === 1 ? '' : 's'} · {money(totalQuoted)} total quoted{lastQuote ? ` · Last: ${lastQuote.jobType}` : ''}</p>
               {lead.notes ? <p className="fine-print">{lead.notes}</p> : null}
             </article>)}
           </div> : <p>Save leads in the pipeline to build reusable customer profiles.</p>}

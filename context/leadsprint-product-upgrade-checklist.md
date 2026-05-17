@@ -8,10 +8,10 @@ Work through these one by one until complete. Keep each item scoped, build/test,
 - Users can open/load the lead from each reminder.
 - Calendar tab and Lead pipeline show due/overdue counts.
 
-## 2. Lead source ROI
-- Track lead source consistently on every lead.
-- Show source totals: total leads, won leads, lost leads, quoted value, won value, win rate.
-- Highlight best-performing source.
+## 2. Lead source ROI ✅
+- Lead source is tracked on every lead.
+- Added source totals: total leads, won leads, lost leads, quoted value, won value, win rate.
+- Highlighted best-performing source in Sales tools.
 
 ## 3. Customer timeline
 - Add a per-lead timeline built from lead creation, status changes, quote saves, follow-up dates, appointment dates, win/loss events.

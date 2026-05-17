@@ -622,6 +622,36 @@ textarea {
   text-align: left;
   cursor: pointer;
 }
+.source-roi-table {
+  display: grid;
+  gap: .45rem;
+  margin-top: 1rem;
+  overflow-x: auto;
+}
+.source-roi-head,
+.source-roi-row {
+  display: grid;
+  grid-template-columns: 1.4fr repeat(5, minmax(82px, .8fr));
+  gap: .55rem;
+  align-items: center;
+  min-width: 720px;
+}
+.source-roi-head {
+  color: var(--muted);
+  font-size: .78rem;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  padding: 0 .55rem;
+}
+.source-roi-row {
+  border: 1px solid var(--line);
+  border-radius: .9rem;
+  background: rgba(255,250,241,.78);
+  padding: .7rem .55rem;
+}
+.source-roi-row strong { color: var(--green-dark); }
+.source-roi-row span { color: var(--muted); font-weight: 850; }
 .pipeline-total {
   border-radius: 999px;
   background: var(--lime);
