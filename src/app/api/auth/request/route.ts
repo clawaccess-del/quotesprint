@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createSignedToken } from '@/lib/access';
-import { findStripeEntitlementByEmail } from '@/lib/entitlements';
+import { findStripeEntitlementByEmail, type Entitlement } from '@/lib/entitlements';
+import { findClientAccountByEmail } from '@/lib/supabase';
 
 function redirectToLogin(siteUrl: string, sent = true) {
   return NextResponse.redirect(`${siteUrl}/login${sent ? '?sent=1' : ''}`, 303);
@@ -39,11 +40,22 @@ export async function POST(request: Request) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin;
   const secret = process.env.STRIPE_SECRET_KEY;
 
-  if (!email || !secret) return redirectToLogin(siteUrl);
+  if (!email) return redirectToLogin(siteUrl);
 
   try {
-    const stripe = new Stripe(secret);
-    const entitlement = await findStripeEntitlementByEmail(stripe, email);
+    let entitlement: Entitlement | null = await findClientAccountByEmail(email)
+      .then((client) => client ? ({
+        plan: client.plan,
+        mode: 'subscription' as const,
+        sessionId: `client:${client.accountId}`,
+        customerEmail: client.email,
+      }) : null)
+      .catch(() => null);
+
+    if (!entitlement && secret) {
+      const stripe = new Stripe(secret);
+      entitlement = await findStripeEntitlementByEmail(stripe, email);
+    }
 
     if (entitlement) {
       const token = createSignedToken({

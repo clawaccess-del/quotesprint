@@ -307,6 +307,16 @@ export async function upsertClientAccount(input: Partial<ClientAccount> & { pass
   return stripPassword(saved as ClientAccount & { passwordHash?: string });
 }
 
+export async function findClientAccountByEmail(email: string) {
+  const normalizedEmail = email.trim().toLowerCase();
+  if (!normalizedEmail) return null;
+  const rows = await getSystemRows<ClientAccount & { passwordHash?: string }>(SYSTEM_EMAILS.clients, 'client_account');
+  const row = rows.find((item) => item.data.email === normalizedEmail)?.data;
+  if (!row || row.status === 'cancelled' || row.status === 'paused') return null;
+  await getOrCreateProfile(row.email);
+  return { email: row.email, plan: row.plan || 'live_ai', accountId: row.id };
+}
+
 export async function verifyClientPasswordLogin(username: string, password: string) {
   const rows = await getSystemRows<ClientAccount & { passwordHash?: string }>(SYSTEM_EMAILS.clients, 'client_account');
   const row = rows.find((item) => item.data.portalUsername === username.trim().toLowerCase())?.data;
