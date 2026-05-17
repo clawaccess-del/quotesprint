@@ -685,6 +685,11 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     return { rows, best: rows[0] || null };
   }, [savedLeads, savedQuotes]);
 
+  const allLeadsByStage = useMemo(() => leadStages.map((stage) => ({
+    ...stage,
+    leads: savedLeads.filter((lead) => leadStatus(lead) === stage.status),
+  })), [savedLeads]);
+
   const customerProfiles = useMemo(() => savedLeads.map((lead) => {
     const leadQuotes = savedQuotes.filter((quote) => quote.customer.trim().toLowerCase() === lead.name.trim().toLowerCase());
     const totalQuoted = leadQuotes.reduce((sum, quote) => sum + quote.total, 0);
@@ -1155,9 +1160,9 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
           <div className="card-title-row"><div><h3>Lead pipeline</h3><p className="fine-print">Move each lead from inquiry to quote, follow-up, won, or lost.</p></div><span className="pipeline-total">{pipelineStats.active} active</span></div>
           <div className="pipeline-metrics"><span>{pipelineStats.total} total leads</span><span>{pipelineStats.won} won</span><span>{pipelineStats.lost} lost</span><span>{todaysFollowUps.length} due today</span><span>{overdueFollowUps.length} overdue</span></div>
           {savedLeads.length ? (
-            <div className="pipeline-board">
-              {leadStages.map((stage) => {
-                const stageLeads = savedLeads.filter((lead) => leadStatus(lead) === stage.status);
+            <div className="all-leads-stack">
+              {allLeadsByStage.map((stage) => {
+                const stageLeads = stage.leads;
                 return <section className="pipeline-column" key={stage.status}>
                   <div className="pipeline-column-head"><strong>{stage.label}</strong><span>{stageLeads.length}</span></div>
                   <p>{stage.helper}</p>

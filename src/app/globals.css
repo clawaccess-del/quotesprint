@@ -678,10 +678,20 @@ textarea {
 }
 .pipeline-board {
   display: grid;
-  grid-template-columns: repeat(5, minmax(180px, 1fr));
+  grid-template-columns: repeat(6, minmax(180px, 1fr));
   gap: .75rem;
   overflow-x: auto;
   padding-bottom: .35rem;
+}
+.all-leads-stack {
+  display: grid;
+  gap: .9rem;
+}
+.all-leads-stack .pipeline-column {
+  min-width: 0;
+}
+.all-leads-stack .pipeline-leads {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 .pipeline-column {
   display: grid;
