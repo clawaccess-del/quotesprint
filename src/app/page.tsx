@@ -25,12 +25,15 @@ export default function Home() {
       <section className="section split">
         <div>
           <span className="eyebrow">Limited founding partner offer</span>
-          <h2>10 businesses get 6 months free and a direct voice in what LeadSprint becomes.</h2>
-          <p>Because LeadSprint is new, we’re selecting 10 home-service businesses or sales teams for more than a trial. Founding partners get free access, an open communication line with us, and a chance to shape the features, workflows, and integrations we build around real lead follow-up problems.</p>
+          <h2>10 businesses get 6 months free, direct access to us, and a real voice in what LeadSprint becomes.</h2>
+          <p>LeadSprint is a new company with strong software already built for lead intake, quoting, follow-up, and pipeline tracking. Because we are still early, founding partners get something bigger companies rarely offer: a direct line to the people building the product and the ability to request the features, workflows, and integrations their team actually needs.</p>
+          <p>When a selected partner shows us a real bottleneck — a calendar flow, CRM export, reporting view, lead-source tracker, SMS/email follow-up pattern, or industry-specific workflow — we can move quickly and build around it. The goal is simple: make LeadSprint better by solving real problems for the first 10 teams using it.</p>
         </div>
         <div className="note-stack">
           <p>6 months free for selected founding partners.</p>
-          <p>Tell us what features, reminders, reports, and integrations would help your team most.</p>
+          <p>Open communication with the LeadSprint team while the product grows.</p>
+          <p>Request features, reminders, reports, workflows, and integrations your team would actually use.</p>
+          <p>Fast-moving product updates based on real operator feedback.</p>
           <p>If LeadSprint genuinely helps, honest feedback or a review helps us grow.</p>
           <p><Link href="/founding-teams">Apply for one of the 10 spots →</Link></p>
         </div>
