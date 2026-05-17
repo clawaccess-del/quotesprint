@@ -1031,6 +1031,27 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     setAiStatus(`${currentLead.name} moved to ${leadStages.find((stage) => stage.status === status)?.label || status}.`);
   }
 
+  function uploadCompanyLogo(file?: File) {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setAiStatus('Logo upload needs an image file.');
+      return;
+    }
+    if (file.size > 700_000) {
+      setAiStatus('Logo is too large. Use an image under 700 KB so it can save with the profile.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setCompanyLogoUrl(reader.result);
+        setAiStatus('Logo uploaded and saved to the company profile.');
+      }
+    };
+    reader.onerror = () => setAiStatus('Logo upload failed. Try a smaller PNG, JPG, or SVG.');
+    reader.readAsDataURL(file);
+  }
+
   async function copyText(text: string, label: string) {
     try {
       await navigator.clipboard.writeText(text);
@@ -1202,7 +1223,12 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
           <div className="card-title-row"><div><h3>Company information</h3><p className="fine-print">This is the source of truth for quotes, follow-ups, social posts, AI rewrites, review prompts, and customer messages.</p></div><span className="pipeline-total">Auto-saved</span></div>
           <div className="company-logo-row">
             <div className="company-logo-preview">{companyLogoUrl ? <img src={companyLogoUrl} alt={`${business} logo`} /> : <span>{business.slice(0, 2).toUpperCase()}</span>}</div>
-            <label>Logo URL<input value={companyLogoUrl} onChange={(e) => setCompanyLogoUrl(e.target.value)} placeholder="https://your-site.com/logo.png" /></label>
+            <div className="logo-input-stack">
+              <label>Upload logo<input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={(e) => uploadCompanyLogo(e.target.files?.[0])} /></label>
+              <label>Logo URL<input value={companyLogoUrl} onChange={(e) => setCompanyLogoUrl(e.target.value)} placeholder="https://your-site.com/logo.png" /></label>
+              {companyLogoUrl ? <button type="button" className="button mini secondary-button" onClick={() => setCompanyLogoUrl('')}>Remove logo</button> : null}
+              <p className="fine-print">Upload a PNG, JPG, WebP, or SVG under 700 KB, or paste a hosted logo URL.</p>
+            </div>
           </div>
           <label>Business name<input value={business} onChange={(e) => setBusiness(e.target.value)} /></label>
           <label>Industry<select value={businessIndustry} onChange={(e) => setBusinessIndustry(e.target.value)}>{businessIndustries.map((industry) => <option key={industry}>{industry}</option>)}</select></label>
