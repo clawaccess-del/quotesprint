@@ -27,9 +27,9 @@ Work through these one by one until complete. Keep each item scoped, build/test,
 - Added checklist for won/near-won work: deposit collected, appointment scheduled, prep instructions sent, materials/scope confirmed, review request sent.
 - Checklist is tied to the selected lead/customer and persists with the lead record.
 
-## 6. Simple revenue dashboard
-- Add dashboard metrics: open quoted value, won revenue, lost quoted value, average quote value, win rate, follow-ups due.
-- Keep visible in Sales tools or a new Dashboard section.
+## 6. Simple revenue dashboard ✅
+- Added dashboard metrics: open quoted value, won revenue, lost quoted value, average quote value, closed win rate, follow-ups due, and won + open pipeline forecast.
+- Revenue dashboard is visible in Sales Tools; Hub money snapshot now uses the same revenue calculations.
 
 ## 7. Import/export
 - Add CSV export for leads.

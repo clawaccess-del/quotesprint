@@ -684,12 +684,23 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     });
   }, [calendarItems]);
 
-  const hubSummary = useMemo(() => {
-    const openValue = savedQuotes.filter((quote) => quote.status === 'open').reduce((sum, quote) => sum + quote.total, 0);
-    const wonValue = savedQuotes.filter((quote) => quote.status === 'won').reduce((sum, quote) => sum + quote.total, 0);
+  const revenueDashboard = useMemo(() => {
+    const openQuotes = savedQuotes.filter((quote) => quote.status === 'open');
+    const wonQuotes = savedQuotes.filter((quote) => quote.status === 'won');
+    const lostQuotes = savedQuotes.filter((quote) => quote.status === 'lost');
+    const openValue = openQuotes.reduce((sum, quote) => sum + quote.total, 0);
+    const wonValue = wonQuotes.reduce((sum, quote) => sum + quote.total, 0);
+    const lostValue = lostQuotes.reduce((sum, quote) => sum + quote.total, 0);
+    const avgQuote = savedQuotes.length ? Math.round(savedQuotes.reduce((sum, quote) => sum + quote.total, 0) / savedQuotes.length) : 0;
+    const totalClosed = wonQuotes.length + lostQuotes.length;
+    const closedWinRate = totalClosed ? Math.round((wonQuotes.length / totalClosed) * 100) : 0;
+    const followUpsDue = todaysFollowUps.length + overdueFollowUps.length;
+    const forecastValue = openValue + wonValue;
     const newestLead = savedLeads[0] || null;
-    return { openValue, wonValue, newestLead };
-  }, [savedLeads, savedQuotes]);
+    return { openValue, wonValue, lostValue, avgQuote, closedWinRate, followUpsDue, forecastValue, newestLead, openQuotes: openQuotes.length, wonQuotes: wonQuotes.length, lostQuotes: lostQuotes.length };
+  }, [overdueFollowUps.length, savedLeads, savedQuotes, todaysFollowUps.length]);
+
+  const hubSummary = revenueDashboard;
 
   const leadSourceRoi = useMemo(() => {
     const bySource = new Map<string, { source: string; total: number; won: number; lost: number; quotedValue: number; wonValue: number }>();
@@ -1133,7 +1144,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
           <div className="hub-actions"><button type="button" className="button" onClick={() => setActiveTab('leads')}>Work leads</button><button type="button" className="button secondary" onClick={() => setActiveTab('calendar')}>Open calendar</button></div>
         </article>
         <article className="copy-card"><h3>Pipeline snapshot</h3><div className="hub-metrics"><span><strong>{pipelineStats.total}</strong>Total leads</span><span><strong>{pipelineStats.active}</strong>Active</span><span><strong>{pipelineStats.won}</strong>Won</span><span><strong>{pipelineStats.lost}</strong>Lost</span></div></article>
-        <article className="copy-card"><h3>Money snapshot</h3><div className="hub-metrics"><span><strong>{money(hubSummary.openValue)}</strong>Open quoted</span><span><strong>{money(hubSummary.wonValue)}</strong>Won revenue</span><span><strong>{stats.winRate}%</strong>Quote win rate</span><span><strong>{money(stats.totalQuoted)}</strong>Total quoted</span></div></article>
+        <article className="copy-card"><h3>Money snapshot</h3><div className="hub-metrics"><span><strong>{money(revenueDashboard.openValue)}</strong>Open quoted</span><span><strong>{money(revenueDashboard.wonValue)}</strong>Won revenue</span><span><strong>{revenueDashboard.closedWinRate}%</strong>Closed win rate</span><span><strong>{money(revenueDashboard.avgQuote)}</strong>Average quote</span></div></article>
         <article className="copy-card"><div className="card-title-row"><h3>Needs attention</h3><button type="button" className="button mini secondary-button" onClick={() => setActiveTab('calendar')}>View all</button></div><div className="pipeline-metrics"><span>{todaysFollowUps.length} due today</span><span>{overdueFollowUps.length} overdue</span><span>{upcomingCalendarItems.length} upcoming</span></div>{[...overdueFollowUps, ...todaysFollowUps].slice(0, 4).map((item) => <div className="hub-list-item" key={`${item.lead.id}-${item.date}-${item.type}`}><strong>{item.lead.name}</strong><span>{item.type} · {item.date} · {item.detail}</span><button type="button" className="button mini secondary-button" onClick={() => loadCustomerProfile(item.lead)}>Open</button></div>)}</article>
         <article className="copy-card"><div className="card-title-row"><h3>Best lead source</h3><button type="button" className="button mini secondary-button" onClick={() => setActiveTab('sales')}>Sales tools</button></div>{leadSourceRoi.best ? <div className="hub-highlight"><strong>{leadSourceRoi.best.source}</strong><span>{leadSourceRoi.best.total} leads · {leadSourceRoi.best.winRate}% win rate · {money(leadSourceRoi.best.wonValue)} won value</span></div> : <p>Add lead sources to see what is working.</p>}</article>
         <article className="copy-card"><h3>Current lead</h3>{leadWorkflow.currentLead ? <div className="hub-highlight"><strong>{leadWorkflow.currentLead.name}</strong><span>{leadWorkflow.stage.label} · {leadWorkflow.currentLead.nextStep || leadWorkflow.stage.action}</span><button type="button" className="button mini" onClick={() => setActiveTab('leads')}>Continue</button></div> : <p>No current lead yet. Add one from Lead pipeline.</p>}</article>
@@ -1361,6 +1372,18 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
       </section> : null}
 
       {activeTab === 'sales' ? <section className="portal-panel-grid single sales-tools-grid">
+        <article className="copy-card revenue-dashboard-card">
+          <div className="card-title-row"><div><h3>Revenue dashboard</h3><p className="fine-print">Quick view of quoted pipeline, won revenue, lost value, average job size, win rate, and follow-ups due.</p></div><span className="pipeline-total">{revenueDashboard.followUpsDue} follow-ups due</span></div>
+          <div className="revenue-metric-grid">
+            <span><strong>{money(revenueDashboard.openValue)}</strong>Open quoted value<small>{revenueDashboard.openQuotes} open quote{revenueDashboard.openQuotes === 1 ? '' : 's'}</small></span>
+            <span><strong>{money(revenueDashboard.wonValue)}</strong>Won revenue<small>{revenueDashboard.wonQuotes} won quote{revenueDashboard.wonQuotes === 1 ? '' : 's'}</small></span>
+            <span><strong>{money(revenueDashboard.lostValue)}</strong>Lost quoted value<small>{revenueDashboard.lostQuotes} lost quote{revenueDashboard.lostQuotes === 1 ? '' : 's'}</small></span>
+            <span><strong>{money(revenueDashboard.avgQuote)}</strong>Average quote value<small>Across saved quotes</small></span>
+            <span><strong>{revenueDashboard.closedWinRate}%</strong>Closed win rate<small>Won vs. lost quotes</small></span>
+            <span><strong>{money(revenueDashboard.forecastValue)}</strong>Won + open pipeline<small>Simple pipeline forecast</small></span>
+          </div>
+        </article>
+
         <article className="copy-card source-roi-card">
           <div className="card-title-row"><div><h3>Lead source ROI</h3><p className="fine-print">See which lead sources produce the most quoted value, won jobs, and revenue.</p></div>{leadSourceRoi.best ? <span className="pipeline-total">Best: {leadSourceRoi.best.source}</span> : null}</div>
           {leadSourceRoi.rows.length ? <div className="source-roi-table">
