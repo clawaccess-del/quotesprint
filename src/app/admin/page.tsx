@@ -17,6 +17,8 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
         <h1>Log in to manage LeadSprint.</h1>
         <p className="lead">This area is only for the LeadSprint owner. It manages client accounts, portal usernames/passwords, support tickets, and account updates.</p>
         <div className="checkout-card login-form">
+          <a className="button full google-button" href="/api/admin/google/start">Continue with Google</a>
+          <div className="login-divider"><span>or owner password</span></div>
           <form action="/api/admin/login" method="post">
             <label>Username<input name="username" required /></label>
             <label>Password<input type="password" name="password" required /></label>

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { ACCESS_COOKIE, accessMaxAgeSeconds, createAccessToken, verifySignedToken } from '@/lib/access';
+import { ADMIN_COOKIE, createAdminTokenForEmail, isAdminGoogleEmail } from '@/lib/admin';
 import { findStripeEntitlementByEmail } from '@/lib/entitlements';
 
-type GoogleState = { expiresAt: number; nonce: string };
+type GoogleState = { expiresAt: number; nonce: string; purpose?: 'admin' | 'customer' };
 type GoogleTokenResponse = { id_token?: string; error?: string };
 type GoogleProfile = { email?: string; email_verified?: boolean };
 
@@ -25,9 +26,11 @@ export async function GET(request: NextRequest) {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
   const stripeSecret = process.env.STRIPE_SECRET_KEY;
+  const isAdminLogin = parsedState?.purpose === 'admin';
+  const errorTarget = isAdminLogin ? 'admin' : 'login';
 
-  if (!code || !parsedState || parsedState.expiresAt < Date.now() || !clientId || !clientSecret || !stripeSecret) {
-    return NextResponse.redirect(`${siteUrl}/login?error=google-login`);
+  if (!code || !parsedState || parsedState.expiresAt < Date.now() || !clientId || !clientSecret || (!isAdminLogin && !stripeSecret)) {
+    return NextResponse.redirect(`${siteUrl}/${errorTarget}?error=google-login`);
   }
 
   try {
@@ -48,10 +51,23 @@ export async function GET(request: NextRequest) {
     const email = profile?.email?.trim().toLowerCase();
 
     if (!tokenResponse.ok || !email || profile?.email_verified === false) {
-      return NextResponse.redirect(`${siteUrl}/login?error=google-email`);
+      return NextResponse.redirect(`${siteUrl}/${errorTarget}?error=google-email`);
     }
 
-    const stripe = new Stripe(stripeSecret);
+    if (isAdminLogin) {
+      if (!isAdminGoogleEmail(email)) return NextResponse.redirect(`${siteUrl}/admin?error=not-owner`);
+      const response = NextResponse.redirect(`${siteUrl}/admin?access=granted`);
+      response.cookies.set(ADMIN_COOKIE, createAdminTokenForEmail(email), {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 60 * 60 * 12,
+      });
+      return response;
+    }
+
+    const stripe = new Stripe(stripeSecret!);
     const entitlement = await findStripeEntitlementByEmail(stripe, email);
 
     if (!entitlement) return NextResponse.redirect(`${siteUrl}/login?error=no-purchase`);
@@ -76,6 +92,6 @@ export async function GET(request: NextRequest) {
     return response;
   } catch (error) {
     console.error('Google login failed', error);
-    return NextResponse.redirect(`${siteUrl}/login?error=google-login`);
+    return NextResponse.redirect(`${siteUrl}/${errorTarget}?error=google-login`);
   }
 }
