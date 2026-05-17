@@ -1196,7 +1196,12 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
         </article>
       </section> : null}
 
-      {activeTab === 'leads' ? <section className="portal-panel-grid">
+      {activeTab === 'leads' ? <section className="portal-panel-grid single lead-management-layout">
+        <article className="copy-card lead-selector-card">
+          <div className="card-title-row"><div><h3>Select a lead</h3><p className="fine-print">Choose the lead up top, then update contact details, stage, follow-up dates, and next actions below.</p></div><span className="pipeline-total">{savedLeads.length} total</span></div>
+          {savedLeads.length ? <div className="lead-selector-list">{savedLeads.map((lead) => <button type="button" key={lead.id} className={leadWorkflow.currentLead?.id === lead.id ? 'active' : ''} onClick={() => loadCustomerProfile(lead)}><strong>{lead.name}</strong><span>{leadStages.find((stage) => stage.status === leadStatus(lead))?.label}</span>{lead.followUpDate ? <small>Follow-up {lead.followUpDate}</small> : null}</button>)}</div> : <p>No leads yet. Add the first lead below.</p>}
+        </article>
+        <div className="lead-options-grid">
         <article className="builder-panel lead-entry-panel">
           <div className="form-section-title">Lead contact</div>
           <label>Lead / customer name<input value={customer} onChange={(e) => setCustomer(e.target.value)} /></label>
@@ -1228,6 +1233,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
             <div className="customer-timeline"><h3>Customer timeline</h3>{currentLeadTimeline.map((event) => <div className="timeline-event" key={`${event.title}-${event.date}-${event.detail}`}><span>{event.date.slice(0, 10)}</span><div><strong>{event.title}</strong><p>{event.detail}</p></div></div>)}</div>
           </> : <p>Save a lead or load a customer profile to see the guided workflow from first contact to final answer.</p>}
         </article>
+        </div>
         <article className="copy-card pipeline-card">
           <div className="card-title-row"><div><h3>All leads by stage</h3><p className="fine-print">Tap Load to focus one lead, or use Quick move to advance it without opening the full editor.</p></div><span className="pipeline-total">{pipelineStats.active} active</span></div>
           <div className="pipeline-metrics"><span>{pipelineStats.total} total leads</span><span>{pipelineStats.won} won</span><span>{pipelineStats.lost} lost</span><span>{todaysFollowUps.length} due today</span><span>{overdueFollowUps.length} overdue</span></div>

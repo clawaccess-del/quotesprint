@@ -1017,3 +1017,46 @@ textarea {
   .all-leads-stack .pipeline-leads { grid-template-columns: 1fr; }
   .lead-card-topline { align-items: flex-start; flex-direction: column; }
 }
+.lead-management-layout {
+  gap: 1rem;
+}
+.lead-options-grid {
+  display: grid;
+  grid-template-columns: .85fr 1.15fr;
+  gap: 1rem;
+  align-items: start;
+}
+.lead-selector-list {
+  display: flex;
+  gap: .6rem;
+  overflow-x: auto;
+  padding: .25rem 0 .35rem;
+  scroll-snap-type: x mandatory;
+}
+.lead-selector-list button {
+  min-width: 190px;
+  scroll-snap-align: start;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: rgba(255,250,241,.8);
+  color: var(--muted);
+  cursor: pointer;
+  padding: .8rem;
+  text-align: left;
+}
+.lead-selector-list button.active {
+  border-color: var(--green-dark);
+  background: var(--green-dark);
+  color: white;
+}
+.lead-selector-list strong,
+.lead-selector-list span,
+.lead-selector-list small {
+  display: block;
+}
+.lead-selector-list strong { color: inherit; font-size: 1rem; }
+.lead-selector-list span { font-weight: 900; margin-top: .2rem; }
+.lead-selector-list small { opacity: .8; margin-top: .25rem; }
+@media (max-width: 900px) {
+  .lead-options-grid { grid-template-columns: 1fr; }
+}
