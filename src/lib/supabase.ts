@@ -113,7 +113,7 @@ async function getOrCreateProfile(email: string): Promise<ProfileRow> {
 
   const createResponse = await supabaseFetch('profiles?select=id,email,company_name', {
     method: 'POST',
-    body: JSON.stringify([{ email, company_name: '' }]),
+    body: JSON.stringify([{ id: crypto.randomUUID(), email, company_name: '' }]),
     headers: { Prefer: 'return=representation' },
   });
   const created = await createResponse.json();
