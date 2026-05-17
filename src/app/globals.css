@@ -209,6 +209,66 @@ textarea {
   color: var(--ink);
   resize: vertical;
 }
+.founding-page .section { width: 100%; }
+.founding-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) .9fr;
+  gap: 1.5rem;
+  align-items: stretch;
+  padding: clamp(3rem, 7vw, 5rem) 0 2rem;
+}
+.founding-hero h1 {
+  font-size: clamp(2.8rem, 7vw, 6rem);
+  line-height: .9;
+  letter-spacing: -.075em;
+  margin: .7rem 0 1rem;
+}
+.founding-card,
+.trial-apply-card {
+  border: 1px solid var(--line);
+  border-radius: 2rem;
+  background: rgba(255,255,255,.72);
+  box-shadow: var(--shadow);
+}
+.founding-card {
+  display: grid;
+  align-content: center;
+  gap: .85rem;
+  padding: 1.4rem;
+  background: linear-gradient(155deg, var(--green-dark), var(--green));
+  color: white;
+}
+.founding-card strong {
+  font-size: clamp(2rem, 4vw, 3.6rem);
+  line-height: .95;
+  letter-spacing: -.055em;
+}
+.founding-card span {
+  display: inline-flex;
+  width: fit-content;
+  border: 1px solid rgba(255,255,255,.22);
+  border-radius: 999px;
+  background: rgba(255,255,255,.12);
+  padding: .55rem .75rem;
+  color: var(--lime);
+  font-weight: 950;
+}
+.founding-card small { color: rgba(255,255,255,.74); line-height: 1.55; }
+.founding-industries span { text-transform: none; }
+.trial-apply-card {
+  display: grid;
+  grid-template-columns: .8fr 1.2fr;
+  gap: 1rem;
+  padding: 1.2rem;
+}
+.trial-form {
+  display: grid;
+  gap: .8rem;
+}
+@media (max-width: 900px) {
+  .founding-hero,
+  .trial-apply-card { grid-template-columns: 1fr; }
+}
 .form-section-title {
   color: var(--green-dark);
   font-size: .78rem;

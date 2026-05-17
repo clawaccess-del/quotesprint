@@ -12,7 +12,7 @@ export default function Home() {
           <p>LeadSprint uses your company profile, brand voice, service area, customer details, and industry playbooks to turn new inquiries into organized leads, professional estimates, tailored follow-up, and a cleaner path to booked work.</p>
           <div className="hero-actions">
             <Link href="/app" className="button">Open the builder</Link>
-            <Link href="/checkout?plan=live" className="button secondary">Start LeadSprint Live</Link>
+            <Link href="/founding-teams" className="button secondary">Apply for 6 months free</Link>
           </div>
         </div>
         <div className="hero-card">

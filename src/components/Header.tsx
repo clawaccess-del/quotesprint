@@ -12,6 +12,7 @@ export function Header() {
       <nav>
         <Link href="/product">Product</Link>
         <Link href="/pricing">Pricing</Link>
+        <Link href="/founding-teams">6-month trial</Link>
         <Link href="/resources">Resources</Link>
         <Link href="/login">Log in</Link>
         <Link href="/app" className="nav-cta">Customer access</Link>
