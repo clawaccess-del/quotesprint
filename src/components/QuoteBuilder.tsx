@@ -460,6 +460,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
   const [presetName, setPresetName] = useState('My saved service');
   const [customerReply, setCustomerReply] = useState('Can you do any better on price? I am comparing a few quotes.');
   const [coachedReply, setCoachedReply] = useState('');
+  const [leadStageFilter, setLeadStageFilter] = useState<LeadStatus | 'all'>('all');
 
   useEffect(() => {
     const savedTab = window.localStorage.getItem('leadsprint-active-tab') as PortalTab | null;
@@ -717,10 +718,9 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
     return events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [leadWorkflow.currentLead, savedQuotes]);
 
-  const allLeadsByStage = useMemo(() => leadStages.map((stage) => ({
-    ...stage,
-    leads: savedLeads.filter((lead) => leadStatus(lead) === stage.status),
-  })), [savedLeads]);
+  const visibleLeadStages = useMemo(() => leadStages
+    .filter((stage) => leadStageFilter === 'all' || stage.status === leadStageFilter)
+    .map((stage) => ({ ...stage, leads: savedLeads.filter((lead) => leadStatus(lead) === stage.status) })), [leadStageFilter, savedLeads]);
 
   const customerProfiles = useMemo(() => savedLeads.map((lead) => {
     const leadQuotes = savedQuotes.filter((quote) => quote.customer.trim().toLowerCase() === lead.name.trim().toLowerCase());
@@ -1218,9 +1218,10 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
           <button type="button" className="button full" onClick={saveLead}>Save lead contact</button>
         </article>
         <article className="copy-card lead-workflow-card">
-          <div className="card-title-row"><div><h3>Lead-to-answer guide</h3><p className="fine-print">Use this as the daily command center for the current lead.</p></div>{leadWorkflow.currentLead ? <span className="pipeline-total">{leadWorkflow.stage.label}</span> : null}</div>
+          <div className="card-title-row"><div><h3>Selected lead workflow</h3><p className="fine-print">Pick a lead below, then use this guided panel to move it to the next answer.</p></div>{leadWorkflow.currentLead ? <span className="pipeline-total">{leadWorkflow.stage.label}</span> : null}</div>
           {leadWorkflow.currentLead ? <>
-            <div className="workflow-progress" aria-label="Lead workflow progress">{leadStages.map((stage, index) => <button key={stage.status} type="button" className={index <= leadWorkflow.stageIndex ? 'complete' : ''} onClick={() => moveCurrentLead(stage.status)}>{stage.label}</button>)}</div>
+            <div className="selected-lead-title"><strong>{leadWorkflow.currentLead.name}</strong><span>{[leadWorkflow.currentLead.phone, leadWorkflow.currentLead.email].filter(Boolean).join(' · ') || 'No contact details yet'}</span></div>
+            <div className="workflow-progress" aria-label="Lead workflow progress">{leadStages.map((stage, index) => <button key={stage.status} type="button" className={index <= leadWorkflow.stageIndex ? 'complete' : ''} onClick={() => moveCurrentLead(stage.status)}><span>{index + 1}</span>{stage.label}</button>)}</div>
             <div className="next-action-box"><strong>Recommended next action</strong><p>{leadWorkflow.currentLead.nextStep || leadWorkflow.stage.action}</p>{leadWorkflow.currentLead.followUpDate ? <span>Follow up on {leadWorkflow.currentLead.followUpDate}</span> : null}{leadWorkflow.currentLead.appointmentDate ? <span>Sales/appointment date: {leadWorkflow.currentLead.appointmentDate}</span> : null}</div>
             <div className="lead-checklist">{leadWorkflow.checklist.map((item) => <span key={item.label} className={item.done ? 'done' : ''}>{item.done ? '✓' : '○'} {item.label}</span>)}</div>
             <div className="hero-actions"><button type="button" className="button secondary" onClick={() => moveCurrentLead('qualified')}>Qualified</button><button type="button" className="button secondary" onClick={saveQuote}>Save quote + mark quoted</button><button type="button" className="button secondary" onClick={() => moveCurrentLead('followed-up')}>Followed up</button><button type="button" className="button" onClick={() => moveCurrentLead('won')}>Won</button><button type="button" className="button secondary" onClick={() => moveCurrentLead('lost')}>Lost</button></div>
@@ -1228,11 +1229,12 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
           </> : <p>Save a lead or load a customer profile to see the guided workflow from first contact to final answer.</p>}
         </article>
         <article className="copy-card pipeline-card">
-          <div className="card-title-row"><div><h3>Lead pipeline</h3><p className="fine-print">Move each lead from inquiry to quote, follow-up, won, or lost.</p></div><span className="pipeline-total">{pipelineStats.active} active</span></div>
+          <div className="card-title-row"><div><h3>All leads by stage</h3><p className="fine-print">Tap Load to focus one lead, or use Quick move to advance it without opening the full editor.</p></div><span className="pipeline-total">{pipelineStats.active} active</span></div>
           <div className="pipeline-metrics"><span>{pipelineStats.total} total leads</span><span>{pipelineStats.won} won</span><span>{pipelineStats.lost} lost</span><span>{todaysFollowUps.length} due today</span><span>{overdueFollowUps.length} overdue</span></div>
+          <div className="stage-filter"><button type="button" className={leadStageFilter === 'all' ? 'active' : ''} onClick={() => setLeadStageFilter('all')}>All</button>{leadStages.map((stage) => <button type="button" key={stage.status} className={leadStageFilter === stage.status ? 'active' : ''} onClick={() => setLeadStageFilter(stage.status)}>{stage.label}</button>)}</div>
           {savedLeads.length ? (
             <div className="all-leads-stack">
-              {allLeadsByStage.map((stage) => {
+              {visibleLeadStages.map((stage) => {
                 const stageLeads = stage.leads;
                 return <section className="pipeline-column" key={stage.status}>
                   <div className="pipeline-column-head"><strong>{stage.label}</strong><span>{stageLeads.length}</span></div>
@@ -1256,7 +1258,7 @@ export function QuoteBuilder({ accountEmail, aiEnabled }: { accountEmail?: strin
                             <div className="row-actions"><button type="button" className="button mini" onClick={saveLeadEdit}>Save changes</button><button type="button" className="button mini secondary-button" onClick={() => setEditingLead(null)}>Cancel</button></div>
                           </div>
                         ) : (
-                          <><div><strong>{lead.name}</strong><span>{[lead.phone, lead.email, lead.address].filter(Boolean).join(' · ') || 'No contact details yet'}</span>{lead.source ? <small>Source: {lead.source}</small> : null}{lead.nextStep ? <small>Next: {lead.nextStep}</small> : null}{lead.followUpDate ? <small>Follow-up: {lead.followUpDate}</small> : null}{lead.appointmentDate ? <small>Sales/appointment: {lead.appointmentDate}</small> : null}{lead.notes ? <small>{lead.notes}</small> : null}</div><div className="lead-card-actions"><select value={leadStatus(lead)} onChange={(e) => updateLeadStatus(lead.id, e.target.value as LeadStatus)} aria-label={`Pipeline status for ${lead.name}`}>{leadStages.map((option) => <option value={option.status} key={option.status}>{option.label}</option>)}</select><button type="button" className="button mini secondary-button" onClick={() => loadCustomerProfile(lead)}>Load</button><button type="button" className="button mini secondary-button" onClick={() => setEditingLead(lead)}>Edit</button></div></>
+                          <><div><div className="lead-card-topline"><strong>{lead.name}</strong><span>{leadStages.find((item) => item.status === leadStatus(lead))?.label}</span></div><span>{[lead.phone, lead.email, lead.address].filter(Boolean).join(' · ') || 'No contact details yet'}</span>{lead.source ? <small>Source: {lead.source}</small> : null}{lead.nextStep ? <small>Next: {lead.nextStep}</small> : null}<div className="lead-date-row">{lead.followUpDate ? <span>Follow-up {lead.followUpDate}</span> : null}{lead.appointmentDate ? <span>Appt {lead.appointmentDate}</span> : null}</div>{lead.notes ? <small>{lead.notes}</small> : null}</div><div className="lead-card-actions"><select value={leadStatus(lead)} onChange={(e) => updateLeadStatus(lead.id, e.target.value as LeadStatus)} aria-label={`Pipeline status for ${lead.name}`}>{leadStages.map((option) => <option value={option.status} key={option.status}>{option.label}</option>)}</select><button type="button" className="button mini" onClick={() => loadCustomerProfile(lead)}>Load</button><button type="button" className="button mini secondary-button" onClick={() => setEditingLead(lead)}>Edit</button></div></>
                         )}
                       </div>
                     )) : <div className="pipeline-empty">No leads here yet.</div>}
